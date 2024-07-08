@@ -38,7 +38,7 @@ def get_secret(secret_name: str, region_name: str = "eu-west-2") -> json:
 
 def lambda_handler(event, context) -> json:
     """
-    AWS Lambda function to fetch data catalogue from London Datastore and dump it to S3.
+    AWS Lambda function to fetch data catalogue from London Datastore and dump it to S3
     """
     try:
         secret_name = get_param("herding_cats_param")
