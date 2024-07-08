@@ -60,7 +60,8 @@ class CATExplore:
             value_preview = str(data)[:50] + "..." if len(str(data)) > 50 else str(data)
             print(f"{' ' * indent}{key}: ({value_type}) {value_preview}")
 
+# Example usage
 if __name__ == "__main__":
-    explorer = CATExplore("opendata.bristol.gov.uk")
+    explorer = CATExplore("data.london.gov.uk")
     result = explorer.fetch_sample()
     explorer.print_structure(result)
