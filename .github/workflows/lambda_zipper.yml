@@ -4,28 +4,41 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'herding_cats_pipelines/**'
 
 jobs:
-  zip-and-upload:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Ruff
+        run: pip install ruff
+      - name: Run Ruff
+        run: ruff check ./herding_cats_pipelines
 
+  zip-and-upload:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Install dependencies and zip Lambda function
         run: |
           cd ./herding_cats_pipelines/lambda_jobs
           pip install -r requirements.txt -t ./package
           cp *.py ./package/
           cd ./package && zip -r ../lambda_jobs.zip .
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: "eu-west-2"
-
       - name: Upload to S3
         run: |
-          cd ./herding_cats_pipelines/lambda_jobs 
+          cd ./herding_cats_pipelines/lambda_jobs
           aws s3 cp lambda_jobs.zip s3://${{ secrets.S3_BUCKET_NAME }}/lambda_jobs.zip
