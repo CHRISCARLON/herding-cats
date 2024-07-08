@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'herding_cats_pipelines/lambda_jobs'
+      - 'herding_cats_pipelines/lambda_jobs/**'
 
 jobs:
   lint:
