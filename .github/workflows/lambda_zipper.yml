@@ -16,7 +16,7 @@ jobs:
           cd ./herding_cats_pipelines/lambda_jobs
           pip install -r requirements.txt -t ./package
           cp *.py ./package/
-          cd ./package && zip -r ../../lambda_jobs.zip .
+          cd ./package && zip -r ../lambda_jobs.zip .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2
