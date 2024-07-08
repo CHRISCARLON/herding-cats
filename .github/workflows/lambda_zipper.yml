@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'herding_cats_pipelines/**'
+      - 'herding_cats_pipelines/lambda_jobs'
 
 jobs:
   lint:
@@ -19,7 +19,7 @@ jobs:
       - name: Install Ruff
         run: pip install ruff
       - name: Run Ruff
-        run: ruff check ./herding_cats_pipelines
+        run: ruff check ./herding_cats_pipelines/lambda_jobs
 
   zip-and-upload:
     needs: lint
