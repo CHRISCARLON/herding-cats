@@ -11,8 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Zip the lambda_jobs directory
-        run: zip -r lambda_jobs.zip ./herding_cats_pipelines/lambda_jobs
+      - name: Install dependencies and zip Lambda function
+        run: |
+          cd ./herding_cats_pipelines/lambda_jobs
+          pip install -r requirements.txt -t ./package
+          cp *.py ./package/
+          cd ./package && zip -r ../../lambda_jobs.zip .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2

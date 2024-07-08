@@ -5,6 +5,8 @@
 
 The aim of this project is simple, **provide regular snapshots of the overall health and compositioin of the UK's open data landscape**.
 
+The pipeline will only focus on London Datastore as a proof of concept.
+
 ## Metrics
 
 More metrics will come in the future...
