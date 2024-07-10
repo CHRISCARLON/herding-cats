@@ -31,7 +31,7 @@ jobs:
           cd ./herding_cats_pipelines/lambda_jobs
           pip install -r requirements.txt -t ./package
           cp *.py ./package/
-          cd ./package && zip -r ../lambda_jobs.zip .
+          cd ./package && zip -r ../lambda_herding_cats_jobs.zip .
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
@@ -41,4 +41,4 @@ jobs:
       - name: Upload to S3
         run: |
           cd ./herding_cats_pipelines/lambda_jobs
-          aws s3 cp lambda_jobs.zip s3://${{ secrets.S3_BUCKET_NAME }}/lambda_jobs.zip
+          aws s3 cp lambda_herding_cats_jobs.zip s3://${{ secrets.S3_BUCKET_NAME }}/lambda_herding_cats_jobs.zip

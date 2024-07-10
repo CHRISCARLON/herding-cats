@@ -1,5 +1,7 @@
 import json
 import boto3
+import botocore
+import botocore.exceptions
 import requests
 
 from loguru import logger
@@ -43,7 +45,7 @@ def lambda_handler(event, context) -> json:
     try:
         secret_name = get_param("herding_cats_param")
         secret = get_secret(secret_name)
-        bucket_name = secret[secret_name]
+        bucket_name = secret["herding_cats_raw_data_bucket"]
         
         url = "https://data.london.gov.uk/api/action/package_search"
         response = requests.get(url)
@@ -62,7 +64,7 @@ def lambda_handler(event, context) -> json:
             Body=json.dumps(data),
             ContentType='application/json'
         )
-        print(f"Data Successfully Dumped to S3://{bucket_name}/{file_name}")
+        logger.success(f"Data Successfully Dumped")
 
         return {
             'statusCode': 200,
@@ -74,7 +76,7 @@ def lambda_handler(event, context) -> json:
             'statusCode': 500,
             'body': json.dumps({'error': f'Data fetch error: {str(e)}'})
         }
-    except boto3.exceptions.BotoError as e:
+    except botocore.exceptions.ClientError as e:
         print(f"An error occurred while dumping to S3: {str(e)}")
         return {
             'statusCode': 500,
