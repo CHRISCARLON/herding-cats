@@ -18,7 +18,8 @@ def lambda_handler(event, context) -> json:
     
     catalogues_list = [
         "https://data.london.gov.uk/api/action/package_search",
-        "https://opendata.bristol.gov.uk/api/feed/dcat-ap/2.1.1.json"
+        "https://opendata.bristol.gov.uk/api/feed/dcat-ap/2.1.1.json",
+        "https://www.data.gov.uk/api/action/package_search"
     ]
     
     try:
