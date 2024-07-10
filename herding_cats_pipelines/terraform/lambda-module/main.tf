@@ -8,12 +8,16 @@ resource "aws_lambda_function" "herding-cats" {
   role          = aws_iam_role.lambda_role.arn
   handler       = "main.lambda_handler"
   memory_size   = 2048
-  reserved_concurrent_executions = 1
   timeout       = 15
   runtime       = "python3.11"
   s3_bucket     = var.code_bucket_name
   s3_key        = "lambda_herding_cats_jobs.zip"
   source_code_hash = data.aws_s3_object.lambda_code.etag
+}
+
+resource "aws_lambda_function_event_invoke_config" "herding-cats_concurrency" {
+  function_name                = aws_lambda_function.herding-cats.function_name
+  maximum_retry_attempts       = 0
 }
 
 # IAM role for Lambda
