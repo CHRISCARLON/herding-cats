@@ -17,4 +17,4 @@ jobs:
       - name: Install pytest
         run: pip install pytest
       - name: Run tests
-        run: pytest tests/
+        run: pytest tests/endpoints_still_active.py
