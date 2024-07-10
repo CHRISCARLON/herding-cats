@@ -12,7 +12,12 @@ resource "aws_lambda_function" "herding-cats" {
   runtime       = "python3.11"
   s3_bucket     = var.code_bucket_name
   s3_key        = "lambda_herding_cats_jobs.zip"
-  source_code_hash = data.aws_s3_object.lambda_code.etag
+  s3_object_version = "$LATEST"
+}
+
+data "aws_s3_object" "lambda_code" {
+  bucket = var.code_bucket_name
+  key    = "lambda_herding_cats_jobs.zip"
 }
 
 resource "aws_lambda_function_event_invoke_config" "herding-cats_concurrency" {
@@ -72,9 +77,7 @@ resource "aws_iam_policy" "s3_data_access_policy" {
     Statement = [{
       Effect = "Allow"
       Action = [
-        "s3:GetObject",
         "s3:PutObject",
-        "s3:DeleteObject",
         "s3:ListBucket"
       ]
       Resource = [
@@ -97,8 +100,53 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_data_access" {
   role       = aws_iam_role.lambda_role.name
 }
 
+# SSM Parameter Store access policy
+resource "aws_iam_policy" "ssm_parameter_access_policy" {
+  name        = "${var.function_name}-ssm-parameter-access-policy"
+  path        = "/"
+  description = "IAM policy for SSM Parameter Store access from Lambda"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter"]
+        Resource = ["arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.ssm_parameter_name}"]
+      }
+    ]
+  })
+}
 
-data "aws_s3_object" "lambda_code" {
-  bucket = var.code_bucket_name
-  key    = "lambda_herding_cats_jobs.zip"
+# Secrets Manager access policy
+resource "aws_iam_policy" "secrets_manager_access_policy" {
+  name        = "${var.function_name}-secrets-manager-access-policy"
+  path        = "/"
+  description = "IAM policy for Secrets Manager access from Lambda"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = ["arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:*"]
+      }
+    ]
+  })
+}
+
+# Get current AWS account ID
+data "aws_caller_identity" "current" {}
+
+# Attach SSM Parameter Store access policy to Lambda role
+resource "aws_iam_role_policy_attachment" "lambda_ssm_parameter_access" {
+  policy_arn = aws_iam_policy.ssm_parameter_access_policy.arn
+  role       = aws_iam_role.lambda_role.name
+}
+
+# Attach Secrets Manager access policy to Lambda role
+resource "aws_iam_role_policy_attachment" "lambda_secrets_manager_access" {
+  policy_arn = aws_iam_policy.secrets_manager_access_policy.arn
+  role       = aws_iam_role.lambda_role.name
 }
