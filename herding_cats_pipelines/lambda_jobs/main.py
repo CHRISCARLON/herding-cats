@@ -64,7 +64,7 @@ def lambda_handler(event, context) -> json:
             Body=json.dumps(data),
             ContentType='application/json'
         )
-        logger.success(f"Data Successfully Dumped")
+        logger.success("Data Successfully Dumped")
 
         return {
             'statusCode': 200,
