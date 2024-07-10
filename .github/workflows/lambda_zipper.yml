@@ -1,12 +1,10 @@
-name: Zip Lambda Jobs and Upload to S3
-
+name: Herding Cats Lambda Deploy
 on:
   push:
     branches:
       - main
     paths:
       - 'herding_cats_pipelines/lambda_jobs/**'
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -20,7 +18,6 @@ jobs:
         run: pip install ruff
       - name: Run Ruff
         run: ruff check ./herding_cats_pipelines/lambda_jobs
-
   zip-and-upload:
     needs: lint
     runs-on: ubuntu-latest
@@ -42,3 +39,9 @@ jobs:
         run: |
           cd ./herding_cats_pipelines/lambda_jobs
           aws s3 cp lambda_herding_cats_jobs.zip s3://${{ secrets.S3_BUCKET_NAME }}/lambda_herding_cats_jobs.zip
+      - name: Update Lambda Function
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --s3-bucket ${{ secrets.LAMBDA_BUCKET }} \
+            --s3-key lambda_herding_cats_jobs.zip
