@@ -1,5 +1,3 @@
-from . import (
-    api_endpoints as api_endpoints,
-    cats_errors as cats_errors,
-    herding_cats as herding_cats
-)
+import api_endpoints as api_endpoints
+import cats_errors as cats_errors
+import herding_cats as herding_cats
