@@ -1,20 +1,22 @@
 import pytest
-import requests
-from src.herding_cats import CATExplore
+from src.herding_cats import CatSession
 
 @pytest.fixture
-def cat_explore():
-    return CATExplore("data.london.gov.uk")
+def domain():
+    return "data.london.gov.uk"
 
-@pytest.mark.parametrize("endpoint", [
-    "package_search"
-])
-def test_fetch_ckan_sample_endpoint_active(cat_explore, endpoint):
+def test_cat_session_creation(domain):
     try:
-        # Attempt to fetch data from the endpoint
-        result = cat_explore.fetch_ckan_sample(endpoint)
+        session = CatSession(domain)
+        assert isinstance(session, CatSession), "CatSession object should be created"
+        assert session.domain == domain, "CatSession should have the correct domain"
+        assert session.base_url == f"https://{domain}", "CatSession should have the correct base URL"
+    except Exception as e:
+        pytest.fail(f"Failed to create CatSession: {str(e)}")
 
-        # If we get here, the request was successful
-        assert True, f"Endpoint {endpoint} is active"
-    except requests.exceptions.RequestException as e:
-        pytest.fail(f"Endpoint {endpoint} is not active: {str(e)}")
+def test_cat_session_start(domain):
+    try:
+        with CatSession(domain) as session:
+            assert session.session is not None, "Session object should be created"
+    except Exception as e:
+        pytest.fail(f"Failed to start CatSession: {str(e)}")

@@ -9,8 +9,8 @@ from pprint import pprint
 from enum import Enum
 from urllib.parse import urlencode
 
-from api_endpoints import CkanApiPaths
-from cats_errors import CatExplorerError, CatSessionError
+from .api_endpoints import CkanApiPaths
+from .cats_errors import CatExplorerError, CatSessionError
 
 class CatSession:
     def __init__(self, domain: str) -> None:

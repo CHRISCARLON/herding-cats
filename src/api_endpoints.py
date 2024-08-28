@@ -2,7 +2,7 @@ class CkanApiPaths:
     BASE_PATH = "/api/3/action/{}"
     PACKAGE_LIST = BASE_PATH.format("package_list")
     PACKAGE_SEARCH = BASE_PATH.format("package_search")
-    # Add more paths as needed
+    # Add more paths as needed...
 
 
 class DcatApiPaths:
