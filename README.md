@@ -4,7 +4,8 @@
 
 >[!IMPORTANT]
 > THIS IS A WORK IN PROGRESS
-> Using London's Datastore to test functionality
+>
+> Currently using London's Datastore to test functionality
 
 # Purpose
 
