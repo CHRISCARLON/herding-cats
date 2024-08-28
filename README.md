@@ -5,13 +5,9 @@
 >[!IMPORTANT]
 > THIS IS A WORK IN PROGRESS
 
-## Project Objectives
+# Purpose
 
-The aims of this project are to:
-
-    1. Create a basic python library to explore and interact with the UK's open data catalogues.
-
-    2. Provide regular snapshots of the overall health and compositioin of the UK's open data catalogues.
+The aim of this project is simple, **create a basic python library to explore and interact with the UK's open data catalogues**.
 
 ## Examples of UK Open Data Catalogues
 

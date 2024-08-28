@@ -192,3 +192,5 @@ src/os_open_usrn_functions/explore_and_prep.py
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
+
+python_3.11.9_venv

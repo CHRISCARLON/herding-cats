@@ -4,12 +4,12 @@ from typing import Any, Dict
 from loguru import logger
 from pprint import pprint
 
-from herding_cats_explorer.cats_errors import CATExploreError, CKANFetchError, DCATFetchError
+from .cats_errors import CATExploreError, CKANFetchError, DCATFetchError
 
 
 
 class CATExplore:
-    
+
     CKAN_API_PATH = "/api/3/action/{}"
     DCAT_API_PATH = "/api/feed/dcat-ap/2.1.1.json"
     REQUEST_TIMEOUT = 15
@@ -45,7 +45,7 @@ class CATExplore:
 
     # SEARCH DATA
     def basic_search_ckan_data(self, user_input: str, endpoint: str = "package_search") -> Dict[str, Any]:
-            try: 
+            try:
                 url = f"https://{self.domain}{self.CKAN_API_PATH.format(endpoint)}"
                 params = {
                     "q": user_input
@@ -98,7 +98,7 @@ class CATExplore:
             value_type = type(data).__name__
             value_preview = str(data)[:50] + "..." if len(str(data)) > 50 else str(data)
             print(f"{' ' * indent}{key}: ({value_type}) {value_preview}")
-    
+
     @staticmethod
     def pretty_print_helper(data: Any) -> None:
         return pprint(data)
