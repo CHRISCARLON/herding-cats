@@ -1,4 +1,4 @@
-name: Herding Cats Lambda Deploy
+name: Herding Cats Unit Tests
 on:
   push:
     branches:
@@ -17,4 +17,4 @@ jobs:
       - name: Install pytest
         run: pip install pytest requests loguru
       - name: Run tests
-        run: pytest tests/endpoints_still_active.py
+        run: pytest tests/
