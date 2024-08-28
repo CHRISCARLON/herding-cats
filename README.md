@@ -2,28 +2,23 @@
 
 ![Herding-CATs-Small](https://github.com/CHRISCARLON/Herding-CATs/assets/138154138/c8fa93e2-ac8b-4718-810d-c92c7254780f)
 
->[!IMPORTANT]
-> THIS IS A WORK IN PROGRESS
->
-> Currently using London's Datastore to test functionality
-
 # Purpose
 
 **The aim of this project is simple, create a basic python library to explore and interact with the UK's open data catalogues**.
 
 ## Examples of UK Open Data Catalogues
 
-| Catalogue Name | Website | Catalogue API Endpoint |
+| Catalogue Name | Website | Catalogue API Endpoint Definition |
 |----------------|---------|-------------------|
 | Bristol Open Data | https://opendata.bristol.gov.uk | TBC |
-| London Datastore | https://data.london.gov.uk | CKAN: https://data.london.gov.uk/api/3/ |
+| London Datastore | https://data.london.gov.uk | CKAN |
 | Data Mill North | https://datamillnorth.org | TBC |
 | Gov Open Data | https://www.data.gov.uk | TBC |
 
 ## Basic usage examples:
 
 ```python
-# Example usage 1
+# Example usage 1: Basic Search
 if __name__ == "__main__":
     with CatSession("data.london.gov.uk") as session:
         explore = CatExplorer(session)
@@ -32,11 +27,23 @@ if __name__ == "__main__":
 ```
 
 ```python
-# Example usage 2
+# Example usage 2: List packages and show package info
 if __name__ == "__main__":
     with CatSession("data.london.gov.uk") as session:
         explore = CatExplorer(session)
         packlage_list = explore.package_list_json()
         boundary_info = explore.package_show_info_json('2011-boundary-files')
         pprint(show_info)
+```
+
+```python
+# Example usage 3: Condensed package info view with resource access
+if __name__ == "__main__":
+    with CatSession("data.london.gov.uk") as session:
+        explorer = CatExplorer(session)
+        condensed_results = explorer.package_search_condense_dataframe_packed("police", 'polars')
+        print(condensed_results)
+
+        condensed_results = explorer.package_search_condense_dataframe_unpacked("police", 'polars')
+        print(condensed_results)
 ```
