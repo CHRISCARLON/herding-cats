@@ -4,6 +4,7 @@
 
 >[!IMPORTANT]
 > THIS IS A WORK IN PROGRESS
+> Using London's Datastore to test functionality
 
 # Purpose
 
@@ -11,18 +12,30 @@
 
 ## Examples of UK Open Data Catalogues
 
-1. [Bristol Open Data](https://opendata.bristol.gov.uk)
-2. [London Datastore](https://data.london.gov.uk)
-3. [Data Mill North](https://datamillnorth.org)
-4. [Gov Open Data](https://www.data.gov.uk)
+| Catalogue Name | Website | Catalogue API Endpoint |
+|----------------|---------|-------------------|
+| Bristol Open Data | https://opendata.bristol.gov.uk | TBC |
+| London Datastore | https://data.london.gov.uk | CKAN: https://data.london.gov.uk/api/3/ |
+| Data Mill North | https://datamillnorth.org | TBC |
+| Gov Open Data | https://www.data.gov.uk | TBC |
 
 ## Basic usage examples:
 
 ```python
-# Example usage
+# Example usage 1
 if __name__ == "__main__":
     with CatSession("data.london.gov.uk") as session:
         explore = CatExplorer(session)
-        v =  explore.package_search_json(search_query="census")
-        pprint(v)
+        census_package =  explore.package_search_json(search_query="census")
+        pprint(census_package)
+```
+
+```python
+# Example usage 2
+if __name__ == "__main__":
+    with CatSession("data.london.gov.uk") as session:
+        explore = CatExplorer(session)
+        packlage_list = explore.package_list_json()
+        boundary_info = explore.package_show_info_json('2011-boundary-files')
+        pprint(show_info)
 ```

@@ -8,8 +8,8 @@ from pprint import pprint
 from enum import Enum
 from urllib.parse import urlencode
 
-from .api_endpoints import CkanApiPaths
-from .cats_errors import CatExplorerError, CatSessionError
+from api_endpoints import CkanApiPaths
+from cats_errors import CatExplorerError, CatSessionError
 
 class CatSession:
     def __init__(self, domain: str) -> None:
@@ -93,7 +93,24 @@ class CatExplorer:
             params["q"] = search_query
 
         url = f"{base_url}?{urlencode(params)}" if params else base_url
-        print(url)
+
+        try:
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            data = response.json()
+            return data['result']
+        except requests.RequestException as e:
+            logger.error(f"Failed to search datasets: {e}")
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+
+    def package_show_info_json(self, package_name:str):
+        base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_INFO
+
+        params = {}
+        if package_name:
+            params["id"] = package_name
+
+        url = f"{base_url}?{urlencode(params)}" if params else base_url
 
         try:
             response = self.cat_session.session.get(url)
@@ -119,5 +136,6 @@ class CatExplorer:
 if __name__ == "__main__":
     with CatSession("data.london.gov.uk") as session:
         explore = CatExplorer(session)
-        v =  explore.package_search_json(search_query="census")
-        pprint(v)
+        show_list = explore.package_list_json()
+        show_info = explore.package_show_info_json('2011-boundary-files')
+        pprint(show_info)
