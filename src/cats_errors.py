@@ -1,5 +1,5 @@
 class CATExploreError(Exception):
-    """Base exception for CATExplore"""
+    """Base exception for CATExplore..."""
 
 class CKANFetchError(CATExploreError):
     """Raised when CKAN fetch fails"""
