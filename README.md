@@ -7,7 +7,9 @@
 
 # Purpose
 
-The aim of this project is simple, **create a basic python library to explore and interact with the UK's open data catalogues**.
+The aim of this project is simple:
+
+  **create a basic python library to explore and interact with the UK's open data catalogues**.
 
 ## Examples of UK Open Data Catalogues
 
