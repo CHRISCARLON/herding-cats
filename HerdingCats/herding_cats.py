@@ -6,8 +6,8 @@ from typing import Any, Dict, Optional, Union, Literal, List
 from loguru import logger
 from urllib.parse import urlencode
 
-from api_endpoints import CkanApiPaths
-from cats_errors import CatExplorerError, CatSessionError
+from .api_endpoints import CkanApiPaths
+from .cats_errors import CatExplorerError, CatSessionError
 
 class CkanCatSession:
     def __init__(self, domain: str) -> None:
