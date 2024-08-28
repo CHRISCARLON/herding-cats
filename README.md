@@ -15,3 +15,14 @@
 2. [London Datastore](https://data.london.gov.uk)
 3. [Data Mill North](https://datamillnorth.org)
 4. [Gov Open Data](https://www.data.gov.uk)
+
+## Basic usage examples:
+
+```python
+# Example usage
+if __name__ == "__main__":
+    with CatSession("data.london.gov.uk") as session:
+        explore = CatExplorer(session)
+        v =  explore.package_search_json(search_query="census")
+        pprint(v)
+```

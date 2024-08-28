@@ -42,7 +42,6 @@ class CatSession:
         """Allows use with context manager with"""
         self.close_session()
 
-
 class CatExplorer:
     def __init__(self, cat_session: CatSession):
         self.cat_session = cat_session
