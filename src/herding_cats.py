@@ -132,7 +132,7 @@ class CatExplorer:
                 logger.error(f"Failed to get package count: {e}")
                 raise CatExplorerError(f"Failed to get package count: {str(e)}")
 
-# Example usage
+# Example usage...
 if __name__ == "__main__":
     with CatSession("data.london.gov.uk") as session:
         explore = CatExplorer(session)
