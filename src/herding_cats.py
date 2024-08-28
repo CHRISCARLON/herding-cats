@@ -1,4 +1,3 @@
-from pandas.io.clipboards import option_context
 import requests
 import pandas as pd
 import polars as pl
