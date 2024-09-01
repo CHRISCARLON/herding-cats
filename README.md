@@ -13,13 +13,13 @@
 |----------------|---------|-------------------|
 | London Datastore | https://data.london.gov.uk | CKAN |
 | Subak Data Catalogue | https://data.subak.org | CKAN |
+| Gov Open Data | https://www.data.gov.uk | CKAN |
 
 **TBC**
 | Catalogue Name | Website | Catalogue API Endpoint Definition |
 |----------------|---------|-------------------|
 | Bristol Open Data | https://opendata.bristol.gov.uk | TBC |
 | Data Mill North | https://datamillnorth.org | TBC |
-| Gov Open Data | https://www.data.gov.uk | TBC |
 
 ## Basic usage examples:
 
