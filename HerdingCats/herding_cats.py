@@ -16,6 +16,7 @@ class CkanCatSession:
         self.domain = self._process_domain(domain)
         self.session = requests.Session()
         self.base_url = f"https://{self.domain}" if not self.domain.startswith('http') else self.domain
+        self._validate_url()
 
     @staticmethod
     def _process_domain(domain: Union[str, CKANDataCatalogues]) -> str:
@@ -34,6 +35,14 @@ class CkanCatSession:
         parsed = urlparse(domain)
         return parsed.netloc if parsed.netloc else parsed.path
 
+    def _validate_url(self) -> None:
+        """Validate the URL by attempting to connect to it."""
+        try:
+            response = self.session.get(self.base_url, timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            logger.error(f"Failed to connect to {self.base_url}: {str(e)}")
+            raise CatSessionError(f"Invalid or unreachable URL: {self.base_url}. Error: {str(e)}")
 
     def start_session(self) -> None:
         """Start a session with the specified domain."""
@@ -520,7 +529,7 @@ class CkanCatExplorer:
 
 # Example usage...
 if __name__ == "__main__":
-    with CkanCatSession("subak") as session:
+    with CkanCatSession("sub") as session:
         explorer = CkanCatExplorer(session)
         results = explorer.package_search_condense_dataframe_unpacked('police', 500, "polars")
         print(results)
