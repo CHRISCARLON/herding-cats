@@ -8,10 +8,16 @@
 
 ## Examples of UK Open Data Catalogues
 
+**CKAN**
+| Catalogue Name | Website | Catalogue API Endpoint Definition |
+|----------------|---------|-------------------|
+| London Datastore | https://data.london.gov.uk | CKAN |
+| Subak Data Catalogue | https://data.subak.org | CKAN |
+
+**TBC**
 | Catalogue Name | Website | Catalogue API Endpoint Definition |
 |----------------|---------|-------------------|
 | Bristol Open Data | https://opendata.bristol.gov.uk | TBC |
-| London Datastore | https://data.london.gov.uk | CKAN |
 | Data Mill North | https://datamillnorth.org | TBC |
 | Gov Open Data | https://www.data.gov.uk | TBC |
 
