@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "HerdingCats"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["christophercarlon <cmcarleone@gmail.com>"]
 readme = "README.md"
