@@ -1,6 +1,5 @@
 import pytest
 from HerdingCats.herding_cats import CkanCatSession, CkanCatExplorer
-from HerdingCats.api_endpoints import CkanDataCatalogues
 import requests
 from loguru import logger
 

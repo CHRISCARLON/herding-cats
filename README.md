@@ -14,7 +14,7 @@ Easily access data from several CKAN data sources with planned integrations for:
 - Google Big Query
 - Maybe a few others
 
-This will
+This will improve and speed up how people access and use data from open data catalogues.
 
 ## Current Default Open Data Catalogues
 
