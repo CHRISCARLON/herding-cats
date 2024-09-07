@@ -5,8 +5,6 @@ from loguru import logger
 
 CATALOGUES = [
     "https://data.london.gov.uk",
-    "https://data.gov.uk",
-    "https://data.subak.org",
     "https://data.humdata.org"
 ]
 
