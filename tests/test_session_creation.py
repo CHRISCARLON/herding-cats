@@ -6,6 +6,9 @@ def domain():
     return "data.london.gov.uk"
 
 def test_cat_session_creation(domain):
+    """
+    Check that a valid Ckan session can be created
+    """
     try:
         session = CkanCatSession(domain)
         assert isinstance(session, CkanCatSession), "CkanCatSession object should be created"

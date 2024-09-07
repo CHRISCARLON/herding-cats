@@ -1,17 +1,18 @@
 import requests
 import pandas as pd
 import polars as pl
+from pprint import pprint
 
 from typing import Any, Dict, Optional, Union, Literal, List
 from loguru import logger
 from urllib.parse import urlencode, urlparse
 
-from .api_endpoints import CkanApiPaths, CKANDataCatalogues
-from .cats_errors import CatExplorerError, CatSessionError
+from api_endpoints import CkanApiPaths, CkanDataCatalogues
+from cats_errors import CatExplorerError, CatSessionError
 
-
+# START A SESSION
 class CkanCatSession:
-    def __init__(self, domain: Union[str, CKANDataCatalogues]) -> None:
+    def __init__(self, domain: Union[str, CkanDataCatalogues]) -> None:
         """Initialise CATExplore with a valid domain or predefined catalog."""
         self.domain = self._process_domain(domain)
         self.session = requests.Session()
@@ -19,13 +20,13 @@ class CkanCatSession:
         self._validate_url()
 
     @staticmethod
-    def _process_domain(domain: Union[str, CKANDataCatalogues]) -> str:
+    def _process_domain(domain: Union[str, CkanDataCatalogues]) -> str:
         """Process the domain to ensure it's in the correct format."""
-        if isinstance(domain, CKANDataCatalogues):
+        if isinstance(domain, CkanDataCatalogues):
             return urlparse(domain.value).netloc
 
-        # Check if the domain matches any predefined catalog
-        for catalog in CKANDataCatalogues:
+        # Check if the domain matches any predefined catalog in the api_endpoints.py file
+        for catalog in CkanDataCatalogues:
             if domain.lower() == catalog.name.lower().replace('_', ' '):
                 url = urlparse(catalog.value).netloc
                 logger.info(f"You are using: {url}")
@@ -36,7 +37,7 @@ class CkanCatSession:
         return parsed.netloc if parsed.netloc else parsed.path
 
     def _validate_url(self) -> None:
-        """Validate the URL by attempting to connect to it."""
+        """Validate the URL to catch any errors."""
         try:
             response = self.session.get(self.base_url, timeout=10)
             response.raise_for_status()
@@ -68,9 +69,45 @@ class CkanCatSession:
         """Allows use with context manager with"""
         self.close_session()
 
+# FIND THE DATA YOU WANT / NEED
 class CkanCatExplorer:
     def __init__(self, cat_session: CkanCatSession):
+        """
+        Takes in a CkanCatSession
+
+        Allows user to start exploring data catalogue programatically
+        """
         self.cat_session = cat_session
+
+    def check_site_health(self) -> None:
+        url = self.cat_session.base_url + CkanApiPaths.SITE_READ
+
+        response = self.cat_session.session.get(url)
+        response.raise_for_status()
+        data = response.json()
+        health_status = data.get("success")
+
+        if health_status == True:
+            logger.success("Health Check Passed: CKAN is running and available")
+        else:
+            logger.error("Health Check Failed: Something went wrong and CKAN is currently not available")
+
+    def get_package_count(self) -> int:
+        """
+        Quick way to see how 'big' a data catalogue is
+
+        How many datasets do they have...
+
+        """
+        url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
+        try:
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            data = response.json()
+            return len(data['result'])
+        except requests.RequestException as e:
+            logger.error(f"Failed to get package count: {e}")
+            raise CatExplorerError(f"Failed to get package count: {str(e)}")
 
     def package_list_dictionary(self) -> dict:
         """
@@ -165,6 +202,43 @@ class CkanCatExplorer:
             logger.error(f"Failed to create DataFrame: {e}")
             raise CatExplorerError(f"Failed to create DataFrame: {str(e)}")
 
+    def package_show_info_json(self, package_name: Union[str, dict, Any]) -> List[Dict]:
+        """
+        Pass in a package name as a string or as a value from a dictionary
+
+        # Example usage...
+        if __name__ == "__main__":
+            with CkanCatSession("data.london.gov.uk") as session:
+                explore = CkanCatExplorer(session)
+                all_packages = explore.package_list_dictionary()
+                census = all_packages.get("2011-boundary-files")
+                census_info = explore.package_show_info_json(census)
+                pprint(census_info)
+
+        """
+        if package_name is None:
+            raise ValueError("package name cannot be none")
+
+        base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_INFO
+
+        params = {}
+        if package_name:
+            params["id"] = package_name
+
+        url = f"{base_url}?{urlencode(params)}" if params else base_url
+
+        try:
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            data = response.json()
+            result_data = data['result']
+
+            return self._extract_package_show_data(result_data)
+
+        except requests.RequestException as e:
+            logger.error(f"Failed to search datasets: {e}")
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+
     def package_search_json(self, search_query: str, num_rows: int):
         """
         Returns all available data for a particular search query.
@@ -190,7 +264,7 @@ class CkanCatExplorer:
             logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
-    def package_search_condense_json(self, search_query: str, num_rows: int):
+    def package_search_condense_json_unpacked(self, search_query: str, num_rows: int):
         """
         Returns a more condensed view of package informaton focusing on:
             name
@@ -208,7 +282,7 @@ class CkanCatExplorer:
         if __name__ == "__main__":
             with CatSession("data.london.gov.uk") as session:
                 explorer = CatExplorer(session)
-                condensed_results = explorer.package_search_condense("police")
+                condensed_results = explorer.package_search_condense_json_unpacked("police")
                 pprint(condensed_results)
 
         """
@@ -236,7 +310,7 @@ class CkanCatExplorer:
                 raise KeyError("Neither 'result' nor 'results' key found in the API response")
 
             return self._extract_condensed_package_data(result_data,
-                                    ['name', 'notes_markdown', 'num_resources'],
+                                    ['name', 'notes_markdown'],
                                     ['name', 'created', 'format', 'url'])
 
         except requests.RequestException as e:
@@ -340,7 +414,7 @@ class CkanCatExplorer:
 
         Specify the number of rows if the 'count' is large as the ouput is capped.
 
-        The resources column is now unested so you can use specific datasets more easily.
+        The resources column is now unested so you can use specific dataset resources more easily.
 
         This will be a much larger df as a result - check the shape.
 
@@ -407,7 +481,7 @@ class CkanCatExplorer:
 
             extracted_data = self._extract_condensed_package_data(
                 result_data,
-                ['name', 'notes_markdown', 'num_resources'],
+                ['name', 'notes_markdown'],
                 ['name', 'created', 'format', 'url']
             )
 
@@ -419,6 +493,41 @@ class CkanCatExplorer:
         except requests.RequestException as e:
             logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+
+    def extract_resource_url(self, package_info: List[Dict], resource_name: str) -> List[str] | None:
+        """
+        Extracts the URL and format of a specific resource from a package.
+
+        Returns:
+        List[format, url]: The URL of the specified resource + its format.
+
+        Example:
+            if __name__ == "__main__":
+                with CkanCatSession("data.london.gov.uk") as session:
+                    explore = CkanCatExplorer(session)
+                    all_packages = explore.package_list_dictionary()
+                    data = all_packages.get("violence-reduction-unit")
+                    info = explore.package_show_info_json(data)
+                    dl_link = explore.extract_resource_url(info, "VRU Q1 2023-24 Dataset")
+                    print(dl_link)
+
+        [
+        'spreadsheet',
+        'https://data.london.gov.uk/download/violence-reduction-unit/1ef840d0-2c02-499c-ae40-382005b2a0c7/VRU%2520Dataset%2520Q1%2520April-Nov%25202023.xlsx'
+        ]
+
+        """
+
+        for item in package_info:
+            if item.get('resource_name') == resource_name:
+                url = item.get('resource_url')
+                format = item.get('resource_format')
+                if url and format:
+                    logger.info(f"Found URL for resource '{resource_name}'. Format is: {format}")
+                    return [format, url]
+                else:
+                    logger.warning(f"Resource '{resource_name}' found in package, but no URL available")
+                    return None
 
     @staticmethod
     def _extract_condensed_package_data(data: List[Dict[str, Any]], fields: List[str], resource_fields: List[str]) -> List[Dict[str, Any]]:
@@ -482,54 +591,71 @@ class CkanCatExplorer:
             for f in ['name', 'created', 'format', 'url']
         ]).drop('resources', 'num_resources')
 
-    def package_show_info_json(self, package_name: Union[str, dict, Any]):
+    @staticmethod
+    def _extract_package_show_data(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Pass in a package name as a string or as a value from a dictionary.
+        Extracts specific fields from the package data and creates a list of dictionaries,
+        one for each resource, containing the specified fields.
 
-        # Example usage...
-        if __name__ == "__main__":
-            with CatSession("data.london.gov.uk") as session:
-                explore = CatExplorer(session)
-                all_packages = explore.package_list_json()
-                census = all_packages.get("2011-boundary-files")
-                census_info = explore.package_show_info_json(census)
-                pprint(census_info)
+        Args:
+        data (Dict[str, Any]): The input package data dictionary.
+
+        Returns:
+        List[Dict[str, Any]]: A list of dictionaries, each containing the specified fields for a resource.
         """
-        if package_name is None:
-            raise ValueError("package name cannot be none")
+        base_fields = {
+            'name': data.get('name'),
+            'notes_markdown': data.get('notes_markdown')
+        }
 
-        base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_INFO
+        resource_fields = ['url', 'name', 'format', 'created', 'last_modified']
 
-        params = {}
-        if package_name:
-            params["id"] = package_name
+        result = []
+        for resource in data.get('resources', []):
+            resource_data = base_fields.copy()
+            for field in resource_fields:
+                resource_data[f'resource_{field}'] = resource.get(field)
+            result.append(resource_data)
 
-        url = f"{base_url}?{urlencode(params)}" if params else base_url
+        return result
 
-        try:
-            response = self.cat_session.session.get(url)
+# START TO WRANGLE
+class CkanCatAnalyser:
+    def __init__(self):
+        pass
+
+    def polars_data_loader(self, resource_data: Optional[List]) -> pl.DataFrame:
+        """
+        Load resource data into Polars DataFrame
+        """
+        if resource_data:
+            url = resource_data[1]
+            response = requests.get(url)
             response.raise_for_status()
-            data = response.json()
-            return data['result']
-        except requests.RequestException as e:
-            logger.error(f"Failed to search datasets: {e}")
-            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+            binary_data = response.content
 
-    def get_package_count(self) -> int:
-        """TBC"""
-        url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
-        try:
-            response = self.cat_session.session.get(url)
-            response.raise_for_status()
-            data = response.json()
-            return len(data['result'])
-        except requests.RequestException as e:
-            logger.error(f"Failed to get package count: {e}")
-            raise CatExplorerError(f"Failed to get package count: {str(e)}")
+            file_format = resource_data[0]
+
+            if file_format and (file_format.lower() == 'spreadsheet' or file_format.lower() == 'xlsx'):
+                df = pl.read_excel(binary_data)
+                return df
+            else:
+                logger.error("Error")
+        else:
+            logger.error("Error")
+
+
+
 
 # Example usage...
 if __name__ == "__main__":
-    with CkanCatSession("sub") as session:
-        explorer = CkanCatExplorer(session)
-        results = explorer.package_search_condense_dataframe_unpacked('police', 500, "polars")
-        print(results)
+    with CkanCatSession("HUMANITARIAN") as session:
+        explore = CkanCatExplorer(session)
+        all_packages = explore.package_list_dictionary()
+        data = all_packages.get("cameroon-humanitarian-needs")
+        info = explore.package_show_info_json(data)
+        dl_link = explore.extract_resource_url(info, "cmr_hpc_needs_2024")
+
+    analyser = CkanCatAnalyser()
+    df = analyser.polars_data_loader(dl_link)
+    print(df)
