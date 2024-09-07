@@ -649,13 +649,14 @@ class CkanCatAnalyser:
 
 # Example usage...
 if __name__ == "__main__":
-    with CkanCatSession("HUMANITARIAN") as session:
+    with CkanCatSession("subak") as session:
         explore = CkanCatExplorer(session)
         all_packages = explore.package_list_dictionary()
-        data = all_packages.get("cameroon-humanitarian-needs")
-        info = explore.package_show_info_json(data)
-        dl_link = explore.extract_resource_url(info, "cmr_hpc_needs_2024")
+        print(all_packages)
+    #     data = all_packages.get("cameroon-humanitarian-needs")
+    #     info = explore.package_show_info_json(data)
+    #     dl_link = explore.extract_resource_url(info, "cmr_hpc_needs_2024")
 
-    analyser = CkanCatAnalyser()
-    df = analyser.polars_data_loader(dl_link)
-    print(df)
+    # analyser = CkanCatAnalyser()
+    # df = analyser.polars_data_loader(dl_link)
+    # print(df)

@@ -27,7 +27,7 @@ jobs:
       - name: Create pytest.ini
         run: |
           echo "[pytest]" > pytest.ini
-          echo "pythonpath = src/" >> pytest.ini
+          echo "pythonpath = HerdingCats/" >> pytest.ini
 
       - name: Run tests
         run: pytest tests/

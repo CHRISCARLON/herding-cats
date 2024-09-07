@@ -4,7 +4,6 @@ from HerdingCats.api_endpoints import CkanApiPaths, CkanDataCatalogues
 import requests
 from loguru import logger
 
-# "https://data.gov.uk" FOR SOME READ THIS DOES NOT WORK???
 CATALOGUES = [
     "https://data.london.gov.uk",
     "https://data.subak.org",
