@@ -1,4 +1,4 @@
-# Herding-CATs
+# Herding-CATs 🐈‍⬛
 
 ## Purpose
 
