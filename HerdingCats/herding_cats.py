@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional, Union, Literal, List
 from loguru import logger
 from urllib.parse import urlencode, urlparse
 
-from api_endpoints import CkanApiPaths, CkanDataCatalogues
-from cats_errors import CatExplorerError, CatSessionError
+from .api_endpoints import CkanApiPaths, CkanDataCatalogues
+from .cats_errors import CatExplorerError, CatSessionError
 
 # START A SESSION
 class CkanCatSession:
