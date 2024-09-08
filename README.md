@@ -107,3 +107,18 @@ if __name__ == "__main__":
     df = analyser.polars_data_loader(dl_link)
     print(df)
 ```
+
+```python
+# Example usage 5: Find the data you want, and then load it into a local duckdb for further processing
+if __name__ == "__main__":
+    with CkanCatSession("humanitarian") as session:
+        explore = CkanCatExplorer(session)
+        all_packages = explore.package_list_dictionary()
+        data = all_packages.get("cameroon-humanitarian-needs")
+        info = explore.package_show_info_json(data)
+        dl_link = explore.extract_resource_url(info, "cmr_hpc_needs_2024")
+
+    analyser = CkanCatAnalyser()
+    df = analyser.duckdb_data_loader_persist(dl_link, "test", "test_table")
+    print(df)
+```

@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class CkanApiPaths:
     BASE_PATH = "/api/3/action/{}"
     SITE_READ = BASE_PATH.format("site_read")
@@ -19,4 +20,5 @@ class CkanDataCatalogues(Enum):
     UK_GOV = "https://data.gov.uk"
     SUBAK = "https://data.subak.org"
     HUMANITARIAN = "https://data.humdata.org"
+    AFRICA = "https://open.africa"
     # Add more catalogues as needed...
