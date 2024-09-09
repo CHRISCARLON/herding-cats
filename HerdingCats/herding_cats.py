@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import polars as pl
 import duckdb
+import json
 
 from io import BytesIO
 from typing import Any, Dict, Optional, Union, Literal, List
@@ -643,7 +644,7 @@ class CkanCatExplorer:
 
         Example output:
             [{'name': 'police-force-strength',
-              'notes_markdown': 'Numbers of police officers, police civilian staff, and '
+            'notes_markdown': 'Numbers of police officers, police civilian staff, and '
                                 'Police Community Support Officers in the Metropolitan '
                                 "Police Force. Figures are reported by MOPAC to the GLA's "
                                 'Police and Crime Committee each month. The figures are '
@@ -651,13 +652,13 @@ class CkanCatExplorer:
                                 'account of part-time working, job sharing etc, and do not '
                                 'represent a measure of headcount.
                                 'For more information, click here and here.',
-              'num_resources': 1,
-              'resources': [{'created': '2024-08-28T16:15:59.080Z',
-                             'format': 'csv',
-                             'name': 'Police force strength',
-                             'url': 'https://airdrive-secure.s3-eu-west-1.amazonaws.com/
-                             london/dataset/police-force-strength/2024-08-28T16%3A15%3A56/
-                             Police_Force_Strength.csv'}]}
+            'num_resources': 1,
+            'resources': [{'created': '2024-08-28T16:15:59.080Z',
+                            'format': 'csv',
+                            'name': 'Police force strength',
+                            'url': 'https://airdrive-secure.s3-eu-west-1.amazonaws.com/
+                            london/dataset/police-force-strength/2024-08-28T16%3A15%3A56/
+                            Police_Force_Strength.csv'}]}
         """
         return [
             {
@@ -729,7 +730,7 @@ class CkanCatExplorer:
 
 
 # START TO WRANGLE / ANALYSE
-# Only support excel files for now
+# Only supports excel files for now
 # Plan is to account for csv, and json as well
 class CkanCatAnalyser:
     def __init__(self):
@@ -825,13 +826,13 @@ class CkanCatAnalyser:
 
 # Example usage...
 if __name__ == "__main__":
-    with CkanCatSession("") as session:
+    with CkanCatSession(CkanDataCatalogues.HUMANITARIAN) as session:
         explore = CkanCatExplorer(session)
-        all_packages = explore.package_list_dictionary()
-        print(all_packages)
-        data = all_packages.get("")
-        info = explore.package_show_info_json(data)
-        dl_link = explore.extract_resource_url(info, "")
-    analyser = CkanCatAnalyser()
-    df = analyser.polars_data_loader(dl_link)
-    print(df)
+        all_packages = explore.package_search_json("water", 5)
+        print(json.dumps(all_packages, indent=4))
+    #     data = all_packages.get("")
+    #     info = explore.package_show_info_json(data)
+    #     dl_link = explore.extract_resource_url(info, "")
+    # analyser = CkanCatAnalyser()
+    # df = analyser.polars_data_loader(dl_link)
+    # print(df)
