@@ -3,6 +3,7 @@ import pandas as pd
 import polars as pl
 import duckdb
 import json
+import threading
 
 from io import BytesIO
 from typing import Any, Dict, Optional, Union, Literal, List
@@ -18,6 +19,9 @@ class CkanCatSession:
     def __init__(self, domain: Union[str, CkanDataCatalogues]) -> None:
         """
         Initialise CATExplore with a valid domain or predefined catalog.
+
+        Args:
+            domain (url or catalogue item): str
         """
         self.domain = self._process_domain(domain)
         self.session = requests.Session()
@@ -36,6 +40,9 @@ class CkanCatSession:
         This iterates through the CkanDataCatalogues Enum and checks for a match
 
         Otherwise processes the url as normal
+
+        Args:
+            domain (url or catalogue item): str
 
         Returns:
             a url in the correct format
@@ -56,7 +63,12 @@ class CkanCatSession:
             raise ValueError("Domain must be a string or CkanDataCatalogues enum")
 
     def _validate_url(self) -> None:
-        """Validate the URL to catch any errors."""
+        """
+        Validate the URL to catch any errors
+
+        Will raise status code error if there is a problem
+
+        """
         try:
             response = self.session.get(self.base_url, timeout=10)
             response.raise_for_status()
@@ -101,6 +113,9 @@ class CkanCatExplorer:
 
         Make sure you pass a valid CkanCatSession in
 
+        Args:
+            CkanCatSession
+
         # Example usage...
         if __name__ == "__main__":
             with CatSession("data.london.gov.uk") as session:
@@ -109,7 +124,20 @@ class CkanCatExplorer:
         self.cat_session = cat_session
 
     def check_site_health(self) -> None:
-        """Make sure the Ckan endpoints are healthy and reachable"""
+        """
+        Make sure the Ckan endpoints are healthy and reachable
+
+        This calls the Ckan site_read endpoint
+
+        Will return a dictionary with a "success" field if all is well
+
+        # Example usage...
+        if __name__ == "__main__":
+            with CatSession("data.london.gov.uk") as session:
+                explore = CatExplorer(session)
+                health_check = explore.check_site_health()
+
+        """
         url = self.cat_session.base_url + CkanApiPaths.SITE_READ
 
         response = self.cat_session.session.get(url)
@@ -129,6 +157,16 @@ class CkanCatExplorer:
         Quick way to see how 'big' a data catalogue is
 
         Especially how many datasets there are
+
+        Returns:
+            package_count: int
+
+        # Example usage...
+        if __name__ == "__main__":
+            with CatSession("data.london.gov.uk") as session:
+                explore = CatExplorer(session)
+                package_count = get_package_count()
+                pprint(package_count)
         """
 
         url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
@@ -136,15 +174,21 @@ class CkanCatExplorer:
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
-            data = response.json()
-            return len(data["result"])
+            package_count = response.json()
+            return len(package_count["result"])
         except requests.RequestException as e:
             logger.error(f"Failed to get package count: {e}")
             raise CatExplorerError(f"Failed to get package count: {str(e)}")
 
     def package_list_dictionary(self) -> dict:
         """
-        Returns dictionary of all available packages to use for further exploration:
+        Explore all packages that are available to query.
+
+        Returns:
+            Dictionary of all available packages to use for further exploration.
+
+            It follows a {"package_name": "package_name"} structure so that you can use the package names for
+            additional methods
 
             {'--lfb-financial-and-performance-reporting-2021-22': '--lfb-financial-and-performance-reporting-2021-22',
              '-ghg-emissions-per-capita-from-food-and-non-alcoholic-drinks-': '-ghg-emissions-per-capita-from-food-and-non-alcoholic-drinks-',
@@ -181,7 +225,7 @@ class CkanCatExplorer:
         self, df_type: Literal["pandas", "polars"]
     ) -> Union[pd.DataFrame, "pl.DataFrame"]:
         """
-        Return all package information as a dataframe for further exploration
+        Return all available packages as a dataframe for further use
 
         Must specify a df type:
             pandas
@@ -255,6 +299,33 @@ class CkanCatExplorer:
         except (requests.RequestException, Exception) as e:
             logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+
+    def package_list_sorted_most_recent_extra_info(self):
+        """
+        THIS NEEDS MORE WORK - BASICS ARE THERE
+        """
+        url = (
+            self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
+        )
+        try:
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            data = response.json()
+            dictionary_prep = data["result"]
+            dictionary_data = [
+                {
+                    "owner_org": entry.get("owner_org"),
+                    "title": entry.get("title"),
+                    "maintainer": entry.get("maintainer"),
+                    "metadata_modified": entry.get("metadata_modified"),
+                }
+                for entry in dictionary_prep
+            ]
+            return dictionary_data
+        except requests.RequestException as e:
+            logger.error(f"Failed to search datasets: {e}")
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+        return
 
     def package_show_info_json(self, package_name: Union[str, dict, Any]) -> List[Dict]:
         """
@@ -731,8 +802,33 @@ class CkanCatExplorer:
 
 # START TO WRANGLE / ANALYSE
 # Only supports excel files for now
-# Plan is to account for csv, and json as well
+# Plan is to account for csv, and other data types
+# Plan is to allow to upload and also access stored catalogue data
 class CkanCatAnalyser:
+    """
+    Need to do:
+        polars ✅
+        pandas ✅
+        duckdb ✅
+        motherduck ✅
+
+        S3 (duckdb)
+        S3 (direct)
+        S3 (DeltaLake)
+        S3 (Iceberg)
+        Redshift
+
+        Databricks
+        Snowflake
+
+        Google Cloud Storage
+        Google Big Query
+
+
+
+
+    """
+
     def __init__(self):
         pass
 
@@ -784,14 +880,31 @@ class CkanCatAnalyser:
         else:
             logger.error("Error")
 
-    def duckdb_data_loader_persist(
+    def duckdb_data_loader(
         self, resource_data: Optional[List], duckdb_name: str, table_name: str
     ):
         """
-        Load resource data into a DuckDB database
+        Load resource data into a local duckdb database.
+
+        Args:
+            - resource_data: List containing file format and URL.
+            - token: MotherDuck authentication token.
+            - duckdb_name: Name of the DuckDB database.
+            - table_name: Name of the table to create in DuckDB.
         """
-        if not resource_data:
-            logger.error("No resource data provided")
+        # Enforce that resource_data is not None or empty
+        if not resource_data or len(resource_data) < 2:
+            logger.error("Invalid or insufficient resource data provided")
+            return
+
+        # Ensure valid database and table names
+        if (
+            not isinstance(duckdb_name, str)
+            or not duckdb_name.strip()
+            or not isinstance(table_name, str)
+            or not table_name.strip()
+        ):
+            logger.error("Database name or table name is invalid")
             return
 
         url = resource_data[1]
@@ -823,16 +936,135 @@ class CkanCatAnalyser:
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
 
+    @staticmethod
+    def input_with_timeout(prompt: Optional[str], timeout: int) -> Optional[str]:
+        """
+        Get user input with a timeout.
+
+        Args:
+            prompt (str): The prompt message to display to the user.
+            timeout (int): The timeout duration in seconds.
+
+        Returns:
+            Optional[str]: User input or None if timeout occurred.
+        """
+        input_result = [None]  # Use a list to allow modification within a thread
+
+        def get_input():
+            input_result[0] = input(prompt)
+
+        input_thread = threading.Thread(target=get_input)
+        input_thread.start()
+        input_thread.join(timeout)  # Wait for the thread to complete or timeout
+
+        if input_thread.is_alive():
+            # If the thread is still alive, it means the timeout occurred
+            return None
+        return input_result[0]
+
+    def motherduck_data_loader(
+        self,
+        resource_data: Optional[List[str]],
+        token: str,
+        duckdb_name: str,
+        table_name: str,
+    ):
+        """
+        Load resource data into a MotherDuck database.
+
+        Args:
+            - resource_data: List containing file format and URL.
+            - token: MotherDuck authentication token.
+            - duckdb_name: Name of the DuckDB database.
+            - table_name: Name of the table to create in DuckDB.
+        """
+        # Enforce that resource_data is not None or empty
+        if not resource_data or len(resource_data) < 2:
+            logger.error("Invalid or insufficient resource data provided")
+            return
+
+        # Enforce that a token is provided or ask for it
+        if len(token) < 10:
+            token = self.input_with_timeout(
+                "Token provided for MotherDuck authentication is not valid. Please enter your token or 'N' to cancel (30 seconds timeout): ",
+                30,
+            )
+            if token is None:
+                logger.error(
+                    "No token provided within 30 seconds. Operation cancelled."
+                )
+                return
+            if token.strip().lower() == "n":
+                logger.error("No token provided. Operation cancelled by user.")
+                return
+
+        # Ensure valid database and table names
+        if (
+            not isinstance(duckdb_name, str)
+            or not duckdb_name.strip()
+            or not isinstance(table_name, str)
+            or not table_name.strip()
+        ):
+            logger.error("Database name or table name is invalid")
+            return
+
+        # Establish connection to DuckDB using a context manager
+        connection_string = f"md:{duckdb_name}?motherduck_token={token}"
+        try:
+            with duckdb.connect(connection_string) as conn:
+                logger.info("MotherDuck Connection Made")
+
+                # Extract file format and URL from resource_data
+                file_format = resource_data[0].lower()
+                url = resource_data[1]
+
+                # Fetch data from the URL
+                try:
+                    response = requests.get(url)
+                    response.raise_for_status()
+                    binary_data = BytesIO(response.content)
+                except requests.RequestException as e:
+                    logger.error(f"Error fetching data from URL: {e}")
+                    return
+
+                # Load data into DataFrame based on file format
+                try:
+                    if file_format in ["spreadsheet", "xlsx"]:
+                        df = pd.read_excel(binary_data)
+                    elif file_format in ["csv"]:
+                        df = pd.read_csv(binary_data)
+                    elif file_format in ["json"]:
+                        df = pd.read_json(binary_data)
+                    else:
+                        logger.error(f"Unsupported file format: {file_format}")
+                        return
+                except pd.errors.EmptyDataError:
+                    logger.error("The file contains no data")
+                    return
+                except ValueError as e:
+                    logger.error(f"Error loading data into DataFrame: {e}")
+                    return
+
+                # Load DataFrame into DuckDB
+                try:
+                    conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM df")
+                    logger.info(f"Data successfully loaded into table '{table_name}'")
+                except duckdb.Error as e:
+                    logger.error(f"DuckDB error: {e}")
+                except Exception as e:
+                    logger.error(f"Unexpected error while executing query: {e}")
+        except duckdb.Error as e:
+            logger.warning(f"An error occurred while connecting to MotherDuck: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error while connecting to MotherDuck: {e}")
+
 
 # Example usage...
 if __name__ == "__main__":
-    with CkanCatSession(CkanDataCatalogues.HUMANITARIAN) as session:
+    with CkanCatSession(CkanDataCatalogues.LONDON_DATA_STORE) as session:
         explore = CkanCatExplorer(session)
-        all_packages = explore.package_search_json("water", 5)
-        print(json.dumps(all_packages, indent=4))
-    #     data = all_packages.get("")
-    #     info = explore.package_show_info_json(data)
-    #     dl_link = explore.extract_resource_url(info, "")
-    # analyser = CkanCatAnalyser()
-    # df = analyser.polars_data_loader(dl_link)
-    # print(df)
+        all_packages = explore.package_list_sorted_most_recent_extra_info()
+    analyser = CkanCatAnalyser()
+    df = analyser.motherduck_data_loader(
+        all_packages, token="ee", duckdb_name="ddd", table_name="ffff"
+    )

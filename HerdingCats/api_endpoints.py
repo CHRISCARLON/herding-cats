@@ -7,6 +7,9 @@ class CkanApiPaths:
     PACKAGE_LIST = BASE_PATH.format("package_list")
     PACKAGE_SEARCH = BASE_PATH.format("package_search")
     PACKAGE_INFO = BASE_PATH.format("package_show")
+    CURRENT_PACKAGE_LIST_WITH_RESOURCES = BASE_PATH.format(
+        "current_package_list_with_resources"
+    )
     # Add more paths as needed...
 
 
