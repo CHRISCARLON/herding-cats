@@ -2,8 +2,6 @@ import requests
 import pandas as pd
 import polars as pl
 import duckdb
-import json
-import threading
 
 from io import BytesIO
 from typing import Any, Dict, Optional, Union, Literal, List
@@ -315,6 +313,7 @@ class CkanCatExplorer:
             dictionary_data = [
                 {
                     "owner_org": entry.get("owner_org"),
+                    "name": entry.get("name"),
                     "title": entry.get("title"),
                     "maintainer": entry.get("maintainer"),
                     "metadata_modified": entry.get("metadata_modified"),
@@ -823,10 +822,6 @@ class CkanCatAnalyser:
 
         Google Cloud Storage
         Google Big Query
-
-
-
-
     """
 
     def __init__(self):
@@ -936,32 +931,6 @@ class CkanCatAnalyser:
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
 
-    @staticmethod
-    def input_with_timeout(prompt: Optional[str], timeout: int) -> Optional[str]:
-        """
-        Get user input with a timeout.
-
-        Args:
-            prompt (str): The prompt message to display to the user.
-            timeout (int): The timeout duration in seconds.
-
-        Returns:
-            Optional[str]: User input or None if timeout occurred.
-        """
-        input_result = [None]  # Use a list to allow modification within a thread
-
-        def get_input():
-            input_result[0] = input(prompt)
-
-        input_thread = threading.Thread(target=get_input)
-        input_thread.start()
-        input_thread.join(timeout)  # Wait for the thread to complete or timeout
-
-        if input_thread.is_alive():
-            # If the thread is still alive, it means the timeout occurred
-            return None
-        return input_result[0]
-
     def motherduck_data_loader(
         self,
         resource_data: Optional[List[str]],
@@ -983,20 +952,10 @@ class CkanCatAnalyser:
             logger.error("Invalid or insufficient resource data provided")
             return
 
-        # Enforce that a token is provided or ask for it
+        # Enforce that a token is provided
         if len(token) < 10:
-            token = self.input_with_timeout(
-                "Token provided for MotherDuck authentication is not valid. Please enter your token or 'N' to cancel (30 seconds timeout): ",
-                30,
-            )
-            if token is None:
-                logger.error(
-                    "No token provided within 30 seconds. Operation cancelled."
-                )
-                return
-            if token.strip().lower() == "n":
-                logger.error("No token provided. Operation cancelled by user.")
-                return
+            logger.error("Token not long enough")
+            return
 
         # Ensure valid database and table names
         if (
@@ -1047,7 +1006,9 @@ class CkanCatAnalyser:
 
                 # Load DataFrame into DuckDB
                 try:
-                    conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM df")
+                    conn.execute(
+                        f"CREATE TABLE IF NOT EXISTS {table_name} AS SELECT * FROM df"
+                    )
                     logger.info(f"Data successfully loaded into table '{table_name}'")
                 except duckdb.Error as e:
                     logger.error(f"DuckDB error: {e}")
@@ -1063,8 +1024,15 @@ class CkanCatAnalyser:
 if __name__ == "__main__":
     with CkanCatSession(CkanDataCatalogues.LONDON_DATA_STORE) as session:
         explore = CkanCatExplorer(session)
-        all_packages = explore.package_list_sorted_most_recent_extra_info()
-    analyser = CkanCatAnalyser()
-    df = analyser.motherduck_data_loader(
-        all_packages, token="ee", duckdb_name="ddd", table_name="ffff"
+        all_packages = explore.package_list_dictionary()
+        data = all_packages.get("violence-reduction-unit")
+        info = explore.package_show_info_json(data)
+        dl_link = explore.extract_resource_url(info, "VRU Q1 2023-24 Dataset")
+
+    analyse = CkanCatAnalyser()
+    motherd = analyse.motherduck_data_loader(
+        dl_link,
+        token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGVubWVzaGVkLmRldiIsInNlc3Npb24iOiJoZWxsby5lbm1lc2hlZC5kZXYiLCJwYXQiOiJqc0R1YnRhNjNQSkh0RXlNMlhHVmZhYkRGWXlIdW12cEltX0t1WW9TdC0wIiwidXNlcklkIjoiZGI5OWY3ZWYtZTYwNi00NmY3LWE2MTktZWU0NDFiZDQ3ZTgzIiwiaXNzIjoibWRfcGF0IiwiaWF0IjoxNzI2NDM0NjI1LCJleHAiOjE3MjcwMzk0MjV9.9IWL5nAuWSOHCs6aWoZRy2WC1_BqjwWKrPBk7xCkk0U",
+        duckdb_name="test",
+        table_name="test_table_herding_cats",
     )
