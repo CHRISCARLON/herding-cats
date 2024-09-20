@@ -1039,6 +1039,8 @@ class CkanCatAnalyser:
             logger.error(f"Unexpected error while connecting to MotherDuck: {e}")
 
 
+
+
 # Example usage...
 if __name__ == "__main__":
     with CkanCatSession(CkanDataCatalogues.LONDON_DATA_STORE) as session:
