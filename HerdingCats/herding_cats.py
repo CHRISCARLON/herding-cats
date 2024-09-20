@@ -1032,7 +1032,7 @@ if __name__ == "__main__":
     analyse = CkanCatAnalyser()
     motherd = analyse.motherduck_data_loader(
         dl_link,
-        token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGVubWVzaGVkLmRldiIsInNlc3Npb24iOiJoZWxsby5lbm1lc2hlZC5kZXYiLCJwYXQiOiJqc0R1YnRhNjNQSkh0RXlNMlhHVmZhYkRGWXlIdW12cEltX0t1WW9TdC0wIiwidXNlcklkIjoiZGI5OWY3ZWYtZTYwNi00NmY3LWE2MTktZWU0NDFiZDQ3ZTgzIiwiaXNzIjoibWRfcGF0IiwiaWF0IjoxNzI2NDM0NjI1LCJleHAiOjE3MjcwMzk0MjV9.9IWL5nAuWSOHCs6aWoZRy2WC1_BqjwWKrPBk7xCkk0U",
+        token="",
         duckdb_name="test",
         table_name="test_table_herding_cats",
     )
