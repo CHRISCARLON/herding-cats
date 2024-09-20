@@ -4,42 +4,49 @@ Version: 0.1.2
 
 ## Purpose
 
-**The aim of this project is simple, create a basic python library to explore and interact with open data catalogues - particularly those with CKAN backends**.
-
-Need to do:
-  File Formats:
-    Xlsx ✅
-    Csv ✅
-    Xls
-    Parquet
-    JSON
-    Geopackage
-    Shapefile
-    GeoJSON
-
-
-  Tools and Libs:
-    polars ✅
-    pandas ✅
-    duckdb ✅
-    motherduck ✅
-
-    S3 (duckdb)
-    S3 (direct)
-    S3 (DeltaLake)
-    S3 (Iceberg)
-    Redshift
-
-    Databricks
-    Snowflake
-
-    Google Cloud Storage
-    Google Big Query
+**The aim of this project is simple: create a basic Python library to explore and interact with open data catalogues - particularly those with CKAN backends**.
 
 This will improve and speed up how people:
-  Navigate open data catalogues
-  Find the data they need
-  Get that data into a format for further analysis / aggregation
+- Navigate open data catalogues
+- Find the data they need
+- Get that data into a format for further analysis / aggregation
+
+## To-Do List
+
+### File Formats
+
+| Format     | Status |
+|------------|--------|
+| Xlsx       | ✅     |
+| Csv        | ✅     |
+| Xls        | 🚧     |
+| Parquet    | 🚧     |
+| JSON       | 🚧     |
+| Geopackage | 🚧     |
+| Shapefile  | 🚧     |
+| GeoJSON    | 🚧     |
+
+### Tools and Libraries
+
+#### Implemented
+- polars ✅
+- pandas ✅
+- duckdb ✅
+- motherduck ✅
+
+#### Planned
+- S3 Integration
+  - duckdb
+  - direct
+  - DeltaLake
+  - Iceberg
+- Redshift
+- Databricks
+- Snowflake
+- Google Cloud Platform
+  - Google Cloud Storage
+  - Google BigQuery
+
 
 ## Current Default Open Data Catalogues
 
