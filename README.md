@@ -17,9 +17,8 @@ This will improve and speed up how people:
 
 | Format     | Status |
 |------------|--------|
-| Xlsx       | ✅     |
+| Excel       | ✅    |
 | Csv        | ✅     |
-| Xls        | 🚧     |
 | Parquet    | 🚧     |
 | JSON       | 🚧     |
 | Geopackage | 🚧     |

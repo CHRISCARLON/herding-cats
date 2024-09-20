@@ -800,17 +800,13 @@ class CkanCatExplorer:
 
 
 # START TO WRANGLE / ANALYSE
-# Only supports excel files for now
-# Plan is to account for csv, and other data types
-# Plan is to allow to upload and also access stored catalogue data
 class CkanCatAnalyser:
     """
     Need to do:
 
         File Formats:
-            Xlsx ✅
+            Excel ✅
             Csv ✅
-            Xls
             Parquet
             JSON
             Geopackage
@@ -933,6 +929,8 @@ class CkanCatAnalyser:
                 file_format.lower() == "spreadsheet" or file_format.lower() == "xlsx"
             ):
                 df = pd.read_excel(binary_data)
+            elif file_format and file_format.lower() == "csv":
+                df = pd.read_csv(binary_data)
             else:
                 logger.error(f"Unsupported file format: {file_format}")
 
@@ -959,6 +957,8 @@ class CkanCatAnalyser:
     ):
         """
         Load resource data into a MotherDuck database.
+
+        The database should already exist in MotherDuck for this to work.
 
         Args:
             - resource_data: List containing file format and URL.
