@@ -1,20 +1,45 @@
 # Herding-CATs 🐈‍⬛
 
+Version: 0.1.2
+
 ## Purpose
 
-**The aim of this project is simple, create a basic python library to explore and interact with open data catalogues**.
+**The aim of this project is simple, create a basic python library to explore and interact with open data catalogues - particularly those with CKAN backends**.
 
-Easily access data from several CKAN data sources with planned integrations for:
+Need to do:
+  File Formats:
+    Xlsx ✅
+    Csv ✅
+    Xls
+    Parquet
+    JSON
+    Geopackage
+    Shapefile
+    GeoJSON
 
-- Polars
-- Pandas
-- DuckDB
-- MotherDuck
-- S3
-- Google Big Query
-- Maybe a few others
 
-This will improve and speed up how people access and use data from open data catalogues.
+  Tools and Libs:
+    polars ✅
+    pandas ✅
+    duckdb ✅
+    motherduck ✅
+
+    S3 (duckdb)
+    S3 (direct)
+    S3 (DeltaLake)
+    S3 (Iceberg)
+    Redshift
+
+    Databricks
+    Snowflake
+
+    Google Cloud Storage
+    Google Big Query
+
+This will improve and speed up how people:
+  Navigate open data catalogues
+  Find the data they need
+  Get that data into a format for further analysis / aggregation
 
 ## Current Default Open Data Catalogues
 

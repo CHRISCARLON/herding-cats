@@ -806,22 +806,35 @@ class CkanCatExplorer:
 class CkanCatAnalyser:
     """
     Need to do:
-        polars ✅
-        pandas ✅
-        duckdb ✅
-        motherduck ✅
 
-        S3 (duckdb)
-        S3 (direct)
-        S3 (DeltaLake)
-        S3 (Iceberg)
-        Redshift
+        File Formats:
+            Xlsx ✅
+            Csv ✅
+            Xls
+            Parquet
+            JSON
+            Geopackage
+            Shapefile
+            GeoJSON
 
-        Databricks
-        Snowflake
 
-        Google Cloud Storage
-        Google Big Query
+        Tools and Libs:
+            polars ✅
+            pandas ✅
+            duckdb ✅
+            motherduck ✅
+
+            S3 (duckdb)
+            S3 (direct)
+            S3 (DeltaLake)
+            S3 (Iceberg)
+            Redshift
+
+            Databricks
+            Snowflake
+
+            Google Cloud Storage
+            Google Big Query
     """
 
     def __init__(self):
@@ -846,6 +859,9 @@ class CkanCatAnalyser:
             ):
                 df = pl.read_excel(binary_data)
                 return df
+            elif file_format and file_format.lower() == "csv":
+                df = pl.read_csv(binary_data)
+                return df
             else:
                 logger.error("Error")
         else:
@@ -869,6 +885,9 @@ class CkanCatAnalyser:
                 file_format.lower() == "spreadsheet" or file_format.lower() == "xlsx"
             ):
                 df = pd.read_excel(binary_data)
+                return df
+            elif file_format and file_format.lower() == "csv":
+                df = pd.read_csv(binary_data)
                 return df
             else:
                 logger.error("Error")
