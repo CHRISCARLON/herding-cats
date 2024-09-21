@@ -18,4 +18,4 @@ git-push:
 
 venv-start:
 	@echo "To activate the virtual environment, run the following command:"
-	@echo "source .venv_3.11/bin/activate"
+	@echo "source .venv/bin/activate"
