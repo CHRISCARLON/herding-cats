@@ -36,7 +36,7 @@ This will improve and speed up how people:
 #### Planned
 - S3 Integration
   - duckdb
-  - direct 🚧
+  - direct ✅ - Upload as default file format or as a parquet file
   - DeltaLake
   - Iceberg
 - Redshift
