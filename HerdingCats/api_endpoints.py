@@ -30,4 +30,5 @@ class CkanDataCatalogues(Enum):
     SUBAK = "https://data.subak.org"
     HUMANITARIAN = "https://data.humdata.org"
     AFRICA = "https://open.africa"
+    CANADA_GOV = "https://search.open.canada.ca/opendata"
     # Add more default catalogues as needed...

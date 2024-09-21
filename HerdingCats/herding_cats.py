@@ -359,6 +359,10 @@ class CkanCatExplorer:
         Returns a view of how many resources have been updated in the last 6 months
         as a percentage of the total number of resources, based on unique package names.
         """
+        logger.warning(
+            "This method might not work for all catalogues, and will return 0s"
+        )
+
         url = (
             self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
         )
@@ -1291,7 +1295,7 @@ class CkanCatResourceLoader:
 
 # Example usage...
 if __name__ == "__main__":
-    with CkanCatSession(CkanDataCatalogues.SUBAK) as session:
+    with CkanCatSession(CkanDataCatalogues.CANADA_GOV) as session:
         explore = CkanCatExplorer(session)
-        fresh = explore.catalogue_freshness()
+        fresh = explore.package_list_dataframe("polars")
         print(fresh)
