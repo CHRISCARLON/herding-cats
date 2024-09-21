@@ -1,6 +1,12 @@
 from enum import Enum
 
 
+class CkanApiPathsDocs:
+    PACKAGE_LIST = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_list"
+    PACKAGE_SEARCH = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_search"
+    # Need to add the rest !!
+
+
 class CkanApiPaths:
     BASE_PATH = "/api/3/action/{}"
     SITE_READ = BASE_PATH.format("site_read")
@@ -24,4 +30,4 @@ class CkanDataCatalogues(Enum):
     SUBAK = "https://data.subak.org"
     HUMANITARIAN = "https://data.humdata.org"
     AFRICA = "https://open.africa"
-    # Add more catalogues as needed...
+    # Add more default catalogues as needed...
