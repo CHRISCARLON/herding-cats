@@ -36,14 +36,14 @@ This will improve and speed up how people:
 #### Planned
 - S3 Integration
   - duckdb
-  - direct
+  - direct 🚧
   - DeltaLake
   - Iceberg
 - Redshift
 - Databricks
 - Snowflake
 - Google Cloud Platform
-  - Google Cloud Storage
+  - Google Cloud Storage 🚧
   - Google BigQuery
 
 
