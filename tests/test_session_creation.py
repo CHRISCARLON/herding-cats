@@ -1,5 +1,5 @@
 import pytest
-from HerdingCats.herding_cats import CkanCatSession
+from HerdingCats.session.cat_session import CkanCatSession
 
 @pytest.fixture
 def domain():

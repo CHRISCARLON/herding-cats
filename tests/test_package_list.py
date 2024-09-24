@@ -1,5 +1,6 @@
 import pytest
-from HerdingCats.herding_cats import CkanCatSession, CkanCatExplorer
+from HerdingCats.session.cat_session import CkanCatSession
+from HerdingCats.explorer.cat_explore import CkanCatExplorer
 import requests
 from loguru import logger
 
@@ -23,7 +24,7 @@ def test_package_list_dictionary(catalogue_url):
             assert results is not None, f"No results returned for {catalogue_url}"
 
             # Check if we got the expected number of rows
-            assert len(results) > 100, f"There could be problem - check manually"
+            assert len(results) > 100, "There could be problem - check manually"
 
             logger.info(f"Package search test passed for {catalogue_url}")
         except requests.RequestException as e:
