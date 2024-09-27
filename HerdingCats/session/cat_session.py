@@ -1,23 +1,27 @@
 import requests
-
 from typing import Union
 from loguru import logger
 from urllib.parse import urlparse
+from enum import Enum
+from ..endpoints.api_endpoints import CkanDataCatalogues, OpenDataSoftDataCatalogues
+from ..errors.cats_errors import CatSessionError
 
-from endpoints.api_endpoints import CkanDataCatalogues
-from errors.cats_errors import CatSessionError
+
+class CatalogType(Enum):
+    CKAN = "ckan"
+    OPENDATA_SOFT = "opendatasoft"
 
 
-# START A SESSION
-class CkanCatSession:
-    def __init__(self, domain: Union[str, CkanDataCatalogues]) -> None:
+class CatSession:
+    def __init__(
+        self, domain: Union[str, CkanDataCatalogues, OpenDataSoftDataCatalogues]
+    ) -> None:
         """
         Initialise a session with a valid domain or predefined catalog.
-
         Args:
             domain (url or catalogue item): str
         """
-        self.domain = self._process_domain(domain)
+        self.domain, self.catalog_type = self._process_domain(domain)
         self.session = requests.Session()
         self.base_url = (
             f"https://{self.domain}"
@@ -26,47 +30,53 @@ class CkanCatSession:
         )
         self._validate_url()
 
-    # ----------------------------
-    # Initiate a Session
-    # ----------------------------
     @staticmethod
-    def _process_domain(domain: Union[str, CkanDataCatalogues]) -> str:
+    def _process_domain(
+        domain: Union[str, CkanDataCatalogues, OpenDataSoftDataCatalogues],
+    ) -> tuple[str, CatalogType]:
         """
         Process the domain to ensure it's in the correct format
-
-        This iterates through the CkanDataCatalogues Enum and checks for a match
-
+        This iterates through the CkanDataCatalogues and OpenDataSoftDataCatalogues Enums and checks for a match
         Otherwise it processes the url as normal
-
         Args:
-            domain (url or ckan data catalogue item): str
-
+            domain (url or data catalogue item): str
         Returns:
-            a url in the correct format
+            a tuple of (url in the correct format, catalog type)
         """
-        if isinstance(domain, CkanDataCatalogues):
-            logger.info(f"You are using: {urlparse(domain.value).netloc}")
-            return urlparse(domain.value).netloc
+        if isinstance(domain, (CkanDataCatalogues, OpenDataSoftDataCatalogues)):
+            catalog_type = (
+                CatalogType.CKAN
+                if isinstance(domain, CkanDataCatalogues)
+                else CatalogType.OPENDATA_SOFT
+            )
+            return urlparse(domain.value).netloc, catalog_type
         elif isinstance(domain, str):
-            for catalog in CkanDataCatalogues:
-                if domain.lower() == catalog.name.lower().replace("_", " "):
-                    url = urlparse(catalog.value).netloc
-                    logger.info(f"You are using: {url}")
-                    return url
+            for catalog_enum in (CkanDataCatalogues, OpenDataSoftDataCatalogues):
+                for catalog in catalog_enum:
+                    if domain.lower() == catalog.name.lower().replace("_", " "):
+                        url = urlparse(catalog.value).netloc
+                        catalog_type = (
+                            CatalogType.CKAN
+                            if catalog_enum == CkanDataCatalogues
+                            else CatalogType.OPENDATA_SOFT
+                        )
+                        return url, catalog_type
             else:
                 # If not a predefined catalog, process as a regular domain or URL
                 parsed = urlparse(domain)
-                logger.info(f"You are using: {parsed}")
-                return parsed.netloc if parsed.netloc else parsed.path
+                return (
+                    parsed.netloc if parsed.netloc else parsed.path,
+                    CatalogType.CKAN,
+                )  # Default to CKAN for custom URLs
         else:
-            raise ValueError("Domain must be a string or CkanDataCatalogues enum")
+            raise ValueError(
+                "Domain must be a string, CkanDataCatalogues enum, or OpenDataSoftDataCatalogues enum"
+            )
 
     def _validate_url(self) -> None:
         """
         Validate the URL to catch any errors
-
         Will raise status code error if there is a problem
-
         """
         try:
             response = self.session.get(self.base_url, timeout=10)
@@ -100,3 +110,7 @@ class CkanCatSession:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Allows use with the context manager with"""
         self.close_session()
+
+    def get_catalog_type(self) -> CatalogType:
+        """Return the catalog type (CKAN or OpenDataSoft)"""
+        return self.catalog_type

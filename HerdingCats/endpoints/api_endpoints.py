@@ -1,5 +1,7 @@
 from enum import Enum
 
+
+# CKAN
 class CkanApiPathsDocs:
     PACKAGE_LIST = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_list"
     PACKAGE_SEARCH = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_search"
@@ -18,11 +20,6 @@ class CkanApiPaths:
     # Add more paths as needed...
 
 
-class DcatApiPaths:
-    BASE_PATH = "/api/feed/dcat-ap/2.1.1.json"
-    # Add more paths as needed...
-
-
 class CkanDataCatalogues(Enum):
     LONDON_DATA_STORE = "https://data.london.gov.uk"
     UK_GOV = "https://data.gov.uk"
@@ -30,4 +27,24 @@ class CkanDataCatalogues(Enum):
     HUMANITARIAN = "https://data.humdata.org"
     AFRICA = "https://open.africa"
     CANADA_GOV = "https://search.open.canada.ca/opendata"
-    # Add more default catalogues as needed...
+    # Add more catalogues as needed...
+
+
+class OpenDataSoftDataCatalogues(Enum):
+    UK_POWER_NETWORKS = "https://ukpowernetworks.opendatasoft.com"
+    UKPN = "https://ukpowernetworks.opendatasoft.com"
+    INFRABEL = "https://opendata.infrabel.be"
+    # Add more catalogues as needed...
+
+
+# OPEN DATASOFT
+class OpenDataSoftApiPaths:
+    BASE_PATH = "/api/v2/catalog/{}"
+    SHOW_DATASETS = BASE_PATH.format("/datasets")
+    # Add more paths as needed...
+
+
+# DCAT TBC
+class DcatApiPaths:
+    BASE_PATH = "/api/feed/dcat-ap/2.1.1.json"
+    # Add more paths as needed...

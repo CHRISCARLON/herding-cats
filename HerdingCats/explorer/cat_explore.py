@@ -8,14 +8,14 @@ from typing import Any, Dict, Optional, Union, Literal, List
 from loguru import logger
 from urllib.parse import urlencode
 
-from endpoints.api_endpoints import CkanApiPaths
-from errors.cats_errors import CatExplorerError
-from session.cat_session import CkanCatSession
+from ..endpoints.api_endpoints import CkanApiPaths
+from ..errors.cats_errors import CatExplorerError
+from ..session.cat_session import CatSession
 
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 class CkanCatExplorer:
-    def __init__(self, cat_session: CkanCatSession):
+    def __init__(self, cat_session: CatSession):
         """
         Takes in a CkanCatSession
 
