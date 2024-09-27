@@ -51,14 +51,15 @@ This will improve and speed up how people:
 
 **Herding-CATs supports the following catalogues by default**
 
-**CKAN**
+**Default**
 | Catalogue Name | Website | Catalogue API Endpoint Definition |
 |----------------|---------|-------------------|
-| London Datastore | https://data.london.gov.uk | CKAN |
-| Subak Data Catalogue | https://data.subak.org | CKAN |
-| Gov Open Data | https://www.data.gov.uk | CKAN |
-| Humanitarian Data Exchange | https://data.humdata.org | CKAN |
-
+| London Datastore | https://data.london.gov.uk | CKAN |✅
+| Subak Data Catalogue | https://data.subak.org | CKAN |✅
+| Gov Open Data | https://www.data.gov.uk | CKAN |✅
+| Humanitarian Data Exchange | https://data.humdata.org | CKAN |✅
+| UK Power Networks | https://ukpowernetworks.opendatasoft.com | Open Datasoft |🚧
+| Infrabel | https://opendata.infrabel.be | Open Datasoft |🚧
 
 **TBC**
 | Catalogue Name | Website | Catalogue API Endpoint Definition |

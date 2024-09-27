@@ -1,23 +1,20 @@
 import pytest
-from HerdingCats.session.cat_session import CkanCatSession
+from HerdingCats.session.cat_session import CatSession
 from HerdingCats.explorer.cat_explore import CkanCatExplorer
 import requests
 from loguru import logger
 
-CATALOGUES = [
-    "https://data.london.gov.uk",
-    "https://data.humdata.org"
-]
+CATALOGUES = ["https://data.london.gov.uk", "https://data.humdata.org"]
+
 
 @pytest.mark.parametrize("catalogue_url", CATALOGUES)
 def test_package_list_dictionary(catalogue_url):
     """
     Test the package list functionality for predefined data catalogues
     """
-    with CkanCatSession(catalogue_url) as cat_session:
+    with CatSession(catalogue_url) as cat_session:
         explorer = CkanCatExplorer(cat_session)
         try:
-
             results = explorer.package_list_dictionary()
 
             # Assert that we got a result
@@ -28,9 +25,12 @@ def test_package_list_dictionary(catalogue_url):
 
             logger.info(f"Package search test passed for {catalogue_url}")
         except requests.RequestException as e:
-            pytest.fail(f"Failed to perform package search for {catalogue_url}: {str(e)}")
+            pytest.fail(
+                f"Failed to perform package search for {catalogue_url}: {str(e)}"
+            )
         except AssertionError as e:
             pytest.fail(str(e))
+
 
 # COULD ADD IN TESTS FOR DATAFRAME PACKAGE LIST BUT DON'T WANT TO CALL THE ENDPOINTS TOO MUCH
 # THIS WOULD CALL THEM ALL 12 TIMES - TEST ABOVE SHOULD DO FOR NOW

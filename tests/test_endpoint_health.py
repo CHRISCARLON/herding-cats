@@ -1,5 +1,5 @@
 import pytest
-from HerdingCats.session.cat_session import CkanCatSession
+from HerdingCats.session.cat_session import CatSession
 from HerdingCats.endpoints.api_endpoints import CkanApiPaths
 import requests
 from loguru import logger
@@ -12,7 +12,7 @@ def test_site_read(catalogue_url):
     """
     Check that predefined data cataloues return True - means they can be used
     """
-    with CkanCatSession(catalogue_url) as cat_session:
+    with CatSession(catalogue_url) as cat_session:
         url = cat_session.base_url + CkanApiPaths.SITE_READ
         try:
             response = cat_session.session.get(url)
