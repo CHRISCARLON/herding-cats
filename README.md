@@ -60,7 +60,7 @@ This will improve and speed up how people:
 | Humanitarian Data Exchange | https://data.humdata.org | CKAN |
 | UK Power Networks | https://ukpowernetworks.opendatasoft.com | Open Datasoft |
 | Infrabel | https://opendata.infrabel.be | Open Datasoft |
-| Paris | hhttps://opendata.paris.fr | Open Datasoft |
+| Paris | https://opendata.paris.fr | Open Datasoft |
 | Toulouse | https://data.toulouse-metropole.fr | Open Datasoft |
 
 **TBC**
