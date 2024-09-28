@@ -4,12 +4,19 @@ Version: 0.1.3
 
 ## Purpose
 
-**The aim of this project is simple: create a basic Python library to explore and interact with open data catalogues - particularly those with CKAN backends**.
+**The aim of this project is simple: create a basic Python library to explore and interact with open data catalogues**.
 
 This will improve and speed up how people:
-- Navigate open data catalogues
-- Find the data they need
-- Get that data into a format for further analysis / aggregation
+  - Navigate open data catalogues
+  - Find the data they need
+  - Get data into a format / location for further analysis
+
+> [!NOTE]
+> Herding-CATs is currently under active development. Features may change as the project evolves.
+>
+> Due to slight variations in how Organisations set up and deploy their opendata catalogues, methods may not work 100% of the time for all catalogues.
+>
+> We will do our best to ensure that most method work and a good variety of data catalogues is present.
 
 ## To-Do List
 
@@ -52,22 +59,22 @@ This will improve and speed up how people:
 **Herding-CATs supports the following catalogues by default**
 
 **Default**
-| Catalogue Name | Website | Catalogue Endpoint |
-|----------------|---------|-------------------|
-| London Datastore | https://data.london.gov.uk | CKAN |
-| Subak Data Catalogue | https://data.subak.org | CKAN |
-| Gov Open Data | https://www.data.gov.uk | CKAN |
-| Humanitarian Data Exchange | https://data.humdata.org | CKAN |
-| UK Power Networks | https://ukpowernetworks.opendatasoft.com | Open Datasoft |
-| Infrabel | https://opendata.infrabel.be | Open Datasoft |
-| Paris | https://opendata.paris.fr | Open Datasoft |
-| Toulouse | https://data.toulouse-metropole.fr | Open Datasoft |
+| Catalogue Name | Website | Catalogue Endpoint | Comments |
+|----------------|---------|-------------------|----------|
+| London Datastore | https://data.london.gov.uk | CKAN | Works with all methods |
+| Subak Data Catalogue | https://data.subak.org | CKAN | TBC |
+| Gov Open Data | https://www.data.gov.uk | CKAN | TBC |
+| Humanitarian Data Exchange | https://data.humdata.org | CKAN | Works with most methods |
+| Data Mill North | https://datamillnorth.org | CKAN | Seems to have a slightly different implementation - may not work with all methods |
+| UK Power Networks | https://ukpowernetworks.opendatasoft.com | Open Datasoft | Works with all methods |
+| Infrabel | https://opendata.infrabel.be | Open Datasoft | Works with all methods |
+| Paris | https://opendata.paris.fr | Open Datasoft | Works with all methods |
+| Toulouse | https://data.toulouse-metropole.fr | Open Datasoft | Works with all methods but Endpoint deviates from standard implementation |
 
 **TBC**
 | Catalogue Name | Website | Catalogue API Endpoint Definition |
 |----------------|---------|-------------------|
 | Bristol Open Data | https://opendata.bristol.gov.uk | TBC |
-| Data Mill North | https://datamillnorth.org | TBC |
 | Icebreaker One | https://ib1.org | TBC |
 
 ## Basic usage examples:
