@@ -8,16 +8,17 @@ from typing import Any, Dict, Optional, Union, Literal, List
 from loguru import logger
 from urllib.parse import urlencode
 
-from ..endpoints.api_endpoints import CkanApiPaths
+from ..endpoints.api_endpoints import CkanApiPaths, OpenDataSoftApiPaths
 from ..errors.cats_errors import CatExplorerError
 from ..session.cat_session import CatSession
 
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
+# For Ckan Catalogues Only
 class CkanCatExplorer:
     def __init__(self, cat_session: CatSession):
         """
-        Takes in a CkanCatSession
+        Takes in a CatSession
 
         Allows user to start exploring data catalogue programatically
 
@@ -844,3 +845,100 @@ class CkanCatExplorer:
             print("First few elements of input data:")
             print(json.dumps(data[:2], indent=2))
             return pd.DataFrame()
+
+
+# FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
+# For Open Datasoft Catalogues Only
+class OpenDataSoftCatExplorer:
+    def __init__(self, cat_session: CatSession):
+        """
+        Takes in a CatSession
+
+        Allows user to start exploring data catalogue programatically
+
+        Make sure you pass a valid CkanCatSession in
+
+        Args:
+            CkanCatSession
+
+        # Example usage...
+        if __name__ == "__main__":
+            with CatSession("ukpowernetworks.opendatasoft.com") as session:
+                explore = CatExplorer(session)
+        """
+        self.cat_session = cat_session
+
+    def fetch_all_datasets(self) -> dict | None:
+        urls = [
+            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASETS,
+            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASETS_2,
+        ]
+        dataset_dict = {}
+        total_count = 0
+
+        for url in urls:
+            offset = 0
+            limit = 100
+
+            try:
+                while True:
+                    params = {"offset": offset, "limit": limit}
+                    response = self.cat_session.session.get(url, params=params)
+
+                    if response.status_code == 400 and url == urls[0]:
+                        logger.warning(
+                            "SHOW_DATASETS endpoint returned 400 status. Trying SHOW_DATASETS_2."
+                        )
+                        break  # Break the inner loop to try the next URL
+
+                    response.raise_for_status()
+                    result = response.json()
+
+                    for dataset_info in result.get("datasets", []):
+                        if (
+                            "dataset" in dataset_info
+                            and "metas" in dataset_info["dataset"]
+                            and "default" in dataset_info["dataset"]["metas"]
+                            and "title" in dataset_info["dataset"]["metas"]["default"]
+                            and "dataset_id" in dataset_info["dataset"]
+                        ):
+                            title = dataset_info["dataset"]["metas"]["default"]["title"]
+                            dataset_id = dataset_info["dataset"]["dataset_id"]
+                            dataset_dict[title] = dataset_id
+
+                    # Update total_count if available
+                    if "total_count" in result:
+                        total_count = result["total_count"]
+
+                    # Check if we've reached the end of the datasets
+                    if len(result.get("datasets", [])) < limit:
+                        break
+                    offset += limit
+
+                # If we've successfully retrieved datasets, no need to try the second URL
+                if dataset_dict:
+                    break
+
+            except requests.RequestException as e:
+                if url == urls[-1]:
+                    logger.error(f"Failed to fetch datasets: {e}")
+                    raise CatExplorerError(f"Failed to fetch datasets: {str(e)}")
+                else:
+                    logger.warning(
+                        f"Failed to fetch datasets from {url}: {e}. Trying next URL."
+                    )
+
+        if dataset_dict:
+            returned_count = len(dataset_dict)
+            if returned_count == total_count:
+                logger.success(
+                    f"total_count = {total_count} AND returned_count = {returned_count}"
+                )
+            else:
+                logger.warning(
+                    f"Mismatch in counts: total_count = {total_count}, returned_count = {returned_count}"
+                )
+            return dataset_dict
+        else:
+            logger.warning("No datasets were retrieved.")
+            return None

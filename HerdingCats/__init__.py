@@ -1,7 +1,8 @@
 from .data_loader.data_loader import CkanCatResourceLoader
-from .explorer.cat_explore import CkanCatExplorer
+from .explorer.cat_explore import CkanCatExplorer, OpenDataSoftCatExplorer
 from .session.cat_session import CatSession
 from .errors.cats_errors import CatSessionError, CatExplorerError
+from .endpoints.api_endpoints import CkanApiPaths, OpenDataSoftDataCatalogues
 
 __all__ = [
     "CkanCatResourceLoader",
@@ -9,6 +10,9 @@ __all__ = [
     "CatSession",
     "CatSessionError",
     "CatExplorerError",
+    "CkanApiPaths",
+    "OpenDataSoftDataCatalogues",
+    "OpenDataSoftCatExplorer",
 ]
 
 __version__ = "0.1.3"

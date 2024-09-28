@@ -1,4 +1,5 @@
 import requests
+
 from typing import Union
 from loguru import logger
 from urllib.parse import urlparse

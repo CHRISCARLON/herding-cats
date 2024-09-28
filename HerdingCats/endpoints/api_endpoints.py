@@ -32,15 +32,22 @@ class CkanDataCatalogues(Enum):
 
 class OpenDataSoftDataCatalogues(Enum):
     UK_POWER_NETWORKS = "https://ukpowernetworks.opendatasoft.com"
-    UKPN = "https://ukpowernetworks.opendatasoft.com"
     INFRABEL = "https://opendata.infrabel.be"
+    PARIS = "https://opendata.paris.fr"
+    TOULOUSE = "https://data.toulouse-metropole.fr"
     # Add more catalogues as needed...
 
 
 # OPEN DATASOFT
 class OpenDataSoftApiPaths:
+    # Normal base paths...
     BASE_PATH = "/api/v2/catalog/{}"
-    SHOW_DATASETS = BASE_PATH.format("/datasets")
+    SHOW_DATASETS = BASE_PATH.format("datasets")
+
+    # Alternativre base paths...
+    BASE_PATH_2 = "/api/explore/v2.0/catalog/{}"
+    SHOW_DATASETS_2 = BASE_PATH_2.format("datasets")
+
     # Add more paths as needed...
 
 
