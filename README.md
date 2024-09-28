@@ -1,6 +1,6 @@
 # Herding-CATs 🐈‍⬛
 
-Version: 0.1.3
+Version: 0.1.4
 
 ## Purpose
 
@@ -49,6 +49,7 @@ This will improve and speed up how people:
 - Redshift
 - Databricks
 - Snowflake
+- Postgres
 - Google Cloud Platform
   - Google Cloud Storage 🚧
   - Google BigQuery
