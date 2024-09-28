@@ -16,7 +16,7 @@ This will improve and speed up how people:
 >
 > Due to slight variations in how Organisations set up and deploy their opendata catalogues, methods may not work 100% of the time for all catalogues.
 >
-> We will do our best to ensure that most method work and a good variety of data catalogues is present.
+> We will do our best to ensure that most methods work and a good variety of data catalogues is present.
 
 ## To-Do List
 
