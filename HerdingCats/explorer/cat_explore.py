@@ -1,3 +1,4 @@
+from numpy._core.multiarray import empty
 import requests
 import pandas as pd
 import polars as pl
@@ -30,41 +31,41 @@ class CkanCatExplorer:
         # Example usage...
         if __name__ == "__main__":
             with CatSession("data.london.gov.uk") as session:
-                explore = CatExplorer(session)
+                explore = CkanCatExplorer(session)
         """
         self.cat_session = cat_session
 
     # ----------------------------
-    # Check CKAN backend health
+    # Check CKAN site health
     # ----------------------------
     def check_site_health(self) -> None:
         """
         Make sure the Ckan endpoints are healthy and reachable
 
-        This calls the Ckan site_read endpoint
-
-        Will return a dictionary with a "success" field if all is well
+        This calls the Ckan site package endpoint to check if site is reacheable.
 
         # Example usage...
         if __name__ == "__main__":
             with CatSession("data.london.gov.uk") as session:
-                explore = CatExplorer(session)
+                explore = CkanCatExplorer(session)
                 health_check = explore.check_site_health()
-
         """
-        url = self.cat_session.base_url + CkanApiPaths.SITE_READ
 
-        response = self.cat_session.session.get(url)
-        response.raise_for_status()
-        data = response.json()
-        health_status = data.get("success")
+        url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
+        try:
+            response = self.cat_session.session.get(url)
 
-        if health_status:
-            logger.success("Health Check Passed: CKAN is running and available")
-        else:
-            logger.error(
-                "Health Check Failed: Something went wrong and CKAN is currently not available"
-            )
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    logger.success("Health Check Passed: CKAN is running and available")
+                else:
+                    logger.warning("Health Check Warning: CKAN responded with an empty dataset")
+            else:
+                logger.error(f"Health Check Failed: CKAN responded with status code {response.status_code}")
+
+        except requests.RequestException as e:
+            logger.error(f"Health Check Failed: Unable to connect to CKAN - {str(e)}")
 
     # ----------------------------
     # Basic Available package lists + metadata
@@ -99,13 +100,13 @@ class CkanCatExplorer:
 
     def package_list_dictionary(self) -> dict:
         """
-        Explore all packages that are available to query.
+        Explore all packages that are available to query as a dictionary.
 
         Returns:
             Dictionary of all available packages to use for further exploration.
 
             It follows a {"package_name": "package_name"} structure so that you can use the package names for
-            additional methods
+            additional methods.
 
             {'--lfb-financial-and-performance-reporting-2021-22': '--lfb-financial-and-performance-reporting-2021-22',
              '-ghg-emissions-per-capita-from-food-and-non-alcoholic-drinks-': '-ghg-emissions-per-capita-from-food-and-non-alcoholic-drinks-',
@@ -120,8 +121,8 @@ class CkanCatExplorer:
         # Example usage...
         if __name__ == "__main__":
             with CatSession("data.london.gov.uk") as session:
-                explore = CatExplorer(session)
-                all_packages = explore.package_list_json()
+                explore = CkanCatExplorer(session)
+                all_packages = explore.package_list_dictionary()
                 pprint(all_packages)
         """
 
@@ -148,6 +149,9 @@ class CkanCatExplorer:
             pandas
             polars
 
+        Returns:
+            Dataframe with all dataset names
+
         Example ouput:
             shape: (68_995, 1)
             ┌─────────────────────
@@ -170,7 +174,7 @@ class CkanCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CkanCatSession("uk gov") as session:
+            with CatSession("uk gov") as session:
                 explorer = CkanCatExplorer(session)
                 results = explorer.package_list_dataframe('polars')
                 print(results)

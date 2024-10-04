@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 # CKAN
 class CkanApiPathsDocs:
     PACKAGE_LIST = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_list"
@@ -10,7 +9,6 @@ class CkanApiPathsDocs:
 
 class CkanApiPaths:
     BASE_PATH = "/api/3/action/{}"
-    SITE_READ = BASE_PATH.format("site_read")
     PACKAGE_LIST = BASE_PATH.format("package_list")
     PACKAGE_SEARCH = BASE_PATH.format("package_search")
     PACKAGE_INFO = BASE_PATH.format("package_show")
@@ -26,11 +24,12 @@ class CkanDataCatalogues(Enum):
     SUBAK = "https://data.subak.org"
     HUMANITARIAN = "https://data.humdata.org"
     AFRICA = "https://open.africa"
-    CANADA_GOV = "https://search.open.canada.ca/opendata"
-    NORTHERN_DATA_MILL = "https://datamillnorth.org"
+    # CANADA_GOV = "https://search.open.canada.ca/opendata" NEED TO LOOK INTO THIS ONE MORE
+    # NORTHERN_DATA_MILL = "https://datamillnorth.org" NEED TO LOOK INTO THIS ONE MORE
     # Add more catalogues as needed...
 
 
+# OPEN DATASOFT
 class OpenDataSoftDataCatalogues(Enum):
     UK_POWER_NETWORKS = "https://ukpowernetworks.opendatasoft.com"
     INFRABEL = "https://opendata.infrabel.be"
@@ -38,8 +37,6 @@ class OpenDataSoftDataCatalogues(Enum):
     TOULOUSE = "https://data.toulouse-metropole.fr"
     # Add more catalogues as needed...
 
-
-# OPEN DATASOFT
 class OpenDataSoftApiPaths:
     # Normal base paths...
     BASE_PATH = "/api/v2/catalog/{}"
