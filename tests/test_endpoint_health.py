@@ -8,7 +8,6 @@ CATALOGUES = [
     "https://data.london.gov.uk",
     "https://data.humdata.org",
     "https://data.gov.uk",
-    "https://data.subak.org",
     "https://open.africa"
 ]
 
