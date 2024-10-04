@@ -1,8 +1,10 @@
-# CKAN and OpenDataSoft Explorer Documentation
+# HerdingCats Overview
 
 ## Overview
 
-This module provides classes for exploring CKAN and OpenDataSoft data catalogues. It includes two main classes:
+This python librar  provides classes for exploring CKAN and OpenDataSoft data catalogues.
+
+It includes two main classes:
 
 1. `CkanCatExplorer`: For exploring CKAN-based data catalogues
 2. `OpenDataSoftCatExplorer`: For exploring OpenDataSoft-based data catalogues

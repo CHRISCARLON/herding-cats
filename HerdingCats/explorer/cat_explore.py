@@ -226,10 +226,9 @@ class CkanCatExplorer:
         # Example usage...
         if __name__ == "__main__":
             with CatSession("data.london.gov.uk") as session:
-                explore = CatExplorer(session)
+                explore = CkanCatExplorer(session)
                 info_extra = package_list_dictionary_extra()
                 pprint(info_extra)
-
         """
         url = (
             self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
@@ -257,6 +256,110 @@ class CkanCatExplorer:
             logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
         return
+
+    def package_list_dataframe_extra(
+        self, df_type: Literal["pandas", "polars"]
+    ) -> Union[pd.DataFrame, "pl.DataFrame"]:
+        """
+        Explore all packages that are available to query.
+
+        With extra resource and meta information.
+
+        Sorted by most recently updated dataset first.
+
+        Returned as a dataframe.
+
+        shape: (1_229, 8)
+        ┌───────────────────┬───────────────────┬───────────────────┬──────────────────┬─────────────────
+        │ owner_org         ┆ name              ┆ title             ┆ maintainer       ┆ metadata_created ┆ metadata_modifie ┆ resources        ┆ groups           │
+        │ ---               ┆ ---               ┆ ---               ┆ ---              ┆ ---              ┆ d                ┆ ---              ┆ ---              │
+        │ str               ┆ str               ┆ str               ┆ str              ┆ str              ┆ ---              ┆ list[struct[23]] ┆ list[struct[6]]  │
+        │                   ┆                   ┆                   ┆                  ┆                  ┆ str              ┆                  ┆                  │
+        ╞═══════════════════╪═══════════════════╪═══════════════════╪══════════════════╪════════════════╡
+        │ db7940dd-ee1a-4a6 ┆ mps-stop-and-sear ┆ MPS Stop and      ┆ MPS              ┆ 2022-08-30T13:00 ┆ 2024-10-04T10:51 ┆ [{25,"https://ai ┆ [{"45f26a78-96f6 │
+        │ 8-b874-c34151…    ┆ ch---more-tho…    ┆ Search - More     ┆                  ┆ :15.078Z         ┆ :36.675Z         ┆ rdrive-secure.…  ┆ -44e0-846f-701…  │
+        │                   ┆                   ┆ Tho…              ┆                  ┆                  ┆                  ┆                  ┆                  │
+        │ db7940dd-ee1a-4a6 ┆ mps-stop-and-sear ┆ MPS Stop and      ┆ Metropolitan     ┆ 2021-07-07T07:07 ┆ 2024-10-04T10:51 ┆ [{28,"https://ai ┆ [{"45f26a78-96f6 │
+        │ 8-b874-c34151…    ┆ ch-public-das…    ┆ Search Dashboard  ┆ Police Service   ┆ :25.070Z         ┆ :13.669Z         ┆ rdrive-secure.…  ┆ -44e0-846f-701…  │
+        │                   ┆                   ┆ …                 ┆                  ┆                  ┆                  ┆                  ┆                  │
+        │ 381b4e7e-81a3-456 ┆ snapshot-of-healt ┆ Snapshot of       ┆ GLAPublicHealthI ┆ 2022-10-24T13:51 ┆ 2024-10-03T17:30 ┆ [{12,"https://ai ┆ [{"4199df0d-d454 │
+        │ 3-a108-fa2121…    ┆ h-inequalitie…    ┆ Health            ┆ nbox@london.go…  ┆ :05.660Z         ┆ :21.078Z         ┆ rdrive-secure.…  ┆ -4373-b710-aee…  │
+        │                   ┆                   ┆ Inequalitie…      ┆                  ┆                  ┆                  ┆                  ┆                  │
+        │ 5b858cb2-5c92-4b2 ┆ gla-grants-data   ┆ GLA Grants data   ┆ London Datastore ┆ 2018-07-26T09:49 ┆ 2024-10-03T15:53 ┆ [{5,"https://air ┆ [{"66a92e74-4325 │
+        │ b-8c1d-141cfc…    ┆                   ┆                   ┆                  ┆ :55.607Z         ┆ :39.742Z         ┆ drive-secure.s…  ┆ -4b62-a0eb-5d8…  │
+        │ 5b858cb2-5c92-4b2 ┆ household-project ┆ Household         ┆ GLA Demography   ┆ 2024-10-03T09:58 ┆ 2024-10-03T10:27 ┆ [{4,"https://air ┆ [{"248ec7c0-025e │
+        │ b-8c1d-141cfc…    ┆ ion-data-for-…    ┆ projection data   ┆                  ┆ :50.717Z         ┆ :19.652Z         ┆ drive-secure.s…  ┆ -4b5a-925d-0fc…  │
+        │                   ┆                   ┆ for …             ┆                  ┆                  ┆                  ┆                  ┆                  │
+        │ …                 ┆ …                 ┆ …                 ┆ …                ┆ …                ┆ …                ┆ …                ┆ …                │
+        │ 0fba52f6-f512-403 ┆ gla-poll-results- ┆ GLA Poll Results  ┆ Opinion Research ┆ 2011-01-01T00:00 ┆ 2011-01-01T00:00 ┆ [{2,"https://air ┆ [{"1d5852ed-0315 │
+        │ f-aaf0-7a73fc…    ┆ 2011              ┆ 2011              ┆ and General S…   ┆ :00.000Z         ┆ :00.000Z         ┆ drive-secure.s…  ┆ -4472-927a-3d1…  │
+        │ f1e2d47c-3d52-441 ┆ physically-active ┆ Physically Active ┆ Opinion Research ┆ 2010-02-02T15:35 ┆ 2010-07-06T11:45 ┆ [{0,"https://air ┆ [{"6bfb7207-24fd │
+        │ 3-b376-ba05a0…    ┆ -children         ┆ Children          ┆ and General S…   ┆ :45.000Z         ┆ :23.000Z         ┆ drive-secure.s…  ┆ -492f-b0e5-99a…  │
+        │ 0fba52f6-f512-403 ┆ gla-poll-results- ┆ GLA Poll Results  ┆ Opinion Research ┆ 2010-01-01T00:00 ┆ 2010-01-01T00:00 ┆ [{3,"https://air ┆ [{"1d5852ed-0315 │
+        │ f-aaf0-7a73fc…    ┆ 2010              ┆ 2010              ┆ and General S…   ┆ :00.000Z         ┆ :00.000Z         ┆ drive-secure.s…  ┆ -4472-927a-3d1…  │
+        │ 0fba52f6-f512-403 ┆ gla-poll-results- ┆ GLA Poll Results  ┆ Opinion Research ┆ 2009-01-01T00:00 ┆ 2009-01-01T00:00 ┆ [{2,"https://air ┆ [{"1d5852ed-0315 │
+        │ f-aaf0-7a73fc…    ┆ 2009              ┆ 2009              ┆ and General S…   ┆ :00.000Z         ┆ :00.000Z         ┆ drive-secure.s…  ┆ -4472-927a-3d1…  │
+        │ 5b858cb2-5c92-4b2 ┆ ldn-sqr-test-data ┆ LDN Sqr Test Data ┆                  ┆ 2001-01-01T00:00 ┆ 2001-01-01T00:00 ┆ [{0,"https://air ┆ []               │
+        │ b-8c1d-141cfc…    ┆                   ┆                   ┆                  ┆ :00.000Z         ┆ :00.000Z         ┆ drive-secure.s…  ┆                  │
+        └───────────────────┴───────────────────┴───────────────────┴──────────────────┴─────────────────
+
+        # Example usage...
+        if __name__ == "__main__":
+            with CatSession("data.london.gov.uk") as session:
+                explore = CkanCatExplorer(session)
+                info_extra = package_list_dataframe_extra()
+                pprint(info_extra)
+
+        """
+        if df_type.lower() not in ["pandas", "polars"]:
+            raise ValueError(
+                f"Invalid df_type: '{df_type}'. DataFrame type must be either 'pandas' or 'polars'."
+            )
+
+        url = self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
+
+        try:
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            data = response.json()
+            result = data["result"]
+            data = response.json()
+            dictionary_prep = data["result"]
+            dictionary_data = [
+                {
+                    "owner_org": entry.get("owner_org"),
+                    "name": entry.get("name"),
+                    "title": entry.get("title"),
+                    "maintainer": entry.get("maintainer"),
+                    "metadata_created": entry.get("metadata_created"),
+                    "metadata_modified": entry.get("metadata_modified"),
+                    "resources": entry.get("resources"),
+                    "groups": entry.get("groups"),
+                }
+                for entry in dictionary_prep
+            ]
+
+            match df_type.lower():
+                case "polars":
+                    try:
+                        return pl.DataFrame(dictionary_data)
+                    except ImportError:
+                        raise ImportError(
+                            "Polars is not installed. Please run 'pip install polars' to use this option."
+                        )
+                case "pandas":
+                    try:
+                        return pd.DataFrame(dictionary_data)
+                    except ImportError:
+                        raise ImportError(
+                            "Pandas is not installed. Please run 'pip install pandas' to use this option."
+                        )
+                case _:
+                    raise ValueError(f"Unsupported DataFrame type: {df_type}")
+
+        except (requests.RequestException, Exception) as e:
+            logger.error(f"Failed to search datasets: {e}")
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     # ----------------------------
     # Show catalogue freshness
