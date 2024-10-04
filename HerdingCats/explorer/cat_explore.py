@@ -366,12 +366,15 @@ class CkanCatExplorer:
     # ----------------------------
     def catalogue_freshness(self):
         """
-        Explore all packages that are available to query.
         Returns a view of how many resources have been updated in the last 6 months
         as a percentage of the total number of resources, based on unique package names.
+
+        This might not work for all catalogues.
+
+        It currently uses metadata_modified at the dataset level - not resource level.
         """
         logger.warning(
-            "This method might not work for all catalogues, and will return 0s"
+            "This method might not work for all catalogues, and will return 0s. It currently only works for the London Datastore."
         )
 
         url = (
@@ -429,9 +432,9 @@ class CkanCatExplorer:
     # ----------------------------
     def package_show_info_json(self, package_name: Union[str, dict, Any]) -> List[Dict]:
         """
-        Pass in a package name as a string or as a value from a dictionary
+        Pass in a package name as a string or as a value from a dictionary.
 
-        This will return package metadata including resource information and download links for the data
+        This will return package metadata including resource information and download links for the data.
 
         # Example usage...
         if __name__ == "__main__":
@@ -467,15 +470,14 @@ class CkanCatExplorer:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     # ----------------------------
-    # Search Packages and store in DataFrames / or keep as Dicts
-    # Unpack data or keep it packed (e.g. don't split out resources into own columns')
+    # Search Packages and store in DataFrames / or keep as Dicts.
+    # Unpack data or keep it packed (e.g. don't split out resources into own columns)
     # ----------------------------
     def package_search_json(self, search_query: str, num_rows: int):
         """
         Returns all available data for a particular search query
 
         Specify the number of rows if the 'count' is large
-
         """
 
         base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_SEARCH
