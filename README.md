@@ -18,43 +18,6 @@ This will improve and speed up how people:
 >
 > We will do our best to ensure that most methods work and a good variety of data catalogues is present.
 
-## To-Do List
-
-### File Formats
-
-| Format     | Status |
-|------------|--------|
-| Excel       | ✅    |
-| Csv        | ✅     |
-| Parquet    | 🚧     |
-| JSON       | 🚧     |
-| Geopackage | 🚧     |
-| Shapefile  | 🚧     |
-| GeoJSON    | 🚧     |
-
-### Tools and Libraries
-
-#### Implemented
-- polars ✅
-- pandas ✅
-- duckdb ✅
-- motherduck ✅
-
-#### Planned
-- S3 Integration
-  - duckdb
-  - direct ✅ - Upload as default file format or as a parquet file
-  - DeltaLake
-  - Iceberg
-- Redshift
-- Databricks
-- Snowflake
-- Postgres
-- Google Cloud Platform
-  - Google Cloud Storage 🚧
-  - Google BigQuery
-
-
 ## Current Default Open Data Catalogues
 
 Herding-CATs supports the following catalogues by default:
