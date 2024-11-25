@@ -15,7 +15,7 @@ Both classes are designed to work with a `CatSession` object, which handles the 
 
 ### CkanCatExplorer
 
-#### Initialization
+#### Initialisation
 
 ```python
 import HerdingCats as hc
@@ -41,7 +41,7 @@ if __name__ =="__main__":
 
 5. `package_list_dictionary_extra()`: Returns a dictionary with extra package information.
 
-6. `catalogue_freshness()`: Provides a view of how many resources have been updated in the last 6 months.
+6. `catalogue_freshness()`: Provides a view of how many resources have been updated in the last 6 months. THIS ONLY WORKS WITH THE LONDON DATASTORE AND IS CURRENTLY BEING IMPROVED.
 
 7. `package_show_info_json(package_name: Union[str, dict, Any])`: Returns package metadata including resource information.
 
@@ -57,7 +57,7 @@ if __name__ =="__main__":
 
 ### OpenDataSoftCatExplorer
 
-#### Initialization
+#### Initialisation
 
 ```python
 from cat_session import CatSession
@@ -69,4 +69,4 @@ with CatSession("ukpowernetworks.opendatasoft.com") as session:
 
 #### Methods
 
-1. `fetch_all_datasets()`: Retrieves all datasets from the OpenDataSoft catalogue.
+1. `fetch_all_datasets()`: Retrieves all datasets from an OpenDataSoft catalogue.
