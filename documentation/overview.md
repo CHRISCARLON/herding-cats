@@ -2,7 +2,7 @@
 
 ## Overview
 
-This python librar  provides classes for exploring CKAN and OpenDataSoft data catalogues.
+This python library provides a way to explore CKAN and OpenDataSoft data catalogues.
 
 It includes two main classes:
 
