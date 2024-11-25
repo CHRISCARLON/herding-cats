@@ -458,7 +458,6 @@ class CkanCatExplorer:
         url = f"{base_url}?{urlencode(params)}" if params else base_url
 
         try:
-            print(url)
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
@@ -531,11 +530,17 @@ class CkanCatExplorer:
                 url to download
 
         # Example usage...
-        if __name__ == "__main__":
-            with CatSession("data.london.gov.uk") as session:
-                explorer = CatExplorer(session)
-                condensed_results = explorer.package_search_condense_json_unpacked("police")
-                pprint(condensed_results)
+        import HerdingCats as hc
+        from pprint import pprint
+
+        def main():
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+                explore = hc.CkanCatExplorer(session)
+                packages_search = explore.package_search_condense_json_unpacked("police", 50)
+                pprint(packages_search)
+
+        if __name__ =="__main__":
+            main()
 
         """
         base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_SEARCH
@@ -790,6 +795,11 @@ class CkanCatExplorer:
 
         Returns:
         List[format, url]: The format of the resource and the URL.
+        [
+        'spreadsheet',
+        'https://data.london.gov.uk/download/violence-reduction-unit/1ef840d0-2c02-499c-ae40-382005b2a0c7/VRU%2520Dataset%2520Q1%2520April-Nov%25202023.xlsx'
+        ]
+
 
         Example:
             if __name__ == "__main__":
@@ -800,11 +810,6 @@ class CkanCatExplorer:
                     info = explore.package_show_info_json(data)
                     dl_link = explore.extract_resource_url(info, "VRU Q1 2023-24 Dataset")
                     print(dl_link)
-
-        [
-        'spreadsheet',
-        'https://data.london.gov.uk/download/violence-reduction-unit/1ef840d0-2c02-499c-ae40-382005b2a0c7/VRU%2520Dataset%2520Q1%2520April-Nov%25202023.xlsx'
-        ]
 
         """
 
