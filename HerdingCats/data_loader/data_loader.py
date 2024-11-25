@@ -14,6 +14,7 @@ from botocore.exceptions import ClientError
 
 
 # START TO WRANGLE / ANALYSE
+# LOAD DATA RESOURCES INTO STORAGE
 class CkanCatResourceLoader:
     """
     Need to do:
@@ -51,13 +52,33 @@ class CkanCatResourceLoader:
         pass
 
     # ----------------------------
-    # Load data into a variety of formats/tools for aggregation and analysis
+    # Load data into a variety of formats for aggregation and analysis
     # ----------------------------
     def polars_data_loader(
         self, resource_data: Optional[List]
     ) -> Optional[pl.DataFrame]:
         """
-        Load resource data into Polars DataFrame
+        Isolate a specific resource using the Explorer Class.
+
+        Load a resource into a dataframe for further exploration.
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+                explore = hc.CkanCatExplorer(session)
+                all_packages = explore.package_list_dictionary()
+                data = all_packages.get("number-bicycle-hires")
+                info = explore.package_show_info_json(data)
+                resource_list = explore.extract_resource_url(info, "tfl-daily-cycle-hires.xls")
+                resource_loader = hc.CkanCatResourceLoader()
+                polars_df = resource_loader.polars_data_loader(resource_list)
+                print(polars_df)
+
+        if __name__ =="__main__":
+            main()
+
         """
         if resource_data:
             url = resource_data[1]
@@ -84,7 +105,26 @@ class CkanCatResourceLoader:
         self, resource_data: Optional[List]
     ) -> Optional[pd.DataFrame]:
         """
-        Load resource data into Pandas DataFrame
+        Isolate a specific resource using the Explorer Class.
+
+        Load a resource into a dataframe for further exploration.
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+                explore = hc.CkanCatExplorer(session)
+                all_packages = explore.package_list_dictionary()
+                data = all_packages.get("number-bicycle-hires")
+                info = explore.package_show_info_json(data)
+                resource_list = explore.extract_resource_url(info, "tfl-daily-cycle-hires.xls")
+                resource_loader = hc.CkanCatResourceLoader()
+                pandas_df = resource_loader.pandas_data_loader(resource_list)
+                print(pandas_df)
+
+        if __name__ =="__main__":
+            main()
         """
         if resource_data:
             url = resource_data[1]
@@ -264,8 +304,6 @@ class CkanCatResourceLoader:
     ):
         """
         Load resource data into remote S3 storage as current file type or as a parquet file.
-
-        May add in delta lake and iceberg in the future.
 
         Args:
             - resource_data: List containing file format and URL.
