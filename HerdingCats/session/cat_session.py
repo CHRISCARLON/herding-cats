@@ -7,11 +7,9 @@ from enum import Enum
 from ..endpoints.api_endpoints import CkanDataCatalogues, OpenDataSoftDataCatalogues
 from ..errors.cats_errors import CatSessionError
 
-
 class CatalogType(Enum):
     CKAN = "ckan"
     OPENDATA_SOFT = "opendatasoft"
-
 
 class CatSession:
     def __init__(
@@ -36,9 +34,11 @@ class CatSession:
         domain: Union[str, CkanDataCatalogues, OpenDataSoftDataCatalogues],
     ) -> tuple[str, CatalogType]:
         """
-        Process the domain to ensure it's in the correct format
+        Process the domain to ensure it's in the correct format.
+
         This iterates through the CkanDataCatalogues and OpenDataSoftDataCatalogues Enums and checks for a match
-        Otherwise it processes the url as normal
+        Otherwise it processes the url as normal.
+
         Args:
             domain (url or data catalogue item): str
         Returns:

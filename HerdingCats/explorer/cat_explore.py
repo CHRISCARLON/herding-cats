@@ -42,7 +42,7 @@ class CkanCatExplorer:
         """
         Make sure the Ckan endpoints are healthy and reachable
 
-        This calls the Ckan site package endpoint to check if site is reacheable.
+        This calls the Ckan package_list endpoint to check if site is reacheable.
 
         # Example usage...
         if __name__ == "__main__":
@@ -82,7 +82,7 @@ class CkanCatExplorer:
         # Example usage...
         if __name__ == "__main__":
             with CatSession("data.london.gov.uk") as session:
-                explore = CatExplorer(session)
+                explore = CkanCatExplorer(session)
                 package_count = get_package_count()
                 pprint(package_count)
         """
@@ -307,7 +307,7 @@ class CkanCatExplorer:
         if __name__ == "__main__":
             with CatSession("data.london.gov.uk") as session:
                 explore = CkanCatExplorer(session)
-                info_extra = package_list_dataframe_extra()
+                info_extra = package_list_dataframe_extra('pandas')
                 pprint(info_extra)
 
         """
@@ -374,7 +374,7 @@ class CkanCatExplorer:
         It currently uses metadata_modified at the dataset level - not resource level.
         """
         logger.warning(
-            "This method might not work for all catalogues, and will return 0s. It currently only works for the London Datastore."
+            "This method might not work for all catalogues, and will return 0s. It currently only works for the London Datastore. We are working on improving this"
         )
 
         url = (
@@ -458,6 +458,7 @@ class CkanCatExplorer:
         url = f"{base_url}?{urlencode(params)}" if params else base_url
 
         try:
+            print(url)
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
@@ -478,6 +479,19 @@ class CkanCatExplorer:
         Returns all available data for a particular search query
 
         Specify the number of rows if the 'count' is large
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+                explore = hc.CkanCatExplorer(session)
+                packages_search = explore.package_search_json("police", 50)
+                print(packages_search)
+
+        if __name__ =="__main__":
+            main()
+
         """
 
         base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_SEARCH

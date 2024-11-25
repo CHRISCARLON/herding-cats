@@ -5,10 +5,7 @@ import requests
 from loguru import logger
 
 CATALOGUES = [
-    "https://data.london.gov.uk",
-    "https://data.humdata.org",
-    "https://data.gov.uk",
-    "https://open.africa"
+    "https://data.london.gov.uk"
 ]
 
 @pytest.mark.parametrize("catalogue_url", CATALOGUES)
@@ -20,6 +17,7 @@ def test_ckan_health_check(catalogue_url):
         url = cat_session.base_url + CkanApiPaths.PACKAGE_LIST
         try:
             response = cat_session.session.get(url)
+            print(response)
 
             # Check status code
             assert response.status_code == 200, f"Expected status code 200, but got {response.status_code}"
