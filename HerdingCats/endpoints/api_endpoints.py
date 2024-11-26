@@ -5,7 +5,8 @@ class CkanApiPathsDocs:
     PACKAGE_LIST = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_list"
     PACKAGE_SEARCH = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_search"
     CURRENT_PACKAGE_LIST_WITH_RESOURCES = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.current_package_list_with_resources"
-    # Need to add the rest !!
+    ORGANIZATION_LIST = "https://docs.ckan.org/en/2.10/api/index.html#ckan.logic.action.get.organization_list"
+    # Need to add the rest...
 
 
 class CkanApiPaths:
@@ -44,10 +45,9 @@ class OpenDataSoftApiPaths:
     BASE_PATH = "/api/v2/catalog/{}"
     SHOW_DATASETS = BASE_PATH.format("datasets")
 
-    # Alternativre base paths...
+    # Alternative base paths...
     BASE_PATH_2 = "/api/explore/v2.0/catalog/{}"
     SHOW_DATASETS_2 = BASE_PATH_2.format("datasets")
-
     # Add more paths as needed...
 
 
