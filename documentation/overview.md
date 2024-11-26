@@ -43,11 +43,14 @@ if __name__ == "__main__":
 
 #### Initialisation
 ```python
-from cat_session import CatSession
-from cat_explorer import OpenDataSoftCatExplorer
+import HerdingCats as hc
 
-with CatSession("ukpowernetworks.opendatasoft.com") as session:
-    explorer = OpenDataSoftCatExplorer(session)
+def main():
+    with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
+        explore = hc.OpenDataSoftCatExplorer(session)
+
+if __name__ == "__main__":
+    main()
 ```
 
 #### Methods
@@ -131,10 +134,10 @@ def main():
         polars_df = loader.polars_data_loader(resource_list)
         pandas_df = loader.pandas_data_loader(resource_list)
 
-        # Load into in-memory DuckDB
+        # Load into in-memory DuckDB and specify db name and table name
         loader.duckdb_data_loader(resource_list, "cycle_hire_db", "daily_hires")
 
-        # Load into S3 as Parquet
+        # Load into S3 as Parquet - AWS creds need to be configured with something like AWS vault for this
         loader.aws_s3_data_loader(
             resource_list,
             "my-data-bucket",
@@ -146,9 +149,9 @@ if __name__ == "__main__":
     main()
 ```
 
-## Supported Data Formats for Resource Loader
+## Supported File Types for Resource Loader
 
-The library currently supports the following data formats:
+The Resource Loader currently supports the following data formats:
 - Excel (.xlsx) ✅
 - CSV ✅
 - JSON (partial support) ✅
@@ -159,9 +162,9 @@ Future format support planned for:
 - Shapefile
 - GeoJSON
 
-## Storage Solutions
+## Data Formats and Storage Solutions
 
-Current storage solutions supported:
+Current data formats and storage solutions supported:
 - Polars DataFrame ✅
 - Pandas DataFrame ✅
 - DuckDB (local) ✅
