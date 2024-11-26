@@ -4,6 +4,7 @@ from enum import Enum
 class CkanApiPathsDocs:
     PACKAGE_LIST = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_list"
     PACKAGE_SEARCH = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_search"
+    CURRENT_PACKAGE_LIST_WITH_RESOURCES = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.current_package_list_with_resources"
     # Need to add the rest !!
 
 
@@ -15,6 +16,7 @@ class CkanApiPaths:
     CURRENT_PACKAGE_LIST_WITH_RESOURCES = BASE_PATH.format(
         "current_package_list_with_resources"
     )
+    ORGANIZATION_LIST = BASE_PATH.format("organization_list")
     # Add more paths as needed...
 
 
@@ -22,8 +24,8 @@ class CkanDataCatalogues(Enum):
     LONDON_DATA_STORE = "https://data.london.gov.uk"
     UK_GOV = "https://data.gov.uk"
     SUBAK = "https://data.subak.org"
-    HUMANITARIAN = "https://data.humdata.org"
-    AFRICA = "https://open.africa"
+    HUMANITARIAN_DATA_STORE = "https://data.humdata.org"
+    OPEN_AFRICA = "https://open.africa"
     # CANADA_GOV = "https://search.open.canada.ca/opendata" NEED TO LOOK INTO THIS ONE MORE
     # NORTHERN_DATA_MILL = "https://datamillnorth.org" NEED TO LOOK INTO THIS ONE MORE
     # Add more catalogues as needed...

@@ -1,11 +1,10 @@
-from numpy._core.multiarray import empty
 import requests
 import pandas as pd
 import polars as pl
 import duckdb
 import json
 
-from typing import Any, Dict, Optional, Union, Literal, List
+from typing import Any, Dict, Optional, Union, Literal, List, Tuple
 from loguru import logger
 from urllib.parse import urlencode
 
@@ -29,9 +28,14 @@ class CkanCatExplorer:
             CkanCatSession
 
         # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+                explore = hc.CkanCatExplorer(session)
+
         if __name__ == "__main__":
-            with CatSession("data.london.gov.uk") as session:
-                explore = CkanCatExplorer(session)
+            main()
         """
         self.cat_session = cat_session
 
@@ -42,7 +46,7 @@ class CkanCatExplorer:
         """
         Make sure the Ckan endpoints are healthy and reachable
 
-        This calls the Ckan package_list endpoint to check if site is reacheable.
+        This calls the Ckan package_list endpoint to check if site is still reacheable.
 
         # Example usage...
         if __name__ == "__main__":
@@ -361,6 +365,38 @@ class CkanCatExplorer:
             logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
+    def get_organisation_list(self) -> Tuple[int, list]:
+        """
+        Returns total number of orgs or maintainers if org endpoint does not work,
+        as well as list of the org or mantainers themselves.
+
+        """
+        url = self.cat_session.base_url + CkanApiPaths.ORGANIZATION_LIST
+        try:
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            data = response.json()
+            organisations = data["result"]
+            length = len(organisations)
+            return length, organisations
+        except (requests.RequestException, Exception) as e:
+            logger.warning(f"Primary organisation search method failed - attempting secondary method that fetches 'maintainers' only - this may still be useful but not as accurate: {e}")
+            try:
+                # Secondary method using package endpoint
+                package_url = self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
+                package_response = self.cat_session.session.get(package_url)
+                package_response.raise_for_status()
+                data = package_response.json()
+
+                # Convert list of maintainers to a dictionary
+                maintainers = list(set(entry.get("maintainer", "N/A") for entry in data["result"] if entry.get("maintainer")))
+                length = len(maintainers)
+                return length, maintainers
+
+            except (requests.RequestException, Exception) as e:
+                logger.error(f"Both organization list methods failed: {e}")
+                raise
+
     # ----------------------------
     # Show catalogue freshness
     # ----------------------------
@@ -374,7 +410,7 @@ class CkanCatExplorer:
         It currently uses metadata_modified at the dataset level - not resource level.
         """
         logger.warning(
-            "This method might not work for all catalogues, and will return 0s. It currently only works for the London Datastore. We are working on improving this"
+            "This method DOES NOT work for all catalogues, and will return 0s. It currently only works for the London Datastore. We are working on improving and fixing this."
         )
 
         url = (
