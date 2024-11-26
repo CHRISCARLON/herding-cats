@@ -198,7 +198,7 @@ if __name__ == "__main__":
 
 ## Supported File Types for Resource Loader
 
-The Resource Loader currently supports the following data formats:
+The Resource Loader currently supports the following resource file types:
 - Excel (.xlsx) ✅
 - CSV ✅
 - JSON (partial support) ✅
