@@ -326,8 +326,6 @@ class CkanCatExplorer:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
-            result = data["result"]
-            data = response.json()
             dictionary_prep = data["result"]
             dictionary_data = [
                 {

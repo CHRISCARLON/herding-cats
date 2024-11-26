@@ -1,7 +1,6 @@
 import pytest
 from HerdingCats.session.cat_session import CatSession
 from HerdingCats.explorer.cat_explore import CkanCatExplorer
-from HerdingCats.errors.cats_errors import CatExplorerError
 import requests
 from loguru import logger
 

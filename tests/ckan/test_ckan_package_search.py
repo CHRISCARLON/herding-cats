@@ -4,7 +4,6 @@ import requests
 from pprint import pprint
 from HerdingCats.session.cat_session import CatSession
 from HerdingCats.explorer.cat_explore import CkanCatExplorer
-from HerdingCats.errors.cats_errors import CatExplorerError
 from loguru import logger
 
 CATALOGUES = ["https://data.london.gov.uk"]

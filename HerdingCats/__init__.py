@@ -13,6 +13,7 @@ __all__ = [
     "CkanDataCatalogues",
     "OpenDataSoftDataCatalogues",
     "OpenDataSoftCatExplorer",
+    "CkanApiPathsDocs"
 ]
 
 __version__ = "0.1.4"
