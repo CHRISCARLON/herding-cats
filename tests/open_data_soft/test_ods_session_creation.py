@@ -7,7 +7,7 @@ def domain():
 
 def test_cat_session_creation(domain):
     """
-    Check that a valid Ckan session can be created
+    Check that a valid Ckan session can be created...
     """
     try:
         session = CatSession(domain)
