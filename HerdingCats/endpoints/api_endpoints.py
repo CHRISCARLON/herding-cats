@@ -6,7 +6,7 @@ class CkanApiPathsDocs:
     PACKAGE_SEARCH = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_search"
     CURRENT_PACKAGE_LIST_WITH_RESOURCES = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.current_package_list_with_resources"
     ORGANIZATION_LIST = "https://docs.ckan.org/en/2.10/api/index.html#ckan.logic.action.get.organization_list"
-    # Need to add the rest...
+    # Need to add the rest....
 
 
 class CkanApiPaths:
