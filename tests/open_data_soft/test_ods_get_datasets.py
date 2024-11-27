@@ -9,7 +9,7 @@ CATALOGUES = ["https://ukpowernetworks.opendatasoft.com"]
 @pytest.mark.parametrize("catalogue_url", CATALOGUES)
 def test_package_list_dictionary(catalogue_url):
     """
-    Test the package list functionality for predefined data catalogues
+    Test the package list functionality for predefined data catalogues...
     """
     with CatSession(catalogue_url) as cat_session:
         explorer = OpenDataSoftCatExplorer(cat_session)
