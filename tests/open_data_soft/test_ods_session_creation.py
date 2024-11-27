@@ -19,7 +19,7 @@ def test_cat_session_creation(domain):
             session.base_url == f"https://{domain}"
         ), "OpenDataSoftCatSession should have the correct base URL"
     except Exception as e:
-        pytest.fail(f"Failed to create OpenDataSoftCatSession: {str(e)}")
+        pytest.fail(f"Failed to create OpenDataSoftCatSession!: {str(e)}")
 
 
 def test_cat_session_start(domain):
