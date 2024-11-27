@@ -55,98 +55,77 @@ class CkanCatResourceLoader:
     # ----------------------------
     # Load data into a variety of formats for aggregation and analysis
     # ----------------------------
-    def polars_data_loader(
-        self, resource_data: Optional[List]
-    ) -> Optional[pl.DataFrame]:
+    def polars_data_loader(self, resource_data: Optional[List]) -> pl.DataFrame:
         """
-        Isolate a specific resource using the Explorer Class.
+        Load a resource into a Polars DataFrame from a URL.
+        Supports Excel (.xlsx) and CSV formats.
 
-        Load a resource into a dataframe for further exploration.
+        Args:
+            resource_data: List containing [format, url] of the resource
 
-        # Example usage...
-        import HerdingCats as hc
-
-        def main():
-            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
-                explore = hc.CkanCatExplorer(session)
-                all_packages = explore.package_list_dictionary()
-                data = all_packages.get("number-bicycle-hires")
-                info = explore.package_show_info_json(data)
-                resource_list = explore.extract_resource_url(info, "tfl-daily-cycle-hires.xls")
-                resource_loader = hc.CkanCatResourceLoader()
-                polars_df = resource_loader.polars_data_loader(resource_list)
-                print(polars_df)
-
-        if __name__ =="__main__":
-            main()
-
+        Returns:
+            Optional[pl.DataFrame]: Loaded DataFrame or None if loading fails
         """
-        if resource_data:
+        try:
+            if not resource_data:
+                logger.error("No resource data provided")
+                raise
+
             url = resource_data[1]
+            file_format = resource_data[0].lower()
+
             response = requests.get(url)
             response.raise_for_status()
             binary_data = BytesIO(response.content)
 
-            file_format = resource_data[0]
-
-            if file_format and (
-                file_format.lower() == "spreadsheet" or file_format.lower() == "xlsx"
-            ):
-                df = pl.read_excel(binary_data)
-                return df
-            elif file_format and file_format.lower() == "csv":
-                df = pl.read_csv(binary_data)
-                return df
+            if file_format in ["spreadsheet", "xlsx"]:
+                return pl.read_excel(binary_data)
+            elif file_format == "csv":
+                return pl.read_csv(binary_data)
             else:
-                logger.error("Error")
-        else:
-            logger.error("Error")
+                logger.error(f"Unsupported format: {file_format}")
+                raise
+
+        except Exception as e:
+            logger.error(f"Failed to load data: {str(e)}")
+            raise
 
     def pandas_data_loader(
         self, resource_data: Optional[List]
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame:
         """
-        Isolate a specific resource using the Explorer Class.
+        Load a resource into a Polars DataFrame from a URL.
+        Supports Excel (.xlsx) and CSV formats.
 
-        Load a resource into a dataframe for further exploration.
+        Args:
+            resource_data: List containing [format, url] of the resource
 
-        # Example usage...
-        import HerdingCats as hc
-
-        def main():
-            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
-                explore = hc.CkanCatExplorer(session)
-                all_packages = explore.package_list_dictionary()
-                data = all_packages.get("number-bicycle-hires")
-                info = explore.package_show_info_json(data)
-                resource_list = explore.extract_resource_url(info, "tfl-daily-cycle-hires.xls")
-                resource_loader = hc.CkanCatResourceLoader()
-                pandas_df = resource_loader.pandas_data_loader(resource_list)
-                print(pandas_df)
-
-        if __name__ =="__main__":
-            main()
+        Returns:
+            Optional[pl.DataFrame]: Loaded DataFrame or None if loading fails
         """
-        if resource_data:
+        try:
+            if not resource_data:
+                logger.error("No resource data provided")
+                raise
+
             url = resource_data[1]
+            file_format = resource_data[0].lower()
+
             response = requests.get(url)
             response.raise_for_status()
             binary_data = BytesIO(response.content)
 
-            file_format = resource_data[0]
-
-            if file_format and (
-                file_format.lower() == "spreadsheet" or file_format.lower() == "xlsx"
-            ):
-                df = pd.read_excel(binary_data)
-                return df
-            elif file_format and file_format.lower() == "csv":
-                df = pd.read_csv(binary_data)
-                return df
+            if file_format in ["spreadsheet", "xlsx"]:
+                return pd.read_excel(binary_data)
+            elif file_format == "csv":
+                return pd.read_csv(binary_data)
             else:
-                logger.error("Error")
-        else:
-            logger.error("Error")
+                logger.error(f"Unsupported format: {file_format}")
+                raise
+
+        except Exception as e:
+            logger.error(f"Failed to load data: {str(e)}")
+            raise
 
     def duckdb_data_loader(
         self, resource_data: Optional[List], duckdb_name: str, table_name: str

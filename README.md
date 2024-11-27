@@ -1,7 +1,5 @@
 # Herding-CATs 🐈‍⬛
 
-Current Version: 0.1.4
-
 [![codecov](https://codecov.io/gh/CHRISCARLON/Herding-CATs/graph/badge.svg?token=Y9Z0QA39S3)](https://codecov.io/gh/CHRISCARLON/Herding-CATs)
 
 ## Purpose
@@ -10,8 +8,8 @@ Current Version: 0.1.4
 
 This will improve and speed up how people:
   - Navigate open data catalogues
-  - Find the data they need
-  - Get data into a format / location for further analysis
+  - Find the data that they need
+  - Get that data into a format and/or location for further analysis
 
 > [!NOTE]
 > Herding-CATs is currently under active development. Features may change as the project evolves.
@@ -24,7 +22,7 @@ This will improve and speed up how people:
 
 Herding-CATs supports the following catalogues by default:
 
-### Default
+### Default Catalogues
 
 | Catalogue Name | Website | Catalogue Endpoint
 |----------------|---------|-------------------|
@@ -36,8 +34,10 @@ Herding-CATs supports the following catalogues by default:
 | Infrabel | https://opendata.infrabel.be | Open Datasoft |
 | Paris | https://opendata.paris.fr | Open Datasoft |
 | Toulouse | https://data.toulouse-metropole.fr | Open Datasoft |
+| Elia Belgian Energy | https://opendata.elia.be | Open Datasoft |
+| EDF Energy | https://opendata.edf.fr | Open Datasoft |
 
-### TBC
+### TBC Catalogues
 
 | Catalogue Name | Website | Catalogue API Endpoint Definition | Comments |
 |----------------|---------|-----------------------------------|----------|
@@ -49,20 +49,21 @@ Herding-CATs supports the following catalogues by default:
 # Herding-Cats Quick Start!🏃‍♂️‍➡️
 
 ## Overview
-This Python library currently provides a way to explore CKAN and OpenDataSoft data catalogues.
+This Python library provides a way to explore and interact with CKAN and OpenDataSoft data catalogues. It includes four main classes:
 
-It currently includes three main classes:
 1. `CkanCatExplorer`: For exploring CKAN-based data catalogues
 2. `OpenDataSoftCatExplorer`: For exploring OpenDataSoft-based data catalogues
-3. `CkanCatResourceLoader`: For loading and transforming catalogue data
+3. `CkanCatResourceLoader`: For loading and transforming CKAN catalogue data
+4. `OpenDataSoftResourceLoader`: For loading and transforming OpenDataSoft catalogue data
 
-Both explorer classes are designed to work with a `CatSession` object, which handles the connection to the chosen data catalogue.
+All explorer classes work with a `CatSession` object that handles the connection to the chosen data catalogue.
 
 ## Usage
 
-### CkanCatExplorer
+### CKAN Components
 
-#### Initialisation
+#### CkanCatExplorer
+
 ```python
 import HerdingCats as hc
 
@@ -74,23 +75,64 @@ if __name__ == "__main__":
     main()
 ```
 
-#### Methods
-1. `check_site_health()`: Checks the health of the CKAN site.
-2. `get_package_count()`: Returns the total number of packages in a catalogue.
-3. `package_list_dictionary()`: Returns a dictionary of all available packages.
-4. `package_list_dataframe(df_type: Literal["pandas", "polars"])`: Returns a dataframe of all available packages.
-5. `package_list_dictionary_extra()`: Returns a dictionary with extra package information.
-6. `catalogue_freshness()`: Provides a view of how many resources have been updated in the last 6 months. THIS ONLY WORKS WITH THE LONDON DATASTORE AND IS CURRENTLY BEING IMPROVED.
-7. `package_show_info_json(package_name: Union[str, dict, Any])`: Returns package metadata including resource information.
-8. `package_search_json(search_query: str, num_rows: int)`: Searches for packages and returns results as JSON.
-9. `package_search_condense_json_unpacked(search_query: str, num_rows: int)`: Returns a condensed view of package information.
-10. `package_search_condense_dataframe_packed(search_query: str, num_rows: int, df_type: Literal["pandas", "polars"])`: Returns a condensed view of package information as a dataframe with packed resources.
-11. `package_search_condense_dataframe_unpacked(search_query: str, num_rows: int, df_type: Literal["pandas", "polars"])`: Returns a condensed view of package information as a dataframe with unpacked resources.
-12. `extract_resource_url(package_info: List[Dict], resource_name: str)`: Extracts the URL and format of a specific resource from a package.
+##### Methods
+1. `check_site_health()`: Checks the health of the CKAN site
+2. `get_package_count()`: Returns the total number of packages in a catalogue
+3. `package_list_dictionary()`: Returns a dictionary of all available packages
+4. `package_list_dataframe(df_type: Literal["pandas", "polars"])`: Returns a dataframe of all available packages
+5. `package_list_dictionary_extra()`: Returns a dictionary with extra package information
+6. `catalogue_freshness()`: Provides a view of how many resources have been updated in the last 6 months (London Datastore only)
+7. `package_show_info_json(package_name: Union[str, dict, Any])`: Returns package metadata including resource information
+8. `package_search_json(search_query: str, num_rows: int)`: Searches for packages and returns results as JSON
+9. `package_search_condense_json_unpacked(search_query: str, num_rows: int)`: Returns a condensed view of package information
+10. `package_search_condense_dataframe_packed(search_query: str, num_rows: int, df_type: Literal["pandas", "polars"])`: Returns a condensed view with packed resources
+11. `package_search_condense_dataframe_unpacked(search_query: str, num_rows: int, df_type: Literal["pandas", "polars"])`: Returns a condensed view with unpacked resources
+12. `extract_resource_url(package_info: List[Dict], resource_name: str)`: Extracts the URL and format of a specific resource
 
-### OpenDataSoftCatExplorer
+#### CkanCatResourceLoader
 
-#### Initialisation
+```python
+import HerdingCats as hc
+
+def main():
+    with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+        explore = hc.CkanCatExplorer(session)
+        loader = hc.CkanCatResourceLoader()
+
+if __name__ == "__main__":
+    main()
+```
+
+##### Methods
+
+###### Data Frame Loaders
+- `polars_data_loader(resource_data: Optional[List]) -> Optional[pl.DataFrame]`
+  - Loads data into a Polars DataFrame
+  - Supports Excel (.xlsx) and CSV formats
+
+- `pandas_data_loader(resource_data: Optional[List]) -> Optional[pd.DataFrame]`
+  - Loads data into a Pandas DataFrame
+  - Supports Excel (.xlsx) and CSV formats
+
+###### Database Loaders
+- `duckdb_data_loader(resource_data: Optional[List], duckdb_name: str, table_name: str)`
+  - Loads data into a local DuckDB database
+  - Supports Excel (.xlsx) and CSV formats
+
+- `motherduck_data_loader(resource_data: Optional[List[str]], token: str, duckdb_name: str, table_name: str)`
+  - Loads data into MotherDuck
+  - Supports Excel (.xlsx), CSV, and JSON formats
+
+###### Cloud Storage Loaders
+- `aws_s3_data_loader(resource_data: Optional[List[str]], bucket_name: str, custom_name: str, mode: Literal["raw", "parquet"])`
+  - Loads data into an AWS S3 bucket
+  - Supports raw file upload or Parquet conversion
+  - Supports Excel (.xlsx), CSV, and JSON formats
+
+### OpenDataSoft Components
+
+#### OpenDataSoftCatExplorer
+
 ```python
 import HerdingCats as hc
 
@@ -102,129 +144,95 @@ if __name__ == "__main__":
     main()
 ```
 
-#### Methods
-1. `fetch_all_datasets()`: Retrieves all datasets from an OpenDataSoft catalogue.
+##### Methods
+1. `fetch_all_datasets()`: Retrieves all datasets from an OpenDataSoft catalogue
+2. `show_dataset_info_dict(dataset_id)`: Returns detailed metadata about a specific dataset
+3. `show_dataset_export_options_dict(dataset_id)`: Returns available export formats and download URLs
 
-### CkanCatResourceLoader
+#### OpenDataSoftResourceLoader
 
-The `CkanCatResourceLoader` class provides functionality to load and transform data from CKAN resources into various formats and storage solutions.
-
-#### Initialisation
 ```python
 import HerdingCats as hc
 
 def main():
-    with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
-        explore = hc.CkanCatExplorer(session)
-        loader = hc.CkanCatResourceLoader()
+    with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
+        explore = hc.OpenDataSoftCatExplorer(session)
+        loader = hc.OpenDataSoftResourceLoader()
 
 if __name__ == "__main__":
     main()
 ```
 
-#### Methods
+##### Methods
 
-##### Data Frame Loaders
+###### Data Frame Loaders
+- `polars_data_loader(resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None) -> pl.DataFrame`
+  - Loads Parquet data into a Polars DataFrame
+  - Optional API key for authenticated access
 
-1. `polars_data_loader(resource_data: Optional[List]) -> Optional[pl.DataFrame]`
-   - Loads data into a Polars DataFrame
-   - Supports Excel (.xlsx) and CSV formats
-   - Returns None if loading fails
+- `pandas_data_loader(resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None) -> pd.DataFrame`
+  - Loads Parquet data into a Pandas DataFrame
+  - Optional API key for authenticated access
 
-2. `pandas_data_loader(resource_data: Optional[List]) -> Optional[pd.DataFrame]`
-   - Loads data into a Pandas DataFrame
-   - Supports Excel (.xlsx) and CSV formats
-   - Returns None if loading fails
+###### Database Loaders
+- `duckdb_data_loader(resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None) -> duckdb.DuckDBPyConnection`
+  - Loads Parquet data into an in-memory DuckDB database
+  - Optional API key for authenticated access
 
-##### Database Loaders
+###### Cloud Storage Loaders
+- `aws_s3_data_loader(resource_data: Optional[List[Dict]], bucket_name: str, custom_name: str, api_key: Optional[str] = None)`
+  - Loads Parquet data into an AWS S3 bucket
+  - Optional API key for authenticated access
+  - Requires configured AWS credentials
 
-3. `duckdb_data_loader(resource_data: Optional[List], duckdb_name: str, table_name: str)`
-   - Loads data into a local DuckDB database
-   - Creates a new table with the specified name
-   - Supports Excel (.xlsx) and CSV formats
+## Examples
 
-4. `motherduck_data_loader(resource_data: Optional[List[str]], token: str, duckdb_name: str, table_name: str)`
-   - Loads data into a MotherDuck cloud database
-   - Requires a valid MotherDuck authentication token
-   - Supports Excel (.xlsx), CSV, and JSON formats
-   - Creates a new table if it doesn't exist
-
-##### Cloud Storage Loaders
-
-5. `aws_s3_data_loader(resource_data: Optional[List[str]], bucket_name: str, custom_name: str, mode: Literal["raw", "parquet"])`
-   - Loads data into an AWS S3 bucket
-   - Two modes available:
-     - `raw`: Uploads the file in its original format
-     - `parquet`: Converts the file to Parquet format before uploading
-   - Supports Excel (.xlsx), CSV, and JSON formats
-   - Generates unique filenames using UUID
-   - Requires appropriate AWS credentials configured
-
-#### Example Usage
+### CKAN Example
 
 ```python
 import HerdingCats as hc
 
 def main():
-    with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
-        # Set up explorer and loader
+    with hc.CatSession(hc.CkanDataCatalogues.HUMANITARIAN_DATA_STORE) as session:
         explore = hc.CkanCatExplorer(session)
         loader = hc.CkanCatResourceLoader()
 
-        # Get package information
-        all_packages = explore.package_list_dictionary()
-        cycle_hire_data = all_packages.get("number-bicycle-hires")
-        info = explore.package_show_info_json(cycle_hire_data)
+        list = explore.package_list_dictionary()
+        data = explore.package_show_info_json("burkina-faso-violence-against-civilians-and-vital-civilian-facilities")
+        data_prep = explore.extract_resource_url(data, "2020-2024-BFA Aid Worker KIKA Incident Data.xlsx")
 
-        # Extract specific resource
-        resource_list = explore.extract_resource_url(info, "tfl-daily-cycle-hires.xls")
+        df = loader.polars_data_loader(data_prep)
+        df_2 = loader.pandas_data_loader(data_prep)
+
+        print(df.head(15))
+        print(df_2.head(15))
+
+if __name__ == "__main__":
+    main()
+
+```
+
+### OpenDataSoft Example
+
+For some data catalogues a free api key is required.
+
+Simply sign up to the datastore to generate an api key.
+
+```python
+import HerdingCats as hc
+
+def main():
+    with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
+        explore = hc.OpenDataSoftCatExplorer(session)
+        loader = hc.OpenDataSoftResourceLoader()
+
+        # Get dataset export options
+        data = explore.show_dataset_export_options_dict("ukpn-smart-meter-installation-volumes")
 
         # Load into different formats
-        polars_df = loader.polars_data_loader(resource_list)
-        pandas_df = loader.pandas_data_loader(resource_list)
-
-        # Load into in-memory DuckDB and specify db name and table name
-        loader.duckdb_data_loader(resource_list, "cycle_hire_db", "daily_hires")
-
-        # Load into S3 as Parquet - AWS creds need to be configured with something like AWS vault for this
-        loader.aws_s3_data_loader(
-            resource_list,
-            "my-data-bucket",
-            "cycle-hire-data",
-            mode="parquet"
-        )
+        pl_df = loader.polars_data_loader(data, "parquet", "your_api_key")
+        print(pl_df.head(15))
 
 if __name__ == "__main__":
     main()
 ```
-
-## Supported File Types for Resource Loader
-
-The Resource Loader currently supports the following resource file types:
-- Excel (.xlsx) ✅
-- CSV ✅
-- JSON (partial support) ✅
-- Parquet (for S3 storage) ✅
-
-Future format support planned for:
-- GeoPackage
-- Shapefile
-- GeoJSON
-
-## Data Formats and Storage Solutions
-
-Current data formats and storage solutions supported:
-- Polars DataFrame ✅
-- Pandas DataFrame ✅
-- DuckDB (local) ✅
-- MotherDuck (cloud) ✅
-- AWS S3 ✅
-
-Planned future support for:
-- S3 (DeltaLake)
-- S3 (Iceberg)
-- Amazon Redshift
-- Databricks
-- Snowflake
-- Google Cloud Storage
-- Google BigQuery

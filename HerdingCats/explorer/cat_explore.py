@@ -430,7 +430,7 @@ class CkanCatExplorer:
                 for entry in dictionary_prep
             ]
 
-            df = self._duckdb_explore(
+            df = self.__duckdb_explore(
                 dictionary_data,
                 "freshness",
                 """
@@ -492,7 +492,7 @@ class CkanCatExplorer:
             data = response.json()
             result_data = data["result"]
 
-            return self._extract_resource_data(result_data)
+            return self.__extract_resource_data(result_data)
 
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
@@ -595,7 +595,7 @@ class CkanCatExplorer:
                     "Neither 'result' nor 'results' key found in the API response"
                 )
 
-            return self._extract_condensed_package_data(
+            return self.__extract_condensed_package_data(
                 result_data,
                 ["name", "notes_markdown"],
                 ["name", "created", "format", "url"],
@@ -685,7 +685,7 @@ class CkanCatExplorer:
                     "Neither 'result' nor 'results' key found in the API response"
                 )
 
-            extracted_data = self._extract_condensed_package_data(
+            extracted_data = self.__extract_condensed_package_data(
                 result_data,
                 ["name", "notes_markdown", "num_resources"],
                 ["name", "created", "format", "url"],
@@ -791,16 +791,16 @@ class CkanCatExplorer:
                     "Neither 'result' nor 'results' key found in the API response"
                 )
 
-            extracted_data = self._extract_condensed_package_data(
+            extracted_data = self.__extract_condensed_package_data(
                 result_data,
                 ["name", "notes_markdown"],
                 ["name", "created", "format", "url"],
             )
 
             if df_type.lower() == "polars":
-                return self._create_polars_dataframe(extracted_data)
+                return self.__create_polars_dataframe(extracted_data)
             else:  # pandas
-                return self._create_pandas_dataframe(extracted_data)
+                return self.__create_pandas_dataframe(extracted_data)
 
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
@@ -853,7 +853,7 @@ class CkanCatExplorer:
                     return None
 
     @staticmethod
-    def _extract_condensed_package_data(
+    def __extract_condensed_package_data(
         data: List[Dict[str, Any]], fields: List[str], resource_fields: List[str]
     ) -> List[Dict[str, Any]]:
         """
@@ -900,7 +900,7 @@ class CkanCatExplorer:
         ]
 
     @staticmethod
-    def _create_pandas_dataframe(data: List[Dict[str, Any]]) -> pd.DataFrame:
+    def __create_pandas_dataframe(data: List[Dict[str, Any]]) -> pd.DataFrame:
         """TBC"""
         df = pd.json_normalize(
             data,
@@ -911,7 +911,7 @@ class CkanCatExplorer:
         return df
 
     @staticmethod
-    def _create_polars_dataframe(data: List[Dict[str, Any]]) -> pl.DataFrame:
+    def __create_polars_dataframe(data: List[Dict[str, Any]]) -> pl.DataFrame:
         """TBC"""
         df = pl.DataFrame(data)
         return (
@@ -926,7 +926,7 @@ class CkanCatExplorer:
         )
 
     @staticmethod
-    def _extract_resource_data(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def __extract_resource_data(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts specific fields for a specific package and creates a list of dictionaries,
         one for each resource, containing the specified fields.
@@ -954,7 +954,7 @@ class CkanCatExplorer:
         return result
 
     @staticmethod
-    def _duckdb_explore(
+    def __duckdb_explore(
         data: List[Dict[str, Any]],
         table_name: str,
         query: str = "",
