@@ -198,6 +198,7 @@ def main():
         loader = hc.CkanCatResourceLoader()
 
         list = explore.package_list_dictionary()
+
         data = explore.package_show_info_json("burkina-faso-violence-against-civilians-and-vital-civilian-facilities")
         data_prep = explore.extract_resource_url(data, "2020-2024-BFA Aid Worker KIKA Incident Data.xlsx")
 
@@ -226,10 +227,7 @@ def main():
         explore = hc.OpenDataSoftCatExplorer(session)
         loader = hc.OpenDataSoftResourceLoader()
 
-        # Get dataset export options
         data = explore.show_dataset_export_options_dict("ukpn-smart-meter-installation-volumes")
-
-        # Load into different formats
         pl_df = loader.polars_data_loader(data, "parquet", "your_api_key")
         print(pl_df.head(15))
 
