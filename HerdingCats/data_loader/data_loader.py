@@ -7,8 +7,9 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import uuid
 
+from ..errors.cats_errors import OpenDataSoftExplorerError
 from io import BytesIO
-from typing import Optional, Literal, List
+from typing import Optional, Literal, List, Dict
 from loguru import logger
 from botocore.exceptions import ClientError
 
@@ -399,3 +400,68 @@ class CkanCatResourceLoader:
         except requests.RequestException as e:
             logger.error(f"Error fetching data from URL: {e}")
             return
+
+class OpenDataSoftResourceLoader:
+    def __init__(self) -> None:
+        pass
+
+    def polars_data_loader(
+            self, resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None
+        ) -> pl.DataFrame:
+            """
+            Load data from a resource URL into a Polars DataFrame.
+            Args:
+                resource_data: List of dictionaries containing resource information
+                format_type: Expected format type (currently only supports 'parquet')
+                api_key: Optional API key for authentication with OpenDataSoft
+            Returns:
+                Polars DataFrame
+            Raises:
+                OpenDataSoftExplorerError: If resource data is missing or download fails
+
+            # Example usage
+            import HerdingCats as hc
+            from pprint import pprint
+
+            def main():
+                with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
+                    explore = hc.OpenDataSoftCatExplorer(session)
+                    data_loader = hc.OpenDataSoftResourceLoader()
+
+                    data = explore.show_dataset_export_options_dict("ukpn-smart-meter-installation-volumes")
+                    pl_df = data_loader.polars_data_loader(data, "parquet", "api_key")
+                    print(pl_df.head(10))
+
+            if __name__ == "__main__":
+                main()
+
+            """
+            if not resource_data:
+                raise OpenDataSoftExplorerError("No resource data provided")
+
+            headers = {'Accept': 'application/parquet'}
+            if api_key:
+                headers['Authorization'] = f'apikey {api_key}'
+
+            for resource in resource_data:
+                if resource.get('format', '').lower() == 'parquet':
+                    url = resource.get('download_url')
+                    if not url:
+                        continue
+                    try:
+                        response = requests.get(url, headers=headers)
+                        response.raise_for_status()
+                        binary_data = BytesIO(response.content)
+                        df = pl.read_parquet(binary_data)
+
+                        if df.height == 0 and not api_key:
+                            raise OpenDataSoftExplorerError(
+                                "Received empty DataFrame. This likely means an API key is required for this dataset. "
+                                "Please provide an API key and try again. You can usually do this by creating an account with the datastore you are tyring to access"
+                            )
+                        return df
+
+                    except (requests.RequestException, Exception) as e:
+                        raise OpenDataSoftExplorerError("Failed to download resource", e)
+
+            raise OpenDataSoftExplorerError("No parquet format resource found")

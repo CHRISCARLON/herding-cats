@@ -140,7 +140,6 @@ class CkanCatExplorer:
             dictionary_data = {item: item for item in dictionary_prep}
             return dictionary_data
         except requests.RequestException as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     def package_list_dataframe(
@@ -216,7 +215,6 @@ class CkanCatExplorer:
                     raise ValueError(f"Unsupported DataFrame type: {df_type}")
 
         except (requests.RequestException, Exception) as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     def package_list_dictionary_extra(self):
@@ -257,7 +255,6 @@ class CkanCatExplorer:
             ]
             return dictionary_data
         except requests.RequestException as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
         return
 
@@ -360,7 +357,6 @@ class CkanCatExplorer:
                     raise ValueError(f"Unsupported DataFrame type: {df_type}")
 
         except (requests.RequestException, Exception) as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     def get_organisation_list(self) -> Tuple[int, list]:
@@ -458,7 +454,6 @@ class CkanCatExplorer:
             return df
 
         except requests.RequestException as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     # ----------------------------
@@ -500,7 +495,6 @@ class CkanCatExplorer:
             return self._extract_resource_data(result_data)
 
         except requests.RequestException as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     # ----------------------------
@@ -542,7 +536,6 @@ class CkanCatExplorer:
             data = response.json()
             return data["result"]
         except requests.RequestException as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     def package_search_condense_json_unpacked(
@@ -609,7 +602,6 @@ class CkanCatExplorer:
             )
 
         except requests.RequestException as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     def package_search_condense_dataframe_packed(
@@ -705,7 +697,6 @@ class CkanCatExplorer:
                 return pd.DataFrame(extracted_data)
 
         except requests.RequestException as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     def package_search_condense_dataframe_unpacked(
@@ -812,7 +803,6 @@ class CkanCatExplorer:
                 return self._create_pandas_dataframe(extracted_data)
 
         except requests.RequestException as e:
-            logger.error(f"Failed to search datasets: {e}")
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     # ----------------------------
@@ -1104,3 +1094,51 @@ class OpenDataSoftCatExplorer:
         else:
             logger.warning("No datasets were retrieved.")
             return None
+
+    def show_dataset_info_dict(self, dataset_id):
+        urls = [
+            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_INFO.format(dataset_id),
+            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_INFO.format(dataset_id),
+        ]
+        last_error = []
+        for url in urls:
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                data = response.json()
+                return data
+            except requests.RequestException as e:
+                last_error = e
+                continue
+        error_msg = f"\033[91mFailed to fetch dataset: {str(last_error)}. Are you sure this dataset exists? Check again.\033[0m"
+        raise CatExplorerError(error_msg)
+
+    def show_dataset_export_options_dict(self, dataset_id):
+        urls = [
+            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_EXPORTS.format(dataset_id),
+            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_EXPORTS_2.format(dataset_id),
+        ]
+        last_error = []
+        for url in urls:
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                data = response.json()
+
+                # Extract download links and formats
+                export_options = []
+                for link in data['links']:
+                    if link['rel'] != 'self':
+                        export_options.append({
+                            'format': link['rel'],
+                            'download_url': link['href']
+                        })
+
+                return export_options
+
+            except requests.RequestException as e:
+                last_error = e
+                continue
+
+        error_msg = f"\033[91mFailed to fetch dataset: {str(last_error)}. Are you sure this dataset exists? Check again.\033[0m"
+        raise CatExplorerError(error_msg)

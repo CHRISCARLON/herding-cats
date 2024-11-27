@@ -38,16 +38,21 @@ class OpenDataSoftDataCatalogues(Enum):
     INFRABEL = "https://opendata.infrabel.be"
     PARIS = "https://opendata.paris.fr"
     TOULOUSE = "https://data.toulouse-metropole.fr"
+    ELIA_BELGIAN_ENERGY = "https://opendata.elia.be"
     # Add more catalogues as needed...
 
 class OpenDataSoftApiPaths:
     # Normal base paths...
     BASE_PATH = "/api/v2/catalog/{}"
     SHOW_DATASETS = BASE_PATH.format("datasets")
+    SHOW_DATASET_INFO = BASE_PATH.format("datasets/{}")
+    SHOW_DATASET_EXPORTS = BASE_PATH.format("datasets/{}/exports")
 
     # Alternative base paths...
     BASE_PATH_2 = "/api/explore/v2.0/catalog/{}"
     SHOW_DATASETS_2 = BASE_PATH_2.format("datasets")
+    SHOW_DATASET_INFO_2 = BASE_PATH_2.format("datasets/{}")
+    SHOW_DATASET_EXPORTS_2 = BASE_PATH_2.format("datasets/{}/exports")
     # Add more paths as needed...
 
 
