@@ -1020,6 +1020,9 @@ class OpenDataSoftCatExplorer:
         """
         self.cat_session = cat_session
 
+    # ----------------------------
+    # Get all datasets available on the catalogue
+    # ----------------------------
     def fetch_all_datasets(self) -> dict | None:
         urls = [
             self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASETS,
@@ -1095,6 +1098,9 @@ class OpenDataSoftCatExplorer:
             logger.warning("No datasets were retrieved.")
             return None
 
+    # ----------------------------
+    # Get metadata about specific datasets in the catalogue
+    # ----------------------------
     def show_dataset_info_dict(self, dataset_id):
         urls = [
             self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_INFO.format(dataset_id),
@@ -1113,6 +1119,9 @@ class OpenDataSoftCatExplorer:
         error_msg = f"\033[91mFailed to fetch dataset: {str(last_error)}. Are you sure this dataset exists? Check again.\033[0m"
         raise CatExplorerError(error_msg)
 
+    # ----------------------------
+    # Show what export file types are available for a particular dataset
+    # ----------------------------
     def show_dataset_export_options_dict(self, dataset_id):
         urls = [
             self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_EXPORTS.format(dataset_id),

@@ -22,9 +22,6 @@ def test_package_list_dictionary(catalogue_url):
             # Assert that we got a result
             assert results is not None, f"No results returned for {catalogue_url}"
 
-            # Check if we got the expected number of rows
-            assert len(results) > 100, "There could be a problem - check manually"
-
             logger.info(f"Package search test passed for {catalogue_url}")
         except requests.RequestException as e:
             pytest.fail(

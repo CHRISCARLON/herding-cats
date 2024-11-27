@@ -421,7 +421,6 @@ class OpenDataSoftResourceLoader:
 
             # Example usage
             import HerdingCats as hc
-            from pprint import pprint
 
             def main():
                 with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
@@ -465,3 +464,199 @@ class OpenDataSoftResourceLoader:
                         raise OpenDataSoftExplorerError("Failed to download resource", e)
 
             raise OpenDataSoftExplorerError("No parquet format resource found")
+
+    def pandas_data_loader(
+            self, resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None
+        ) -> pd.DataFrame:
+            """
+            Load data from a resource URL into a Polars DataFrame.
+            Args:
+                resource_data: List of dictionaries containing resource information
+                format_type: Expected format type (currently only supports 'parquet')
+                api_key: Optional API key for authentication with OpenDataSoft
+            Returns:
+                Polars DataFrame
+            Raises:
+                OpenDataSoftExplorerError: If resource data is missing or download fails
+
+            # Example usage
+            import HerdingCats as hc
+
+            def main():
+                with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
+                    explore = hc.OpenDataSoftCatExplorer(session)
+                    data_loader = hc.OpenDataSoftResourceLoader()
+
+                    data = explore.show_dataset_export_options_dict("ukpn-smart-meter-installation-volumes")
+                    pd_df = data_loader.pandas_data_loader(data, "parquet", "api_key")
+                    print(pd_df.head(10))
+
+            if __name__ == "__main__":
+                main()
+
+            """
+            if not resource_data:
+                raise OpenDataSoftExplorerError("No resource data provided")
+
+            headers = {'Accept': 'application/parquet'}
+            if api_key:
+                headers['Authorization'] = f'apikey {api_key}'
+
+            for resource in resource_data:
+                if resource.get('format', '').lower() == 'parquet':
+                    url = resource.get('download_url')
+                    if not url:
+                        continue
+                    try:
+                        response = requests.get(url, headers=headers)
+                        response.raise_for_status()
+                        binary_data = BytesIO(response.content)
+                        df = pd.read_parquet(binary_data)
+
+                        if df.size == 0 and not api_key:
+                            raise OpenDataSoftExplorerError(
+                                "Received empty DataFrame. This likely means an API key is required for this dataset. "
+                                "Please provide an API key and try again. You can usually do this by creating an account with the datastore you are tyring to access"
+                            )
+                        return df
+
+                    except (requests.RequestException, Exception) as e:
+                        raise OpenDataSoftExplorerError("Failed to download resource", e)
+
+            raise OpenDataSoftExplorerError("No parquet format resource found")
+
+    def duckdb_data_loader(
+            self, resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None
+        ) -> duckdb.DuckDBPyConnection:
+        """
+        Load data from a resource URL into a DuckDB in-memory DB via pandas.
+        Args:
+            resource_data: List of dictionaries containing resource information
+            format_type: Expected format type (currently only supports 'parquet')
+            api_key: Optional API key for authentication with OpenDataSoft
+        Returns:
+            DuckDB connection with loaded data
+        Raises:
+            OpenDataSoftExplorerError: If resource data is missing or download fails
+
+        # Example usage:
+            import HerdingCats as hc
+
+            def main():
+                with hc.CatSession(hc.OpenDataSoftDataCatalogues.ELIA_BELGIAN_ENERGY) as session:
+                    explore = hc.OpenDataSoftCatExplorer(session)
+                    loader = hc.OpenDataSoftResourceLoader()
+
+                    data = explore.show_dataset_export_options_dict("ods036")
+                    duckdb = loader.duckdb_data_loader(data, "parquet")
+                    df = duckdb.execute("SELECT * FROM data LIMIT 10").fetchdf()
+                    print(df)
+        """
+        if not resource_data:
+            raise OpenDataSoftExplorerError("No resource data provided")
+
+        headers = {'Accept': 'application/parquet'}
+        if api_key:
+            headers['Authorization'] = f'apikey {api_key}'
+
+        # Create in-memory DuckDB connection
+        con = duckdb.connect(':memory:')
+
+        for resource in resource_data:
+            if resource.get('format', '').lower() == 'parquet':
+                url = resource.get('download_url')
+                if not url:
+                    continue
+                try:
+                    # Download parquet file to memory
+                    response = requests.get(url, headers=headers)
+                    response.raise_for_status()
+                    binary_data = BytesIO(response.content)
+
+                    # First read into pandas DataFrame
+                    df = pd.read_parquet(binary_data)
+
+                    # Check if DataFrame is empty
+                    if df.empty and not api_key:
+                        raise OpenDataSoftExplorerError(
+                            "Received empty DataFrame. This likely means an API key is required for this dataset. "
+                            "Please provide an API key and try again. You can usually do this by creating an account with the datastore you are trying to access"
+                        )
+
+                    # Load DataFrame into DuckDB
+                    con.execute("CREATE TABLE data AS SELECT * FROM df")
+                    return con
+
+                except (requests.RequestException, pd.errors.EmptyDataError, duckdb.Error) as e:
+                    raise OpenDataSoftExplorerError("Failed to download or load resource", e)
+
+        raise OpenDataSoftExplorerError("No parquet format resource found")
+
+    def aws_s3_data_loader(
+        self,
+        resource_data: Optional[List[Dict]],
+        bucket_name: str,
+        custom_name: str,
+        api_key: Optional[str] = None,
+    ) -> None:
+        """
+        Load resource data into remote S3 storage as a parquet file.
+
+        Args:
+            resource_data: List of dictionaries containing resource information
+            bucket_name: S3 bucket name
+            custom_name: Custom prefix for the filename
+            api_key: Optional API key for authentication
+        """
+        if not resource_data:
+            raise OpenDataSoftExplorerError("No resource data provided")
+
+        if not bucket_name:
+            raise ValueError("No bucket name provided")
+
+        # Create an S3 client
+        s3_client = boto3.client("s3")
+        logger.success("S3 Client Created")
+
+        # Check if the bucket exists
+        try:
+            s3_client.head_bucket(Bucket=bucket_name)
+            logger.success("Bucket Found")
+        except ClientError as e:
+            error_code = int(e.response["Error"]["Code"])
+            if error_code == 404:
+                logger.error(f"Bucket '{bucket_name}' does not exist.")
+            else:
+                logger.error(f"Error checking bucket '{bucket_name}': {e}")
+            return
+
+        headers = {'Accept': 'application/parquet'}
+        if api_key:
+            headers['Authorization'] = f'apikey {api_key}'
+
+        for resource in resource_data:
+            if resource.get('format', '').lower() == 'parquet':
+                url = resource.get('download_url')
+                if not url:
+                    continue
+
+                try:
+                    response = requests.get(url, headers=headers)
+                    response.raise_for_status()
+                    binary_data = BytesIO(response.content)
+
+                    # Generate a unique filename
+                    filename = f"{custom_name}-{uuid.uuid4()}.parquet"
+
+                    # Upload the parquet file directly
+                    s3_client.upload_fileobj(binary_data, bucket_name, filename)
+                    logger.success("Parquet file uploaded successfully to S3")
+                    return
+
+                except requests.RequestException as e:
+                    raise OpenDataSoftExplorerError("Failed to download resource", e)
+                except ClientError as e:
+                    logger.error(f"Error: {e}")
+                    return
+
+        raise OpenDataSoftExplorerError("No parquet format resource found")
