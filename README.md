@@ -2,6 +2,8 @@
 
 Current Version: 0.1.4
 
+[![codecov](https://codecov.io/gh/CHRISCARLON/Herding-CATs/graph/badge.svg?token=Y9Z0QA39S3)](https://codecov.io/gh/CHRISCARLON/Herding-CATs)
+
 ## Purpose
 
 **The aim of this project is simple: create a basic Python library to explore and interact with open data catalogues**.
