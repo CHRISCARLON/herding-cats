@@ -2,13 +2,17 @@
 name = "HerdingCats"
 version = "0.1.4"
 description = "A tool for exploring open data catalogues"
-authors = ["christophercarlon <cmcarleone@gmail.com>"]
+authors = [
+    "christophercarlon <chris@enmeshed.dev>",
+    "serjhassan <serj@enmeshed.dev>",
+]
 readme = "README.md"
 packages = [{ include = "HerdingCats" }]
 license = "MIT"
 homepage = "https://github.com/christophercarlon/HerdingCats"
 repository = "https://github.com/christophercarlon/HerdingCats"
 keywords = ["open data", "open data catalogues", "ckan"]
+include = ["LICENSE"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -25,7 +29,6 @@ xlrd = "^2.0.1"
 ruff = "^0.6.7"
 
 [tool.poetry.group.dev.dependencies]
-watchdog = "^4.0.1"
 pytest = "^8.2.2"
 
 [build-system]
