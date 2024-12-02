@@ -68,6 +68,7 @@ class DcatApiPaths:
 class FrenchGouvApiPaths:
     BASE_PATH = "/api/1/{}"
     SHOW_DATASETS = BASE_PATH.format("datasets")
+    SHOW_DATASETS_BY_ID = BASE_PATH.format("datasets/{}")
 
 
 class FrenchGouvCatalogue(Enum):

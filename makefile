@@ -1,4 +1,5 @@
 DATE := $(shell date +%Y-%m-%d)
+VENV_PATH := .venv
 
 define COMMIT_TYPES
 feat:     A new feature
@@ -15,6 +16,32 @@ revert:   Reverts a previous commit
 endef
 export COMMIT_TYPES
 
+# Local development commands
+.PHONY: dev ruff-watch dev-kill
+
+dev:
+	@if [ -z "$$TMUX" ]; then \
+		tmux new-session -d -s herding-cats; \
+		tmux send-keys 'cd $(shell pwd)' C-m; \
+		tmux split-window -v -p 15; \
+		tmux send-keys 'cd $(shell pwd) && source .venv/bin/activate && make ruff-watch' C-m; \
+		tmux select-pane -t 0; \
+		tmux send-keys 'source .venv/bin/activate' C-m; \
+		tmux attach-session -t herding-cats; \
+	else \
+		tmux split-window -v -p 15 'source .venv/bin/activate && make ruff-watch'; \
+		tmux select-pane -t 0; \
+	fi
+
+ruff-watch:
+	@echo "Starting Ruff in watch mode..."
+	@ruff check --watch .
+
+dev-kill:
+	@echo "Killing HerdingCats dev session"s
+	tmux kill-session -t herding-cats
+
+# Git commands
 update: git-add git-commit git-push
 
 git-add:

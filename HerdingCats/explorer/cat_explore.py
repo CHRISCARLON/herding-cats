@@ -3,6 +3,7 @@ import pandas as pd
 import polars as pl
 import duckdb
 import json
+import time
 
 from typing import Any, Dict, Optional, Union, Literal, List, Tuple
 from loguru import logger
@@ -1232,3 +1233,166 @@ class FrenchGouvCatExplorer:
 
         except requests.RequestException as e:
             logger.error(f"Health Check Failed: Unable to connect to French Gouv - {str(e)}")
+
+    # ----------------------------
+    # Get datasets available
+    # ----------------------------
+    def get_all_datasets(self) -> dict:
+        """
+        Paginates through all datasets in the French Government data catalogue
+        and creates a dictionary of acronyms and IDs.
+
+        Returns:
+            dict: Dictionary with dataset IDs as keys and acronyms as values
+        """
+        datasets = {}
+        page = 1
+        base_url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS
+
+        while True:
+            try:
+                # Make request with pagination
+                params = {'page': page}
+                response = self.cat_session.session.get(base_url, params=params)
+
+                if response.status_code != 200:
+                    logger.error(f"Failed to fetch page {page} with status code {response.status_code}")
+                    break
+
+                data = response.json()
+
+                # Process datasets on current page
+                for dataset in data['data']:
+                    dataset_id = dataset.get('id', '')
+                    # Handle null or empty acronyms by setting to empty string
+                    acronym = dataset.get('acronym') if dataset.get('acronym') else ''
+                    datasets[dataset_id] = acronym
+
+                # Check if we've reached the last page
+                if not data.get('next_page'):
+                    break
+
+                page += 1
+
+                # Optional: Log progress every 10 pages
+                if page % 10 == 0:
+                    logger.info(f"Processed {page} pages ({len(datasets)} datasets)")
+
+            except Exception as e:
+                logger.error(f"Error processing page {page}: {str(e)}")
+                break
+
+        logger.success(f"Finished processing {len(datasets)} datasets")
+        return datasets
+
+    def get_datasets_by_id_dict(self, id: str) -> dict:
+        """
+        Paginates through all datasets in the French Government data catalogue
+        and creates a dictionary of acronyms and IDs.
+
+        Returns:
+            dict: Dictionary with dataset IDs as keys and acronyms as values
+        """
+        datasets = {}
+        page = 1
+        base_url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS
+
+        while True:
+            try:
+                # Make request with pagination
+                params = {'page': page}
+                response = self.cat_session.session.get(base_url, params=params)
+
+                if response.status_code != 200:
+                    logger.error(f"Failed to fetch page {page} with status code {response.status_code}")
+                    break
+
+                data = response.json()
+
+                # Process datasets on current page
+                for dataset in data['data']:
+                    dataset_id = dataset.get('id', '')
+                    # Handle null or empty acronyms by setting to empty string
+                    acronym = dataset.get('acronym') if dataset.get('acronym') else ''
+                    datasets[dataset_id] = acronym
+
+                # Check if we've reached the last page
+                if not data.get('next_page'):
+                    break
+
+                page += 1
+
+                # Optional: Log progress every 10 pages
+                if page % 10 == 0:
+                    logger.info(f"Processed {page} pages ({len(datasets)} datasets)")
+
+            except Exception as e:
+                logger.error(f"Error processing page {page}: {str(e)}")
+                break
+
+        logger.success(f"Finished processing {len(datasets)} datasets")
+        return datasets
+
+    def get_dataset_by_identifier(self, identifier: str) -> dict:
+        """
+        Fetches a specific dataset using either its ID or slug.
+
+        Args:
+            identifier (str): Dataset ID or slug to fetch
+
+        Returns:
+            dict: Dataset details or empty dict if not found
+
+        Example identifier:
+            ID: "674de63d05a9bbeddc66bdc1"
+        """
+        try:
+            # Construct URL for specific dataset
+            url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS_BY_ID.format(identifier)
+
+            # Make request
+            response = self.cat_session.session.get(url)
+
+            # Handle response
+            if response.status_code == 200:
+                data = response.json()
+                logger.success(f"Successfully retrieved dataset: {identifier}")
+                return data
+            elif response.status_code == 404:
+                logger.warning(f"Dataset not found: {identifier}")
+                return {}
+            else:
+                logger.error(f"Failed to fetch dataset {identifier} with status code {response.status_code}")
+                return {}
+
+        except Exception as e:
+            logger.error(f"Error fetching dataset {identifier}: {str(e)}")
+            return {}
+
+    def get_datasets_by_identifiers(self, identifiers: list) -> dict:
+        """
+        Fetches multiple datasets using a list of IDs or slugs.
+
+        Args:
+            identifiers (list): List of dataset IDs or slugs to fetch
+
+        Returns:
+            dict: Dictionary mapping identifiers to their dataset details
+        """
+        results = {}
+
+        for identifier in identifiers:
+            try:
+                dataset = self.get_dataset_by_identifier(identifier)
+                if dataset:
+                    results[identifier] = dataset
+
+                # Optional: Add a small delay to avoid overwhelming the API
+                time.sleep(0.1)
+
+            except Exception as e:
+                logger.error(f"Error processing identifier {identifier}: {str(e)}")
+                results[identifier] = {}
+
+        logger.success(f"Finished fetching {len(results)} datasets")
+        return results
