@@ -62,3 +62,13 @@ class OpenDataSoftApiPaths:
 class DcatApiPaths:
     BASE_PATH = "/api/feed/dcat-ap/2.1.1.json"
     # Add more paths as needed...
+
+
+# Bespoke Data.Gouv.Fr (France)
+class FrenchGouvApiPaths:
+    BASE_PATH = "/api/1/{}"
+    SHOW_DATASETS = BASE_PATH.format("datasets")
+
+
+class FrenchGouvCatalogue(Enum):
+    GOUV_FR = "https://www.data.gouv.fr"

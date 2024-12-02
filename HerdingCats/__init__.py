@@ -1,8 +1,8 @@
 from .data_loader.data_loader import CkanCatResourceLoader, OpenDataSoftResourceLoader
-from .explorer.cat_explore import CkanCatExplorer, OpenDataSoftCatExplorer
+from .explorer.cat_explore import CkanCatExplorer, OpenDataSoftCatExplorer, FrenchGouvCatExplorer
 from .session.cat_session import CatSession
 from .errors.cats_errors import CatSessionError, CatExplorerError, OpenDataSoftExplorerError
-from .endpoints.api_endpoints import CkanDataCatalogues, OpenDataSoftDataCatalogues, CkanApiPathsDocs
+from .endpoints.api_endpoints import CkanDataCatalogues, OpenDataSoftDataCatalogues, CkanApiPathsDocs, FrenchGouvCatalogue
 
 __all__ = [
     "CkanCatResourceLoader",
@@ -15,7 +15,9 @@ __all__ = [
     "OpenDataSoftCatExplorer",
     "CkanApiPathsDocs",
     "OpenDataSoftResourceLoader",
-    "OpenDataSoftExplorerError"
+    "OpenDataSoftExplorerError",
+    "FrenchGouvCatExplorer",
+    "FrenchGouvCatalogue"
 ]
 
 __version__ = "0.1.4"

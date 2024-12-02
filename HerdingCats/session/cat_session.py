@@ -4,21 +4,22 @@ from typing import Union
 from loguru import logger
 from urllib.parse import urlparse
 from enum import Enum
-from ..endpoints.api_endpoints import CkanDataCatalogues, OpenDataSoftDataCatalogues
+from ..endpoints.api_endpoints import CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue
 from ..errors.cats_errors import CatSessionError
 
 class CatalogType(Enum):
     CKAN = "ckan"
     OPENDATA_SOFT = "opendatasoft"
+    GOUV_FR = "french_gov"
 
 class CatSession:
     def __init__(
-        self, domain: Union[str, CkanDataCatalogues, OpenDataSoftDataCatalogues]
+        self, domain: Union[str, CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue]
     ) -> None:
         """
         Initialise a session with a valid domain or predefined catalog.
         Args:
-            domain (url or catalogue item): str
+            domain (url or catalogue item): str or catalog enum
         """
         self.domain, self.catalog_type = self._process_domain(domain)
         self.session = requests.Session()
@@ -31,47 +32,60 @@ class CatSession:
 
     @staticmethod
     def _process_domain(
-        domain: Union[str, CkanDataCatalogues, OpenDataSoftDataCatalogues],
+        domain: Union[str, CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue]
     ) -> tuple[str, CatalogType]:
         """
         Process the domain to ensure it's in the correct format.
 
-        This iterates through the CkanDataCatalogues and OpenDataSoftDataCatalogues Enums and checks for a match
-        Otherwise it processes the url as normal.
+        This iterates through the CkanDataCatalogues, OpenDataSoftDataCatalogues, and FrenchGouvCatalogue
+        Enums and checks for a match. Otherwise it processes the url as normal.
 
         Args:
-            domain (url or data catalogue item): str
+            domain (url or catalogue item): str or catalog enum
         Returns:
             a tuple of (url in the correct format, catalog type)
         """
-        if isinstance(domain, (CkanDataCatalogues, OpenDataSoftDataCatalogues)):
-            catalog_type = (
-                CatalogType.CKAN
-                if isinstance(domain, CkanDataCatalogues)
-                else CatalogType.OPENDATA_SOFT
-            )
-            return urlparse(domain.value).netloc, catalog_type
+        if isinstance(domain, (CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue)):
+            if isinstance(domain, FrenchGouvCatalogue):
+                catalog_type = CatalogType.GOUV_FR
+            else:
+                catalog_type = (
+                    CatalogType.CKAN
+                    if isinstance(domain, CkanDataCatalogues)
+                    else CatalogType.OPENDATA_SOFT
+                )
+            parsed_url = urlparse(domain.value)
+            return parsed_url.netloc if parsed_url.netloc else parsed_url.path, catalog_type
+
         elif isinstance(domain, str):
-            for catalog_enum in (CkanDataCatalogues, OpenDataSoftDataCatalogues):
+            # Check predefined catalogs first
+            for catalog_enum in (CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue):
                 for catalog in catalog_enum:
                     if domain.lower() == catalog.name.lower().replace("_", " "):
-                        url = urlparse(catalog.value).netloc
-                        catalog_type = (
-                            CatalogType.CKAN
-                            if catalog_enum == CkanDataCatalogues
-                            else CatalogType.OPENDATA_SOFT
-                        )
+                        parsed_url = urlparse(catalog.value)
+                        url = parsed_url.netloc if parsed_url.netloc else parsed_url.path
+                        if catalog_enum == FrenchGouvCatalogue:
+                            catalog_type = CatalogType.GOUV_FR
+                        else:
+                            catalog_type = (
+                                CatalogType.CKAN
+                                if catalog_enum == CkanDataCatalogues
+                                else CatalogType.OPENDATA_SOFT
+                            )
                         return url, catalog_type
+
+            # If not a predefined catalog, process as a regular domain or URL
+            parsed = urlparse(domain)
+            domain_str = parsed.netloc if parsed.netloc else parsed.path
+
+            # Check if it's a French government domain
+            if domain_str.endswith('.gouv.fr'):
+                return domain_str, CatalogType.GOUV_FR
             else:
-                # If not a predefined catalog, process as a regular domain or URL
-                parsed = urlparse(domain)
-                return (
-                    parsed.netloc if parsed.netloc else parsed.path,
-                    CatalogType.CKAN,
-                )  # Default to CKAN for custom URLs
+                return domain_str, CatalogType.CKAN
         else:
             raise ValueError(
-                "Domain must be a string, CkanDataCatalogues enum, or OpenDataSoftDataCatalogues enum"
+                "Domain must be a string, CkanDataCatalogues enum, OpenDataSoftDataCatalogues enum, or FrenchGouvCatalogue enum"
             )
 
     def _validate_url(self) -> None:
@@ -113,5 +127,5 @@ class CatSession:
         self.close_session()
 
     def get_catalog_type(self) -> CatalogType:
-        """Return the catalog type (CKAN or OpenDataSoft)"""
+        """Return the catalog type (CKAN, OpenDataSoft, or French Government)"""
         return self.catalog_type

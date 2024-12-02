@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Union, Literal, List, Tuple
 from loguru import logger
 from urllib.parse import urlencode
 
-from ..endpoints.api_endpoints import CkanApiPaths, OpenDataSoftApiPaths
+from ..endpoints.api_endpoints import CkanApiPaths, OpenDataSoftApiPaths, FrenchGouvApiPaths
 from ..errors.cats_errors import CatExplorerError
 from ..session.cat_session import CatSession
 
@@ -998,7 +998,6 @@ class CkanCatExplorer:
             print(json.dumps(data[:2], indent=2))
             return pd.DataFrame()
 
-
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For Open Datasoft Catalogues Only
 class OpenDataSoftCatExplorer:
@@ -1019,6 +1018,38 @@ class OpenDataSoftCatExplorer:
                 explore = CatExplorer(session)
         """
         self.cat_session = cat_session
+
+    # ----------------------------
+    # Check OpenDataSoft site health
+    # ----------------------------
+    def check_site_health(self) -> None:
+        """
+        Make sure the Ckan endpoints are healthy and reachable
+
+        This calls the Ckan package_list endpoint to check if site is still reacheable.
+
+        # Example usage...
+        if __name__ == "__main__":
+            with CatSession("data.london.gov.uk") as session:
+                explore = CkanCatExplorer(session)
+                health_check = explore.check_site_health()
+        """
+
+        url = self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASETS
+        try:
+            response = self.cat_session.session.get(url)
+
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    logger.success("Health Check Passed: OpenDataSoft is running and available")
+                else:
+                    logger.warning("Health Check Warning: OpenDataSoft responded with an empty dataset")
+            else:
+                logger.error(f"Health Check Failed: OpenDataSoft responded with status code {response.status_code}")
+
+        except requests.RequestException as e:
+            logger.error(f"Health Check Failed: Unable to connect to OpenDataSoft - {str(e)}")
 
     # ----------------------------
     # Get all datasets available on the catalogue
@@ -1151,3 +1182,53 @@ class OpenDataSoftCatExplorer:
 
         error_msg = f"\033[91mFailed to fetch dataset: {str(last_error)}. Are you sure this dataset exists? Check again.\033[0m"
         raise CatExplorerError(error_msg)
+
+# FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
+# For French Gouv data catalogue Only
+class FrenchGouvCatExplorer:
+    def __init__(self, cat_session: CatSession):
+        """
+        Takes in a CatSession
+
+        Allows user to start exploring data catalogue programatically
+
+        Make sure you pass a valid CkanCatSession in
+
+        Args:
+            CkanCatSession
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+                explore = hc.CkanCatExplorer(session)
+
+        if __name__ == "__main__":
+            main()
+        """
+        self.cat_session = cat_session
+
+    # ----------------------------
+    # Check French Gouv site health
+    # ----------------------------
+    def check_health_check(self) -> None:
+        """
+        TBC
+        """
+
+        url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS
+        try:
+            response = self.cat_session.session.get(url)
+
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    logger.success("Health Check Passed: French Gouv is running and available")
+                else:
+                    logger.warning("Health Check Warning: French Gouv responded with an empty dataset")
+            else:
+                logger.error(f"Health Check Failed: French Gouv responded with status code {response.status_code}")
+
+        except requests.RequestException as e:
+            logger.error(f"Health Check Failed: Unable to connect to French Gouv - {str(e)}")
