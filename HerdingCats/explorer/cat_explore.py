@@ -1215,7 +1215,7 @@ class FrenchGouvCatExplorer:
     # ----------------------------
     def check_health_check(self) -> None:
         """
-        TBC
+        Check the health of the french government's opendata catalogue endpoint
         """
 
         url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS
@@ -1240,41 +1240,59 @@ class FrenchGouvCatExplorer:
     def get_all_datasets(self) -> dict:
         """
         Paginates through all datasets in the French Government data catalogue
-        and creates a dictionary of acronyms and IDs.
-
+        and creates a dictionary of acronyms and IDs using streaming.
         Returns:
             dict: Dictionary with dataset IDs as keys and acronyms as values
         """
         datasets = {}
         page = 1
+        page_size = 100
         base_url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS
 
         while True:
             try:
-                # Make request with pagination
-                params = {'page': page}
-                response = self.cat_session.session.get(base_url, params=params)
-
+                params = {
+                    'page': page,
+                    'page_size': page_size
+                }
+                # Stream the response
+                response = self.cat_session.session.get(base_url, params=params, stream=True)
                 if response.status_code != 200:
                     logger.error(f"Failed to fetch page {page} with status code {response.status_code}")
                     break
 
-                data = response.json()
+                # Process the streaming response
+                next_page_exists = False
+                for line in response.iter_lines():
+                    if not line:
+                        continue
 
-                # Process datasets on current page
-                for dataset in data['data']:
-                    dataset_id = dataset.get('id', '')
-                    # Handle null or empty acronyms by setting to empty string
-                    acronym = dataset.get('acronym') if dataset.get('acronym') else ''
-                    datasets[dataset_id] = acronym
+                    decoded_line = line.decode('utf-8')
 
-                # Check if we've reached the last page
-                if not data.get('next_page'):
+                    # Check for dataset entries
+                    if '"id":' in decoded_line and '"acronym":' in decoded_line:
+                        # Extract just what we need using string operations
+                        id_start = decoded_line.find('"id": "') + 7
+                        id_end = decoded_line.find('"', id_start)
+                        dataset_id = decoded_line[id_start:id_end]
+
+                        acronym_start = decoded_line.find('"acronym": "') + 11
+                        if acronym_start > 10:  # Found acronym
+                            acronym_end = decoded_line.find('"', acronym_start)
+                            acronym = decoded_line[acronym_start:acronym_end]
+                        else:
+                            acronym = ''
+
+                        datasets[dataset_id] = acronym
+
+                    # Check for next_page
+                    elif '"next_page":' in decoded_line:
+                        next_page_exists = 'null' not in decoded_line
+
+                if not next_page_exists:
                     break
 
                 page += 1
-
-                # Optional: Log progress every 10 pages
                 if page % 10 == 0:
                     logger.info(f"Processed {page} pages ({len(datasets)} datasets)")
 
@@ -1387,8 +1405,8 @@ class FrenchGouvCatExplorer:
                 if dataset:
                     results[identifier] = dataset
 
-                # Optional: Add a small delay to avoid overwhelming the API
-                time.sleep(0.1)
+                # Add a small delay to avoid overwhelming the API
+                time.sleep(0.5)
 
             except Exception as e:
                 logger.error(f"Error processing identifier {identifier}: {str(e)}")

@@ -21,7 +21,7 @@ class OpenDataSoftExplorerError(Exception):
 
         # Build the error message with color
         error_msg = (
-            f"{self.RED}OpenDataSoftExplorer Error: {message}{self.RESET}"
+            f"{self.RED}OpenDataSoftExplorer Error 🐈‍⬛: {message}{self.RESET}"
         )
 
         if original_error:

@@ -8,7 +8,6 @@ class CkanApiPathsDocs:
     ORGANIZATION_LIST = "https://docs.ckan.org/en/2.10/api/index.html#ckan.logic.action.get.organization_list"
     # Need to add the rest....
 
-
 class CkanApiPaths:
     BASE_PATH = "/api/3/action/{}"
     PACKAGE_LIST = BASE_PATH.format("package_list")
@@ -20,7 +19,6 @@ class CkanApiPaths:
     ORGANIZATION_LIST = BASE_PATH.format("organization_list")
     # Add more paths as needed...
 
-
 class CkanDataCatalogues(Enum):
     LONDON_DATA_STORE = "https://data.london.gov.uk"
     UK_GOV = "https://data.gov.uk"
@@ -30,7 +28,6 @@ class CkanDataCatalogues(Enum):
     # CANADA_GOV = "https://search.open.canada.ca/opendata" NEED TO LOOK INTO THIS ONE MORE
     # NORTHERN_DATA_MILL = "https://datamillnorth.org" NEED TO LOOK INTO THIS ONE MORE
     # Add more catalogues as needed...
-
 
 # OPEN DATASOFT
 class OpenDataSoftDataCatalogues(Enum):
@@ -57,19 +54,19 @@ class OpenDataSoftApiPaths:
     SHOW_DATASET_EXPORTS_2 = BASE_PATH_2.format("datasets/{}/exports")
     # Add more paths as needed...
 
-
 # DCAT TBC
 class DcatApiPaths:
     BASE_PATH = "/api/feed/dcat-ap/2.1.1.json"
     # Add more paths as needed...
 
+# BESPOKE DATA GOUV FR
+class FrenchGouvApiDocs:
+    DATASET_DOCS = "https://guides.data.gouv.fr/guide-data.gouv.fr/api-1/reference/datasets"
 
-# Bespoke Data.Gouv.Fr (France)
 class FrenchGouvApiPaths:
     BASE_PATH = "/api/1/{}"
     SHOW_DATASETS = BASE_PATH.format("datasets")
     SHOW_DATASETS_BY_ID = BASE_PATH.format("datasets/{}")
-
 
 class FrenchGouvCatalogue(Enum):
     GOUV_FR = "https://www.data.gouv.fr"
