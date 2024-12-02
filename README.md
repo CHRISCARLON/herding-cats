@@ -1,4 +1,4 @@
-# Herding-CATs 🐈‍⬛
+# HerdingCATs 🐈‍⬛
 
 [![codecov](https://codecov.io/gh/CHRISCARLON/Herding-CATs/graph/badge.svg?token=Y9Z0QA39S3)](https://codecov.io/gh/CHRISCARLON/Herding-CATs)
 
