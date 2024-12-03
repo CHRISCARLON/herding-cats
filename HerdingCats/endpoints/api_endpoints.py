@@ -47,7 +47,7 @@ class OpenDataSoftApiPaths:
     SHOW_DATASET_EXPORTS = BASE_PATH.format("datasets/{}/exports")
 
     # Alternative base paths...
-    # Sometimes these are needed - not sure why need to dig into this
+    # Sometimes these are needed - not sure why need to dig into this!
     BASE_PATH_2 = "/api/explore/v2.0/catalog/{}"
     SHOW_DATASETS_2 = BASE_PATH_2.format("datasets")
     SHOW_DATASET_INFO_2 = BASE_PATH_2.format("datasets/{}")

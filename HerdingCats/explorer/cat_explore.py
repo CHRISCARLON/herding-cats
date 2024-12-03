@@ -9,10 +9,13 @@ from typing import Any, Dict, Optional, Union, Literal, List, Tuple
 from loguru import logger
 from urllib.parse import urlencode
 
-from ..endpoints.api_endpoints import CkanApiPaths, OpenDataSoftApiPaths, FrenchGouvApiPaths
-from ..errors.cats_errors import CatExplorerError
-from ..session.cat_session import CatSession
-
+from ..endpoints.api_endpoints import (
+    CkanApiPaths,
+    OpenDataSoftApiPaths,
+    FrenchGouvApiPaths
+)
+from ..errors.cats_errors import CatExplorerError, WrongCatalogueError
+from ..session.cat_session import CatSession, CatalogueType
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For Ckan Catalogues Only
@@ -23,7 +26,8 @@ class CkanCatExplorer:
 
         Allows user to start exploring data catalogue programatically
 
-        Make sure you pass a valid CkanCatSession in
+        Make sure you pass a valid CkanCatSession in - checks if the right type.
+
 
         Args:
             CkanCatSession
@@ -38,6 +42,21 @@ class CkanCatExplorer:
         if __name__ == "__main__":
             main()
         """
+
+        if not hasattr(cat_session, 'catalogue_type'):
+            raise WrongCatalogueError(
+                "CatSession missing catalogue_type attribute",
+                expected_catalogue=str(CatalogueType.CKAN),
+                received_catalogue="Unknown"
+            )
+
+        if cat_session.catalogue_type != CatalogueType.CKAN:
+            raise WrongCatalogueError(
+                "Invalid catalogue type. CkanCatExplorer requires a Ckan catalogue session.",
+                expected_catalogue=str(CatalogueType.CKAN),
+                received_catalogue=str(cat_session.catalogue_type)
+            )
+
         self.cat_session = cat_session
 
     # ----------------------------
@@ -1008,7 +1027,8 @@ class OpenDataSoftCatExplorer:
 
         Allows user to start exploring data catalogue programatically
 
-        Make sure you pass a valid CkanCatSession in
+        Make sure you pass a valid CkanCatSession in - checks if the right type.
+
 
         Args:
             CkanCatSession
@@ -1018,6 +1038,22 @@ class OpenDataSoftCatExplorer:
             with CatSession("ukpowernetworks.opendatasoft.com") as session:
                 explore = CatExplorer(session)
         """
+
+
+        if not hasattr(cat_session, 'catalogue_type'):
+            raise WrongCatalogueError(
+                "CatSession missing catalogue_type attribute",
+                expected_catalogue=str(CatalogueType.OPENDATA_SOFT),
+                received_catalogue="Unknown"
+            )
+
+        if cat_session.catalogue_type != CatalogueType.OPENDATA_SOFT:
+            raise WrongCatalogueError(
+                "Invalid catalogue type. OpenDataSoft requires an OpenDataSoft catalogue session.",
+                expected_catalogue=str(CatalogueType.OPENDATA_SOFT),
+                received_catalogue=str(cat_session.catalogue_type)
+            )
+
         self.cat_session = cat_session
 
     # ----------------------------
@@ -1193,7 +1229,7 @@ class FrenchGouvCatExplorer:
 
         Allows user to start exploring data catalogue programatically
 
-        Make sure you pass a valid CkanCatSession in
+        Make sure you pass a valid CkanCatSession in - checks if the right type.
 
         Args:
             CkanCatSession
@@ -1208,6 +1244,21 @@ class FrenchGouvCatExplorer:
         if __name__ == "__main__":
             main()
         """
+
+        if not hasattr(cat_session, 'catalogue_type'):
+            raise WrongCatalogueError(
+                "CatSession missing catalogue_type attribute",
+                expected_catalogue=str(CatalogueType.GOUV_FR),
+                received_catalogue="Unknown"
+            )
+
+        if cat_session.catalogue_type != CatalogueType.GOUV_FR:
+            raise WrongCatalogueError(
+                "Invalid catalogue type. FrenchGouvCatExplorer requires a French Government catalogue session.",
+                expected_catalogue=str(CatalogueType.GOUV_FR),
+                received_catalogue=str(cat_session.catalogue_type)
+            )
+
         self.cat_session = cat_session
 
     # ----------------------------
@@ -1239,121 +1290,34 @@ class FrenchGouvCatExplorer:
     # ----------------------------
     def get_all_datasets(self) -> dict:
         """
-        Paginates through all datasets in the French Government data catalogue
-        and creates a dictionary of acronyms and IDs using streaming.
-        Returns:
-            dict: Dictionary with dataset IDs as keys and acronyms as values
-        """
-        datasets = {}
-        page = 1
-        page_size = 100
-        base_url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS
-
-        while True:
-            try:
-                params = {
-                    'page': page,
-                    'page_size': page_size
-                }
-                # Stream the response
-                response = self.cat_session.session.get(base_url, params=params, stream=True)
-                if response.status_code != 200:
-                    logger.error(f"Failed to fetch page {page} with status code {response.status_code}")
-                    break
-
-                # Process the streaming response
-                next_page_exists = False
-                for line in response.iter_lines():
-                    if not line:
-                        continue
-
-                    decoded_line = line.decode('utf-8')
-
-                    # Check for dataset entries
-                    if '"id":' in decoded_line and '"acronym":' in decoded_line:
-                        # Extract just what we need using string operations
-                        id_start = decoded_line.find('"id": "') + 7
-                        id_end = decoded_line.find('"', id_start)
-                        dataset_id = decoded_line[id_start:id_end]
-
-                        acronym_start = decoded_line.find('"acronym": "') + 11
-                        if acronym_start > 10:  # Found acronym
-                            acronym_end = decoded_line.find('"', acronym_start)
-                            acronym = decoded_line[acronym_start:acronym_end]
-                        else:
-                            acronym = ''
-
-                        datasets[dataset_id] = acronym
-
-                    # Check for next_page
-                    elif '"next_page":' in decoded_line:
-                        next_page_exists = 'null' not in decoded_line
-
-                if not next_page_exists:
-                    break
-
-                page += 1
-                if page % 10 == 0:
-                    logger.info(f"Processed {page} pages ({len(datasets)} datasets)")
-
-            except Exception as e:
-                logger.error(f"Error processing page {page}: {str(e)}")
-                break
-
-        logger.success(f"Finished processing {len(datasets)} datasets")
-        return datasets
-
-    def get_datasets_by_id_dict(self, id: str) -> dict:
-        """
-        Paginates through all datasets in the French Government data catalogue
-        and creates a dictionary of acronyms and IDs.
+        Uses DuckDB to read a Parquet file of whole French Gouv data catalogue instead and create a dictionary of slugs and IDs.
 
         Returns:
-            dict: Dictionary with dataset IDs as keys and acronyms as values
+            dict: Dictionary with slugs as keys and dataset IDs as values
         """
-        datasets = {}
-        page = 1
-        base_url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS
-
-        while True:
-            try:
-                # Make request with pagination
-                params = {'page': page}
-                response = self.cat_session.session.get(base_url, params=params)
-
-                if response.status_code != 200:
-                    logger.error(f"Failed to fetch page {page} with status code {response.status_code}")
-                    break
-
-                data = response.json()
-
-                # Process datasets on current page
-                for dataset in data['data']:
-                    dataset_id = dataset.get('id', '')
-                    # Handle null or empty acronyms by setting to empty string
-                    acronym = dataset.get('acronym') if dataset.get('acronym') else ''
-                    datasets[dataset_id] = acronym
-
-                # Check if we've reached the last page
-                if not data.get('next_page'):
-                    break
-
-                page += 1
-
-                # Optional: Log progress every 10 pages
-                if page % 10 == 0:
-                    logger.info(f"Processed {page} pages ({len(datasets)} datasets)")
-
-            except Exception as e:
-                logger.error(f"Error processing page {page}: {str(e)}")
-                break
-
-        logger.success(f"Finished processing {len(datasets)} datasets")
-        return datasets
+        try:
+            with duckdb.connect(':memory:') as con:
+                # Install and load httpfs extension
+                con.execute("INSTALL httpfs;")
+                con.execute("LOAD httpfs;")
+                # Query to select only id and slug, converting to dict format
+                query = """
+                SELECT DISTINCT slug, id
+                FROM read_parquet('https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/b06842f8ee27a0302ebbaaa344d35e4c.parquet')
+                WHERE slug IS NOT NULL AND id IS NOT NULL
+                """
+                # Execute query and fetch results
+                result = con.execute(query).fetchall()
+                # Convert results to dictionary
+                datasets = {slug: id for slug, id in result}
+                return datasets
+        except Exception as e:
+            logger.error(f"Error processing parquet file: {str(e)}")
+            return {}
 
     def get_dataset_by_identifier(self, identifier: str) -> dict:
         """
-        Fetches a specific dataset using either its ID or slug.
+        Fetches a metadata for a specific dataset using either its ID or slug.
 
         Args:
             identifier (str): Dataset ID or slug to fetch
@@ -1414,3 +1378,45 @@ class FrenchGouvCatExplorer:
 
         logger.success(f"Finished fetching {len(results)} datasets")
         return results
+
+    # ----------------------------
+    # Show available resources for a particular dataset
+    # ----------------------------
+    def get_dataset_resources(self, dataset) -> list:
+
+        try:
+            resources = [resource for resource in dataset["resources"]]
+            return resources
+        except Exception as e:
+            raise
+
+    # ----------------------------
+    # Show all organisation available
+    # ----------------------------
+    def get_all_orgs(self) -> dict:
+        """
+        Uses DuckDB to read a Parquet file of whole French Gouv data catalogue instead and create a dictionary of orgs and org ids.
+
+        Returns:
+            dict: Dictionary with orgs as keys and org IDs as values
+        """
+
+        try:
+            with duckdb.connect(':memory:') as con:
+                # Install and load httpfs extension
+                con.execute("INSTALL httpfs;")
+                con.execute("LOAD httpfs;")
+                # Query to select only id and slug, converting to dict format
+                query = """
+                SELECT DISTINCT organization, organization_id
+                FROM read_parquet('https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/b06842f8ee27a0302ebbaaa344d35e4c.parquet')
+                WHERE organization IS NOT NULL AND organization_id IS NOT NULL
+                """
+                # Execute query and fetch results
+                result = con.execute(query).fetchall()
+                # Convert results to dictionary
+                organisations = {organization: organization_id for organization, organization_id in result}
+                return organisations
+        except Exception as e:
+            logger.error(f"Error processing parquet file: {str(e)}")
+            return {}

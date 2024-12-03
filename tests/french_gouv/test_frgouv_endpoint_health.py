@@ -1,7 +1,8 @@
 import pytest
+import requests
+
 from HerdingCats.session.cat_session import CatSession
 from HerdingCats.endpoints.api_endpoints import FrenchGouvApiPaths
-import requests
 from loguru import logger
 
 CATALOGUES = [
