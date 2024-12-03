@@ -1,16 +1,18 @@
 import pytest
+import requests
+
 from HerdingCats.session.cat_session import CatSession
 from HerdingCats.explorer.cat_explore import OpenDataSoftCatExplorer
-import requests
+from HerdingCats.endpoints.api_endpoints import OpenDataSoftDataCatalogues
 from loguru import logger
 
-CATALOGUES = ["https://ukpowernetworks.opendatasoft.com"]
 
-@pytest.mark.parametrize("catalogue_url", CATALOGUES)
-def test_package_list_dictionary(catalogue_url):
+
+def test_package_list_dictionary():
     """
     Test the package list functionality for predefined data catalogues...
     """
+    catalogue_url = OpenDataSoftDataCatalogues.UK_POWER_NETWORKS
     with CatSession(catalogue_url) as cat_session:
         explorer = OpenDataSoftCatExplorer(cat_session)
         try:
