@@ -1387,7 +1387,7 @@ class FrenchGouvCatExplorer:
         try:
             resources = [resource for resource in dataset["resources"]]
             return resources
-        except Exception as e:
+        except Exception:
             raise
 
     # ----------------------------

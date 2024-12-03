@@ -2,7 +2,6 @@ import pytest
 import requests
 
 from HerdingCats.session.cat_session import CatSession
-from HerdingCats.endpoints.api_endpoints import FrenchGouvApiPaths
 from HerdingCats.explorer.cat_explore import FrenchGouvCatExplorer
 from loguru import logger
 
@@ -38,7 +37,7 @@ def test_ckan_health_check(catalogue_url):
             )
         except AssertionError as e:
             pytest.fail(str(e))
-        except Exception as e:
+        except Exception:
             pytest.fail(
                 f"Unexpected error while fetching data from {catalogue_url}: "
             )
