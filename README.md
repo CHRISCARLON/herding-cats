@@ -11,6 +11,16 @@ This will improve and speed up how people:
   - Find the data that they need
   - Get that data into a format and/or location for further analysis
 
+Simply...
+```bash
+pip install HerdingCATs
+```
+or 
+
+```bash
+poetry add HerdingCATs
+```
+
 > [!NOTE]
 > Herding-CATs is currently under active development. Features may change as the project evolves.
 >
