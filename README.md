@@ -13,12 +13,12 @@ This will improve and speed up how people:
 
 Simply...
 ```bash
-pip install HerdingCATs
+pip install HerdingCats
 ```
 or 
 
 ```bash
-poetry add HerdingCATs
+poetry add HerdingCats
 ```
 
 > [!NOTE]
