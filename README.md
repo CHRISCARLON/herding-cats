@@ -6,10 +6,11 @@
 
 **The aim of this project is simple: create a basic Python library to explore and interact with open data catalogues**.
 
-This will improve and speed up how people:
-  - Navigate open data catalogues
-  - Find the data that they need
-  - Get that data into a format and/or location for further analysis
+This will improve and speed up how users:
+
+- Navigate open data catalogues
+- Find the data that they need
+- Get that data into a format and/or location for further analysis
 
 > [!NOTE]
 > Herding-CATs is currently under active development. Features may change as the project evolves.
@@ -22,33 +23,38 @@ This will improve and speed up how people:
 
 Herding-CATs supports the following catalogues by default:
 
-### Default Catalogues
+I'll help format these tables in clean markdown:
 
-| Catalogue Name | Website | Catalogue Endpoint
-|----------------|---------|-------------------|
-| London Datastore | https://data.london.gov.uk | CKAN |
-| Subak Data Catalogue | https://data.subak.org | CKAN |
-| Gov Open Data | https://www.data.gov.uk | CKAN |
-| Humanitarian Data Exchange | https://data.humdata.org | CKAN |
-| UK Power Networks | https://ukpowernetworks.opendatasoft.com | Open Datasoft |
-| Infrabel | https://opendata.infrabel.be | Open Datasoft |
-| Paris | https://opendata.paris.fr | Open Datasoft |
-| Toulouse | https://data.toulouse-metropole.fr | Open Datasoft |
-| Elia Belgian Energy | https://opendata.elia.be | Open Datasoft |
-| EDF Energy | https://opendata.edf.fr | Open Datasoft |
+## Supported Catalogues
 
-### TBC Catalogues
+| Catalogue Name             | Website                          | Catalogue Backend |
+| -------------------------- | -------------------------------- | ----------------- |
+| London Datastore           | data.london.gov.uk               | CKAN              |
+| Subak Data Catalogue       | data.subak.org                   | CKAN              |
+| UK Gov Open Data           | data.gov.uk                      | CKAN              |
+| Humanitarian Data Exchange | data.humdata.org                 | CKAN              |
+| UK Power Networks          | ukpowernetworks.opendatasoft.com | Open Datasoft     |
+| Infrabel                   | opendata.infrabel.be             | Open Datasoft     |
+| Paris                      | opendata.paris.fr                | Open Datasoft     |
+| Toulouse                   | data.toulouse-metropole.fr       | Open Datasoft     |
+| Elia Belgian Energy        | opendata.elia.be                 | Open Datasoft     |
+| EDF Energy                 | opendata.edf.fr                  | Open Datasoft     |
+| Cadent Gas                 | cadentgas.opendatasoft.com       | Open Datasoft     |
+| French Gov Open Data       | data.gouv.fr                     | CKAN              |
 
-| Catalogue Name | Website | Catalogue API Endpoint Definition | Comments |
-|----------------|---------|-----------------------------------|----------|
-| Bristol Open Data | https://opendata.bristol.gov.uk | TBC | Need to figure out how to call the catalogue backend |
-| Icebreaker One | https://ib1.org | CKAN | Needs further investigation as authentication with an API key may be required |
-| Data Mill North | https://datamillnorth.org | CKAN | Seems to have a slightly different implementation - may not work with all methods |
-| Canada Open Data | https://open.canada.ca | CKAN | Needs further investigation due to different implementation |
+## In Development
+
+| Catalogue Name    | Website                 | API Endpoint | Status                                                   |
+| ----------------- | ----------------------- | ------------ | -------------------------------------------------------- |
+| Bristol Open Data | opendata.bristol.gov.uk | TBC          | Need to figure out catalogue backend                     |
+| Icebreaker One    | ib1.org                 | TBC          | Authentication with API key required                     |
+| Data Mill North   | datamillnorth.org       | TBC          | Different implementation - may not work with all methods |
+| Canada Open Data  | open.canada.ca          | TBC          | Different implementation needs investigation             |
 
 # Herding-Cats Quick Start!🏃‍♂️‍➡️
 
 ## Overview
+
 This Python library provides a way to explore and interact with CKAN and OpenDataSoft data catalogues. It includes four main classes:
 
 1. `CkanCatExplorer`: For exploring CKAN-based data catalogues
@@ -76,6 +82,7 @@ if __name__ == "__main__":
 ```
 
 ##### Methods
+
 1. `check_site_health()`: Checks the health of the CKAN site
 2. `get_package_count()`: Returns the total number of packages in a catalogue
 3. `package_list_dictionary()`: Returns a dictionary of all available packages
@@ -106,7 +113,9 @@ if __name__ == "__main__":
 ##### Methods
 
 ###### Data Frame Loaders
+
 - `polars_data_loader(resource_data: Optional[List]) -> Optional[pl.DataFrame]`
+
   - Loads data into a Polars DataFrame
   - Supports Excel (.xlsx) and CSV formats
 
@@ -115,7 +124,9 @@ if __name__ == "__main__":
   - Supports Excel (.xlsx) and CSV formats
 
 ###### Database Loaders
+
 - `duckdb_data_loader(resource_data: Optional[List], duckdb_name: str, table_name: str)`
+
   - Loads data into a local DuckDB database
   - Supports Excel (.xlsx) and CSV formats
 
@@ -124,6 +135,7 @@ if __name__ == "__main__":
   - Supports Excel (.xlsx), CSV, and JSON formats
 
 ###### Cloud Storage Loaders
+
 - `aws_s3_data_loader(resource_data: Optional[List[str]], bucket_name: str, custom_name: str, mode: Literal["raw", "parquet"])`
   - Loads data into an AWS S3 bucket
   - Supports raw file upload or Parquet conversion
@@ -145,6 +157,7 @@ if __name__ == "__main__":
 ```
 
 ##### Methods
+
 1. `fetch_all_datasets()`: Retrieves all datasets from an OpenDataSoft catalogue
 2. `show_dataset_info_dict(dataset_id)`: Returns detailed metadata about a specific dataset
 3. `show_dataset_export_options_dict(dataset_id)`: Returns available export formats and download URLs
@@ -166,7 +179,9 @@ if __name__ == "__main__":
 ##### Methods
 
 ###### Data Frame Loaders
+
 - `polars_data_loader(resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None) -> pl.DataFrame`
+
   - Loads Parquet data into a Polars DataFrame
   - Optional API key for authenticated access
 
@@ -175,11 +190,13 @@ if __name__ == "__main__":
   - Optional API key for authenticated access
 
 ###### Database Loaders
+
 - `duckdb_data_loader(resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None) -> duckdb.DuckDBPyConnection`
   - Loads Parquet data into an in-memory DuckDB database
   - Optional API key for authenticated access
 
 ###### Cloud Storage Loaders
+
 - `aws_s3_data_loader(resource_data: Optional[List[Dict]], bucket_name: str, custom_name: str, api_key: Optional[str] = None)`
   - Loads Parquet data into an AWS S3 bucket
   - Optional API key for authenticated access

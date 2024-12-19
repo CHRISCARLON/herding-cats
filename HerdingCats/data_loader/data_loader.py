@@ -13,7 +13,6 @@ from typing import Optional, Literal, List, Dict
 from loguru import logger
 from botocore.exceptions import ClientError
 
-
 # START TO WRANGLE / ANALYSE
 # LOAD DATA RESOURCES INTO STORAGE
 class CkanCatResourceLoader:
@@ -505,71 +504,80 @@ class OpenDataSoftResourceLoader:
             raise OpenDataSoftExplorerError("No parquet format resource found")
 
     def duckdb_data_loader(
-            self, resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None
-        ) -> duckdb.DuckDBPyConnection:
+        self, 
+        resource_data: Optional[List[Dict]], 
+        format_type: Literal["parquet", "xlsx", "csv"],
+        api_key: Optional[str] = None
+    ) -> duckdb.DuckDBPyConnection:
         """
-        Load data from a resource URL into a DuckDB in-memory DB via pandas.
+        Load data from a resource URL directly into DuckDB.
+        
         Args:
             resource_data: List of dictionaries containing resource information
-            format_type: Expected format type (currently only supports 'parquet')
+            format_type: Expected format type ('parquet', 'xlsx', or 'csv')
             api_key: Optional API key for authentication with OpenDataSoft
+            
         Returns:
             DuckDB connection with loaded data
+            
         Raises:
             OpenDataSoftExplorerError: If resource data is missing or download fails
-
-        # Example usage:
-            import HerdingCats as hc
-
-            def main():
-                with hc.CatSession(hc.OpenDataSoftDataCatalogues.ELIA_BELGIAN_ENERGY) as session:
-                    explore = hc.OpenDataSoftCatExplorer(session)
-                    loader = hc.OpenDataSoftResourceLoader()
-
-                    data = explore.show_dataset_export_options_dict("ods036")
-                    duckdb = loader.duckdb_data_loader(data, "parquet")
-                    df = duckdb.execute("SELECT * FROM data LIMIT 10").fetchdf()
-                    print(df)
         """
         if not resource_data:
             raise OpenDataSoftExplorerError("No resource data provided")
 
-        headers = {'Accept': 'application/parquet'}
-        if api_key:
-            headers['Authorization'] = f'apikey {api_key}'
-
         # Create in-memory DuckDB connection
         con = duckdb.connect(':memory:')
-
+        con.execute("SET force_download=true")
+        
         for resource in resource_data:
-            if resource.get('format', '').lower() == 'parquet':
-                url = resource.get('download_url')
-                if not url:
+            match resource.get('format', '').lower():
+                case fmt if fmt == format_type:
+                    url = resource.get('download_url')
+                    if not url:
+                        continue
+                        
+                    try:
+                        # Append API key to URL if provided
+                        if api_key:
+                            url = f"{url}?apikey={api_key}"
+                        
+                        # Load data based on format type
+                        match format_type:
+                            case "parquet":
+                                con.execute(
+                                    "CREATE TABLE data AS SELECT * FROM read_parquet(?)",
+                                    [url]
+                                )
+                            case "xlsx":
+                                con.execute(
+                                    "CREATE TABLE data AS SELECT * FROM read_xlsx(?)",
+                                    [url]
+                                )
+                            case "csv":
+                                con.execute(
+                                    "CREATE TABLE data AS SELECT * FROM read_csv_auto(?)",
+                                    [url]
+                                )
+                        
+                        # Verify data was loaded
+                        sample_data = con.execute("SELECT * FROM data LIMIT 10").fetchall()
+                        if not sample_data and not api_key:
+                            raise OpenDataSoftExplorerError(
+                                "Received empty dataset. This likely means an API key is required. "
+                                "Please provide an API key and try again. You can usually do this by "
+                                "creating an account with the datastore you are trying to access"
+                                )
+                        
+                        return con
+                        
+                    except duckdb.Error as e:
+                        raise OpenDataSoftExplorerError(f"Failed to load {format_type} resource into DuckDB", e)
+                
+                case _:
                     continue
-                try:
-                    # Download parquet file to memory
-                    response = requests.get(url, headers=headers)
-                    response.raise_for_status()
-                    binary_data = BytesIO(response.content)
-
-                    # First read into pandas DataFrame
-                    df = pd.read_parquet(binary_data)
-
-                    # Check if DataFrame is empty
-                    if df.empty and not api_key:
-                        raise OpenDataSoftExplorerError(
-                            "Received empty DataFrame. This likely means an API key is required for this dataset. "
-                            "Please provide an API key and try again. You can usually do this by creating an account with the datastore you are trying to access"
-                        )
-
-                    # Load DataFrame into DuckDB
-                    con.execute("CREATE TABLE data AS SELECT * FROM df")
-                    return con
-
-                except (requests.RequestException, pd.errors.EmptyDataError, duckdb.Error) as e:
-                    raise OpenDataSoftExplorerError("Failed to download or load resource", e)
-
-        raise OpenDataSoftExplorerError("No parquet format resource found")
+        
+        raise OpenDataSoftExplorerError(f"No {format_type} format resource found")
 
     def aws_s3_data_loader(
         self,

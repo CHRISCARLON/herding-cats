@@ -33,8 +33,10 @@ boto3 = "^1.35.23"
 pyarrow = "^17.0.0"
 xlrd = "^2.0.1"
 ruff = "^0.6.7"
+tqdm = "^4.67.1"
 
 [tool.poetry.group.dev.dependencies]
+python-dotenv = "^1.0.0"
 pytest = "^8.2.2"
 
 [build-system]

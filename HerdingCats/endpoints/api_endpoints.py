@@ -37,6 +37,7 @@ class OpenDataSoftDataCatalogues(Enum):
     TOULOUSE = "https://data.toulouse-metropole.fr"
     ELIA_BELGIAN_ENERGY = "https://opendata.elia.be"
     EDF_ENERGY = "https://opendata.edf.fr"
+    CADENT_GAS = "https://cadentgas.opendatasoft.com"
     # Add more catalogues as needed...
 
 class OpenDataSoftApiPaths:
@@ -47,7 +48,7 @@ class OpenDataSoftApiPaths:
     SHOW_DATASET_EXPORTS = BASE_PATH.format("datasets/{}/exports")
 
     # Alternative base paths...
-    # Sometimes these are needed - not sure why need to dig into this!
+    # TODO Sometimes these are needed - not sure why need to dig into this!
     BASE_PATH_2 = "/api/explore/v2.0/catalog/{}"
     SHOW_DATASETS_2 = BASE_PATH_2.format("datasets")
     SHOW_DATASET_INFO_2 = BASE_PATH_2.format("datasets/{}")
