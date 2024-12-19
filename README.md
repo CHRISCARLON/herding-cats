@@ -13,10 +13,12 @@ This will improve and speed up how users:
 - Get that data into a format and/or location for further analysis
 
 Simply...
+
 ```bash
 pip install HerdingCats
 ```
-or 
+
+or
 
 ```bash
 poetry add HerdingCats

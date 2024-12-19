@@ -2,7 +2,6 @@ import requests
 import pandas as pd
 import polars as pl
 import duckdb
-import json
 import time
 
 from typing import Any, Dict, Optional, Union, Literal, List, Tuple
@@ -412,71 +411,6 @@ class CkanCatExplorer:
                 raise
 
     # ----------------------------
-    # Show catalogue freshness
-    # ----------------------------
-    def catalogue_freshness(self):
-        """
-        Returns a view of how many resources have been updated in the last 6 months
-        as a percentage of the total number of resources, based on unique package names.
-
-        This might not work for all catalogues.
-
-        It currently uses metadata_modified at the dataset level - not resource level.
-        """
-        logger.warning(
-            "This method DOES NOT work for all catalogues, and will return 0s. It currently only works for the London Datastore. We are working on improving and fixing this."
-        )
-
-        url = (
-            self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
-        )
-        try:
-            response = self.cat_session.session.get(url)
-            response.raise_for_status()
-            data = response.json()
-            dictionary_prep = data["result"]
-
-            dictionary_data = [
-                {
-                    "owner_org": entry.get("owner_org"),
-                    "name": entry.get("name"),
-                    "title": entry.get("title"),
-                    "maintainer": entry.get("maintainer"),
-                    "metadata_created": entry.get("metadata_created"),
-                    "metadata_modified": entry.get("metadata_modified"),
-                    "resources": entry.get("resources"),
-                    "groups": entry.get("groups"),
-                }
-                for entry in dictionary_prep
-            ]
-
-            df = self.__duckdb_explore(
-                dictionary_data,
-                "freshness",
-                """
-                WITH package_stats AS (
-                    SELECT
-                        name,
-                        COUNT(*) as resource_count,
-                        MAX(TRY_CAST(metadata_modified AS TIMESTAMP)) as last_update
-                    FROM freshness
-                    GROUP BY name
-                )
-                SELECT
-                    COUNT(DISTINCT name) as total_packages,
-                    SUM(resource_count) as total_resources,
-                    COUNT(DISTINCT CASE WHEN last_update >= CURRENT_TIMESTAMP - INTERVAL 6 MONTH THEN name END) as updated_packages_last_6_months,
-                    COUNT(DISTINCT CASE WHEN last_update >= CURRENT_TIMESTAMP - INTERVAL 6 MONTH THEN name END) * 100.0 / COUNT(DISTINCT name) as percentage_updated_packages_last_6_months
-                FROM package_stats
-                """,
-            )
-
-            return df
-
-        except requests.RequestException as e:
-            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
-
-    # ----------------------------
     # Show metadata using a package name
     # ----------------------------
     def package_show_info_json(self, package_name: Union[str, dict, Any]) -> List[Dict]:
@@ -512,7 +446,7 @@ class CkanCatExplorer:
             data = response.json()
             result_data = data["result"]
 
-            return self.__extract_resource_data(result_data)
+            return self._extract_resource_data(result_data)
 
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
@@ -615,7 +549,7 @@ class CkanCatExplorer:
                     "Neither 'result' nor 'results' key found in the API response"
                 )
 
-            return self.__extract_condensed_package_data(
+            return self._extract_condensed_package_data(
                 result_data,
                 ["name", "notes_markdown"],
                 ["name", "created", "format", "url"],
@@ -705,7 +639,7 @@ class CkanCatExplorer:
                     "Neither 'result' nor 'results' key found in the API response"
                 )
 
-            extracted_data = self.__extract_condensed_package_data(
+            extracted_data = self._extract_condensed_package_data(
                 result_data,
                 ["name", "notes_markdown", "num_resources"],
                 ["name", "created", "format", "url"],
@@ -811,16 +745,16 @@ class CkanCatExplorer:
                     "Neither 'result' nor 'results' key found in the API response"
                 )
 
-            extracted_data = self.__extract_condensed_package_data(
+            extracted_data = self._extract_condensed_package_data(
                 result_data,
                 ["name", "notes_markdown"],
                 ["name", "created", "format", "url"],
             )
 
             if df_type.lower() == "polars":
-                return self.__create_polars_dataframe(extracted_data)
+                return self._create_polars_dataframe(extracted_data)
             else:  # pandas
-                return self.__create_pandas_dataframe(extracted_data)
+                return self._create_pandas_dataframe(extracted_data)
 
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
@@ -873,7 +807,7 @@ class CkanCatExplorer:
                     return None
 
     @staticmethod
-    def __extract_condensed_package_data(
+    def _extract_condensed_package_data(
         data: List[Dict[str, Any]], fields: List[str], resource_fields: List[str]
     ) -> List[Dict[str, Any]]:
         """
@@ -920,7 +854,7 @@ class CkanCatExplorer:
         ]
 
     @staticmethod
-    def __create_pandas_dataframe(data: List[Dict[str, Any]]) -> pd.DataFrame:
+    def _create_pandas_dataframe(data: List[Dict[str, Any]]) -> pd.DataFrame:
         """TBC"""
         df = pd.json_normalize(
             data,
@@ -931,7 +865,7 @@ class CkanCatExplorer:
         return df
 
     @staticmethod
-    def __create_polars_dataframe(data: List[Dict[str, Any]]) -> pl.DataFrame:
+    def _create_polars_dataframe(data: List[Dict[str, Any]]) -> pl.DataFrame:
         """TBC"""
         df = pl.DataFrame(data)
         return (
@@ -946,7 +880,7 @@ class CkanCatExplorer:
         )
 
     @staticmethod
-    def __extract_resource_data(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_resource_data(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Extracts specific fields for a specific package and creates a list of dictionaries,
         one for each resource, containing the specified fields.
@@ -972,51 +906,6 @@ class CkanCatExplorer:
             result.append(resource_data)
 
         return result
-
-    @staticmethod
-    def __duckdb_explore(
-        data: List[Dict[str, Any]],
-        table_name: str,
-        query: str = "",
-    ) -> pd.DataFrame:
-        """
-        Create in memory duckdb to explore catalogue data and isolate resources for further analysis
-        """
-        try:
-            flattened_data = []
-            for entry in data:
-                base_entry = {
-                    k: v for k, v in entry.items() if k not in ["resources", "groups"]
-                }
-                # Handle groups - store as a list of group names
-                base_entry["groups"] = [
-                    group["name"] for group in entry.get("groups", [])
-                ]
-                # Handle resources
-                if entry.get("resources"):
-                    for resource in entry["resources"]:
-                        resource_entry = base_entry.copy()
-                        resource_entry.update(
-                            {f"resource_{k}": v for k, v in resource.items()}
-                        )
-                        flattened_data.append(resource_entry)
-                else:
-                    flattened_data.append(base_entry)
-            # Convert the flattened data to a pandas DataFrame
-            df = pd.DataFrame(flattened_data)
-            logger.success("DataFrame Successfully Created")
-            # Use a context manager for the DuckDB connection
-            with duckdb.connect(":memory:") as con:
-                # Register the pandas DataFrame as a table in DuckDB
-                con.register(f"{table_name}", df)
-                # Execute the provided query
-                result = con.execute(query).fetchdf()
-            return result
-        except Exception as e:
-            print(f"Error when creating DuckDB DataFrame: {str(e)}")
-            print("First few elements of input data:")
-            print(json.dumps(data[:2], indent=2))
-            return pd.DataFrame()
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For Open Datasoft Catalogues Only
