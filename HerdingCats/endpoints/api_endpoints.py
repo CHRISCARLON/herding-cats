@@ -68,6 +68,8 @@ class FrenchGouvApiPaths:
     BASE_PATH = "/api/1/{}"
     SHOW_DATASETS = BASE_PATH.format("datasets")
     SHOW_DATASETS_BY_ID = BASE_PATH.format("datasets/{}")
+    SHOW_DATASET_RESOURCE_BY_ID = BASE_PATH.format("datasets/{}/resources/")
+    CATALOGUE = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/b06842f8ee27a0302ebbaaa344d35e4c.parquet"
 
 class FrenchGouvCatalogue(Enum):
     GOUV_FR = "https://www.data.gouv.fr"
