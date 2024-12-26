@@ -1,4 +1,4 @@
-from .data_loader.data_loader import CkanCatResourceLoader, OpenDataSoftResourceLoader
+from .data_loader.data_loader import CkanCatResourceLoader, OpenDataSoftResourceLoader, FrenchGouvResourceLoader
 from .explorer.cat_explore import CkanCatExplorer, OpenDataSoftCatExplorer, FrenchGouvCatExplorer
 from .session.cat_session import CatSession
 from .errors.cats_errors import CatSessionError, CatExplorerError, OpenDataSoftExplorerError
@@ -17,7 +17,8 @@ __all__ = [
     "OpenDataSoftResourceLoader",
     "OpenDataSoftExplorerError",
     "FrenchGouvCatExplorer",
-    "FrenchGouvCatalogue"
+    "FrenchGouvCatalogue",
+    "FrenchGouvResourceLoader"
 ]
 
 __version__ = "0.1.6"

@@ -1321,7 +1321,7 @@ class FrenchGouvCatExplorer:
             logger.error(f"Error fetching dataset {identifier}: {str(e)}")
             return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
 
-    def get_datasets_by_identifiers(self, identifiers: list) -> dict:
+    def get_multiple_datasets_meta(self, identifiers: list) -> dict:
         """
         Fetches multiple datasets using a list of IDs or slugs.
 
@@ -1352,7 +1352,7 @@ class FrenchGouvCatExplorer:
     # ----------------------------
     # Show available resources for a particular dataset
     # ----------------------------
-    def get_dataset_resource(self, dataset_id: str, resource_id: str) -> dict:
+    def get_dataset_resource_export(self, dataset_id: str, resource_id: str) -> dict:
         """
         Fetches metadata for a specific resource within a dataset.
         
@@ -1417,6 +1417,46 @@ class FrenchGouvCatExplorer:
         except Exception as e:
             logger.error(f"Error fetching resource {resource_id}: {str(e)}")
             return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
+    
+    def get_dataset_resource_meta(self, data: dict) -> List[Dict[str, Any]] | None:
+        
+        if len(data) == 0:
+            raise ValueError("Data can't be empty")
+        
+        try:
+            result = self._extract_resource_data(data)
+            return result
+        except Exception as e:
+            logger.error("Error fetching resource: {str(e)}")
+
+    @staticmethod
+    def _extract_resource_data(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Extracts specific fields for a specific package and creates a list of dictionaries,
+        one for each resource, containing the specified fields.
+
+        Args:
+        data (Dict[str, Any]): The input package data dictionary.
+
+        Returns:
+        List[Dict[str, Any]]: A list of dictionaries, each containing the specified fields for a resource.
+        """
+
+        base_fields = {
+            "dataset_id": data.get("id"),
+            "slug": data.get("slug"),
+        }
+
+        resource_fields = ["created_at", "id", "format", "url", "title", "latest", "last_modified", "frequency", "extras"]
+
+        result = []
+        for resource in data.get("resources", []):
+            resource_data = base_fields.copy()
+            for field in resource_fields:
+                resource_data[f"resource_{field}"] = resource.get(field)
+            result.append(resource_data)
+
+        return result
 
     # ----------------------------
     # Show all organisation available

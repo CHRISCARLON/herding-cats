@@ -38,6 +38,7 @@ class OpenDataSoftDataCatalogues(Enum):
     ELIA_BELGIAN_ENERGY = "https://opendata.elia.be"
     EDF_ENERGY = "https://opendata.edf.fr"
     CADENT_GAS = "https://cadentgas.opendatasoft.com"
+    GRD_FRANCE = "https://opendata.agenceore.fr"
     # Add more catalogues as needed...
 
 class OpenDataSoftApiPaths:

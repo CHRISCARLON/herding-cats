@@ -20,7 +20,7 @@ from loguru import logger
 
 
 # START TO WRANGLE / ANALYSE
-# LOAD DATA RESOURCES INTO STORAGE
+# LOAD CKAN DATA RESOURCES INTO STORAGE
 class CkanCatResourceLoader:
     """A class to load data resources into various formats and storage systems."""
     
@@ -296,272 +296,400 @@ class CkanCatResourceLoader:
             logger.error(f"AWS S3 upload error: {e}")
             raise
 
-
+# START TO WRANGLE / ANALYSE
+# LOAD OPEN DATA SOFT DATA RESOURCES INTO STORAGE
 class OpenDataSoftResourceLoader:
+    """A class to load OpenDataSoft resources into various formats and storage systems."""
+
+    SUPPORTED_FORMATS = {
+        "spreadsheet": ["xls", "xlsx"],
+        "csv": ["csv"],
+        "parquet": ["parquet"],
+        "geopackage": ["gpkg", "geopackage"]
+    }
+
     def __init__(self) -> None:
-        pass
+        self._validate_dependencies()
 
-    def polars_data_loader(
-            self, resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None
-        ) -> pl.DataFrame:
-            """
-            Load data from a resource URL into a Polars DataFrame.
-            Args:
-                resource_data: List of dictionaries containing resource information
-                format_type: Expected format type (currently only supports 'parquet')
-                api_key: Optional API key for authentication with OpenDataSoft
-            Returns:
-                Polars DataFrame
-            Raises:
-                OpenDataSoftExplorerError: If resource data is missing or download fails
+    def _validate_dependencies(self):
+        """Validate that all required dependencies are available."""
+        required_modules = {
+            'pandas': pd,
+            'polars': pl,
+            'duckdb': duckdb,
+            'boto3': boto3,
+            'pyarrow': pa
+        }
+        missing = [name for name, module in required_modules.items() if module is None]
+        if missing:
+            raise ImportError(f"Missing required dependencies: {', '.join(missing)}")
 
-            # Example usage
-            import HerdingCats as hc
-
-            def main():
-                with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
-                    explore = hc.OpenDataSoftCatExplorer(session)
-                    data_loader = hc.OpenDataSoftResourceLoader()
-
-                    data = explore.show_dataset_export_options_dict("ukpn-smart-meter-installation-volumes")
-                    pl_df = data_loader.polars_data_loader(data, "parquet", "api_key")
-                    print(pl_df.head(10))
-
-            if __name__ == "__main__":
-                main()
-
-            """
+    @staticmethod
+    def validate_inputs(func):
+        """Decorator to validate resource data containing download URLs and formats."""
+        @wraps(func)
+        def wrapper(self, resource_data: Optional[List[Dict]], *args, **kwargs):
+            # Check if resource data exists and is non-empty
             if not resource_data:
-                raise OpenDataSoftExplorerError("No resource data provided")
-
-            headers = {'Accept': 'application/parquet'}
-            if api_key:
-                headers['Authorization'] = f'apikey {api_key}'
-
-            for resource in resource_data:
-                if resource.get('format', '').lower() == 'parquet':
-                    url = resource.get('download_url')
-                    if not url:
-                        continue
-                    try:
-                        response = requests.get(url, headers=headers)
-                        response.raise_for_status()
-                        binary_data = BytesIO(response.content)
-                        df = pl.read_parquet(binary_data)
-
-                        if df.height == 0 and not api_key:
-                            raise OpenDataSoftExplorerError(
-                                "Received empty DataFrame. This likely means an API key is required for this dataset. "
-                                "Please provide an API key and try again. You can usually do this by creating an account with the datastore you are tyring to access"
-                            )
-                        return df
-
-                    except (requests.RequestException, Exception) as e:
-                        raise OpenDataSoftExplorerError("Failed to download resource", e)
-
-            raise OpenDataSoftExplorerError("No parquet format resource found")
-
-    def pandas_data_loader(
-            self, resource_data: Optional[List[Dict]], format_type: Literal["parquet"], api_key: Optional[str] = None
-        ) -> pd.DataFrame:
-            """
-            Load data from a resource URL into a Polars DataFrame.
-            Args:
-                resource_data: List of dictionaries containing resource information
-                format_type: Expected format type (currently only supports 'parquet')
-                api_key: Optional API key for authentication with OpenDataSoft
-            Returns:
-                Polars DataFrame
-            Raises:
-                OpenDataSoftExplorerError: If resource data is missing or download fails
-
-            # Example usage
-            import HerdingCats as hc
-
-            def main():
-                with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
-                    explore = hc.OpenDataSoftCatExplorer(session)
-                    data_loader = hc.OpenDataSoftResourceLoader()
-
-                    data = explore.show_dataset_export_options_dict("ukpn-smart-meter-installation-volumes")
-                    pd_df = data_loader.pandas_data_loader(data, "parquet", "api_key")
-                    print(pd_df.head(10))
-
-            if __name__ == "__main__":
-                main()
-
-            """
-            if not resource_data:
-                raise OpenDataSoftExplorerError("No resource data provided")
-
-            headers = {'Accept': 'application/parquet'}
-            if api_key:
-                headers['Authorization'] = f'apikey {api_key}'
-
-            for resource in resource_data:
-                if resource.get('format', '').lower() == 'parquet':
-                    url = resource.get('download_url')
-                    if not url:
-                        continue
-                    try:
-                        response = requests.get(url, headers=headers)
-                        response.raise_for_status()
-                        binary_data = BytesIO(response.content)
-                        df = pd.read_parquet(binary_data)
-
-                        if df.size == 0 and not api_key:
-                            raise OpenDataSoftExplorerError(
-                                "Received empty DataFrame. This likely means an API key is required for this dataset. "
-                                "Please provide an API key and try again. You can usually do this by creating an account with the datastore you are tyring to access"
-                            )
-                        return df
-
-                    except (requests.RequestException, Exception) as e:
-                        raise OpenDataSoftExplorerError("Failed to download resource", e)
-
-            raise OpenDataSoftExplorerError("No parquet format resource found")
-
-    def duckdb_data_loader(
+                logger.error("No resource data provided")
+                raise ValueError("Resource data must be provided")
+                
+            if not isinstance(resource_data, list):
+                logger.error("Resource data must be a list")
+                raise ValueError("Resource data must be a list of dictionaries")
+            return func(self, resource_data, *args, **kwargs)
+        return wrapper
+    
+    def _validate_resource_data(
         self, 
-        resource_data: Optional[List[Dict]], 
-        format_type: Literal["parquet", "xlsx", "csv"],
-        api_key: Optional[str] = None
-    ) -> duckdb.DuckDBPyConnection:
-        """
-        Load data from a resource URL directly into DuckDB.
-        
-        Args:
-            resource_data: List of dictionaries containing resource information
-            format_type: Expected format type ('parquet', 'xlsx', or 'csv')
-            api_key: Optional API key for authentication with OpenDataSoft
-            
-        Returns:
-            DuckDB connection with loaded data
-            
-        Raises:
-            OpenDataSoftExplorerError: If resource data is missing or download fails
-        """
+        resource_data: Optional[List[Dict[str, str]]], 
+        format_type: str
+    ) -> str:
+        """Validate resource data and extract download URL."""
         if not resource_data:
             raise OpenDataSoftExplorerError("No resource data provided")
 
-        # Create in-memory DuckDB connection
+        # Get all supported formats
+        all_formats = [fmt for formats in self.SUPPORTED_FORMATS.values() for fmt in formats]
+        
+        # If the provided format_type is a category, get its format
+        valid_formats = (self.SUPPORTED_FORMATS.get(format_type, []) 
+                        if format_type in self.SUPPORTED_FORMATS 
+                        else [format_type])
+
+        # Validate format type
+        if format_type not in self.SUPPORTED_FORMATS and format_type not in all_formats:
+            raise OpenDataSoftExplorerError(
+                f"Unsupported format: {format_type}. "
+                f"Supported formats: csv, parquet, xls, xlsx, geopackage"
+            )
+
+        # Find matching resource
+        url = next(
+            (r.get('download_url') for r in resource_data 
+             if r.get('format', '').lower() in valid_formats),
+            None
+        )
+        
+        # If format provided does not have a url provide the formats that do
+        if not url:
+            available_formats = [r['format'] for r in resource_data]
+            raise OpenDataSoftExplorerError(
+                f"No resource found with format: {format_type}. "
+                f"Available formats: {', '.join(available_formats)}"
+            )
+            
+        return url
+
+    def _fetch_data(self, url: str, api_key: Optional[str] = None) -> BytesIO:
+        """Fetch data from URL and return as BytesIO object."""
+        try:
+            # Add API key to URL if provided
+            if api_key:
+                url = f"{url}?apikey={api_key}"
+                
+            response = requests.get(url)
+            response.raise_for_status()
+            return BytesIO(response.content)
+        except requests.RequestException as e:
+            raise OpenDataSoftExplorerError(f"Failed to download resource: {str(e)}", e)
+
+    def _verify_data(self, df: Union[pd.DataFrame, pl.DataFrame], api_key: Optional[str]) -> None:
+        """Verify that the DataFrame is not empty when no API key is provided."""
+        is_empty = df.empty if isinstance(df, pd.DataFrame) else df.height == 0
+        if is_empty and not api_key:
+            raise OpenDataSoftExplorerError(
+                "Received empty DataFrame. This likely means an API key is required. "
+                "Please provide an API key and try again."
+            )
+
+    def _load_dataframe(
+        self,
+        binary_data: BytesIO,
+        format_type: str,
+        loader_type: Literal["pandas", "polars"],
+        sheet_name: Optional[str] = None
+    ) -> Union[pd.DataFrame, pl.DataFrame]:
+        """Load binary data into specified DataFrame type."""
+        try:
+            match (format_type, loader_type):
+                case ("parquet", "pandas"):
+                    return pd.read_parquet(binary_data)
+                case ("parquet", "polars"):
+                    return pl.read_parquet(binary_data)
+                case ("csv", "pandas"):
+                    return pd.read_csv(binary_data)
+                case ("csv", "polars"):
+                    return pl.read_csv(binary_data)
+                case (("xls" | "xlsx" | "spreadsheet"), "pandas"):
+                    return pd.read_excel(binary_data, sheet_name=sheet_name) if sheet_name else pd.read_excel(binary_data)
+                case (("xls" | "xlsx" | "spreadsheet"), "polars"):
+                    return pl.read_excel(binary_data, sheet_name=sheet_name) if sheet_name else pl.read_excel(binary_data)
+                case (("geopackage" | "gpkg"), _):
+                    raise ValueError("Geopackage format requires using geopandas or a specialized GIS library")
+                case _:
+                    raise ValueError(f"Unsupported format {format_type} or loader type {loader_type}")
+        except Exception as e:
+            raise OpenDataSoftExplorerError(f"Failed to load {loader_type} DataFrame: {str(e)}", e)
+
+    @overload
+    def _load_to_frame(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: str,
+        loader_type: Literal["pandas"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> PandasDataFrame: ...
+
+    @overload
+    def _load_to_frame(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: str,
+        loader_type: Literal["polars"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> PolarsDataFrame: ...
+
+    def _load_to_frame(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: str,
+        loader_type: Literal["pandas", "polars"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> Union[pd.DataFrame, pl.DataFrame]:
+        """Common method for loading data into pandas or polars DataFrame."""
+        url = self._validate_resource_data(resource_data, format_type)
+        binary_data = self._fetch_data(url, api_key)
+        df = self._load_dataframe(binary_data, format_type, loader_type, sheet_name)
+        self._verify_data(df, api_key)
+        return df
+
+    @validate_inputs
+    def polars_data_loader(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> pl.DataFrame:
+        """Load data from a resource URL into a Polars DataFrame."""
+        return self._load_to_frame(resource_data, format_type, "polars", api_key, sheet_name)
+
+    @validate_inputs
+    def pandas_data_loader(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> pd.DataFrame:
+        """Load data from a resource URL into a Pandas DataFrame."""
+        return self._load_to_frame(resource_data, format_type, "pandas", api_key, sheet_name)
+
+    @validate_inputs
+    def duckdb_data_loader(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: Literal["csv", "parquet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> duckdb.DuckDBPyConnection:
+        """Load data from a resource URL directly into DuckDB."""
+        url = self._validate_resource_data(resource_data, format_type)
+        
+        if api_key:
+            url = f"{url}?apikey={api_key}"
+            
         con = duckdb.connect(':memory:')
         con.execute("SET force_download=true")
+        con.execute("INSTALL spatial")
+        con.execute("LOAD spatial")
         
-        for resource in resource_data:
-            match resource.get('format', '').lower():
-                case fmt if fmt == format_type:
-                    url = resource.get('download_url')
-                    if not url:
-                        continue
-                        
-                    try:
-                        # Append API key to URL if provided
-                        if api_key:
-                            url = f"{url}?apikey={api_key}"
-                        
-                        # Load data based on format type
-                        match format_type:
-                            case "parquet":
-                                con.execute(
-                                    "CREATE TABLE data AS SELECT * FROM read_parquet(?)",
-                                    [url]
-                                )
-                            case "xlsx":
-                                con.execute(
-                                    "CREATE TABLE data AS SELECT * FROM read_xlsx(?)",
-                                    [url]
-                                )
-                            case "csv":
-                                con.execute(
-                                    "CREATE TABLE data AS SELECT * FROM read_csv_auto(?)",
-                                    [url]
-                                )
-                        
-                        # Verify data was loaded
-                        sample_data = con.execute("SELECT * FROM data LIMIT 10").fetchall()
-                        if not sample_data and not api_key:
-                            raise OpenDataSoftExplorerError(
-                                "Received empty dataset. This likely means an API key is required. "
-                                "Please provide an API key and try again. You can usually do this by "
-                                "creating an account with the datastore you are trying to access"
-                                )
-                        
-                        return con
-                        
-                    except duckdb.Error as e:
-                        raise OpenDataSoftExplorerError(f"Failed to load {format_type} resource into DuckDB", e)
-                
+        try:
+            # Use match statement for format handling
+            match format_type:
+                case "parquet":
+                    con.execute("CREATE TABLE data AS SELECT * FROM read_parquet(?)", [url])
+                case "csv":
+                    con.execute("CREATE TABLE data AS SELECT * FROM read_csv(?)", [url])
+                case "xls" | "xlsx" | "spreadsheet":
+                    if sheet_name:
+                        con.execute("CREATE TABLE data AS SELECT * FROM st_read(?, sheet_name=?)", [url, sheet_name])
+                    else:
+                        con.execute("CREATE TABLE data AS SELECT * FROM st_read(?)", [url])
                 case _:
-                    continue
-        
-        raise OpenDataSoftExplorerError(f"No {format_type} format resource found")
+                    raise ValueError(f"Unsupported format type: {format_type}")
+            
+            # Verify data was loaded
+            sample_data = con.execute("SELECT * FROM data LIMIT 10").fetchall()
+            if not sample_data and not api_key:
+                raise OpenDataSoftExplorerError(
+                    "Received empty dataset. This likely means an API key is required."
+                )
+            
+            return con
+            
+        except duckdb.Error as e:
+            raise OpenDataSoftExplorerError(f"Failed to load {format_type} resource into DuckDB", e)
 
-    def aws_s3_data_loader(
-        self,
-        resource_data: Optional[List[Dict]],
-        bucket_name: str,
-        custom_name: str,
-        api_key: Optional[str] = None,
-    ) -> None:
-        """
-        Load resource data into remote S3 storage as a parquet file.
 
-        Args:
-            resource_data: List of dictionaries containing resource information
-            bucket_name: S3 bucket name
-            custom_name: Custom prefix for the filename
-            api_key: Optional API key for authentication
-        """
-        if not resource_data:
-            raise OpenDataSoftExplorerError("No resource data provided")
-
-        if not bucket_name:
-            raise ValueError("No bucket name provided")
-
-        # Create an S3 client
-        s3_client = boto3.client("s3")
-        logger.success("S3 Client Created")
-
-        # Check if the bucket exists
+    def _verify_s3_bucket(self, s3_client, bucket_name: str) -> None:
+        """Verify S3 bucket exists."""
         try:
             s3_client.head_bucket(Bucket=bucket_name)
             logger.success("Bucket Found")
         except ClientError as e:
             error_code = int(e.response["Error"]["Code"])
             if error_code == 404:
-                logger.error(f"Bucket '{bucket_name}' does not exist.")
-            else:
-                logger.error(f"Error checking bucket '{bucket_name}': {e}")
-            return
+                raise ValueError(f"Bucket '{bucket_name}' does not exist")
+            raise
 
-        headers = {'Accept': 'application/parquet'}
-        if api_key:
-            headers['Authorization'] = f'apikey {api_key}'
+    def _convert_to_parquet(self, binary_data: BytesIO, format_type: str) -> BytesIO:
+        """Convert input data to parquet format."""
+        try:
+            match format_type:
+                case "csv":
+                    df = pd.read_csv(binary_data)
+                case "xls" | "xlsx":
+                    df = pd.read_excel(binary_data)
+                case _:
+                    raise ValueError(f"Unsupported format type for Parquet conversion: {format_type}")
 
-        for resource in resource_data:
-            if resource.get('format', '').lower() == 'parquet':
-                url = resource.get('download_url')
-                if not url:
-                    continue
+            if df.empty:
+                raise ValueError("No data was loaded from the source file")
 
-                try:
-                    response = requests.get(url, headers=headers)
-                    response.raise_for_status()
-                    binary_data = BytesIO(response.content)
+            # Convert to parquet
+            parquet_buffer = BytesIO()
+            table = pa.Table.from_pandas(df)
+            pq.write_table(table, parquet_buffer)
+            parquet_buffer.seek(0)
+            return parquet_buffer
+        except Exception as e:
+            raise OpenDataSoftExplorerError(f"Failed to convert to parquet: {str(e)}", e)
+    
+    @validate_inputs
+    def aws_s3_data_loader(
+        self,
+        resource_data: List[Dict[str, str]],
+        bucket_name: str,
+        custom_name: str,
+        mode: Literal["raw", "parquet"],
+        format_type: Literal["csv", "parquet", "xls", "xlsx"],
+        api_key: Optional[str] = None
+    ) -> str:
+        """
+        Load resource data into remote S3 storage.
 
-                    # Generate a unique filename
-                    filename = f"{custom_name}-{uuid.uuid4()}.parquet"
+        Args:
+            resource_data: List of dictionaries containing format and download_url
+            bucket_name: S3 bucket name
+            custom_name: Custom prefix for the filename
+            mode: 'raw' to keep original format, 'parquet' to convert to parquet
+            format_type: Format to download ('csv', 'parquet', 'xls', 'xlsx')
+            api_key: Optional API key for authentication
 
-                    # Upload the parquet file directly
+        Returns:
+            str: Name of the uploaded file
+        """
+    
+        # Validate inputs
+        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
+            raise ValueError("Bucket name and custom name must be non-empty strings")
+        
+        # Get URL for specified format
+        url = self._validate_resource_data(resource_data, format_type)
+        
+        # Fetch data
+        binary_data = self._fetch_data(url, api_key)
+        
+        # Setup S3
+        s3_client = boto3.client("s3")
+        self._verify_s3_bucket(s3_client, bucket_name)
+
+        try:
+            match mode:
+                case "raw":
+                    filename = f"{custom_name}-{uuid.uuid4()}.{format_type}"
                     s3_client.upload_fileobj(binary_data, bucket_name, filename)
-                    logger.success("Parquet file uploaded successfully to S3")
-                    return
+                case "parquet":
+                    parquet_buffer = self._convert_to_parquet(binary_data, format_type)
+                    filename = f"{custom_name}-{uuid.uuid4()}.parquet"
+                    s3_client.upload_fileobj(parquet_buffer, bucket_name, filename)
+            
+            logger.success(f"File uploaded successfully to S3 as {filename}")
+            return filename
+        except Exception as e:
+            logger.error(f"AWS S3 upload error: {e}")
+            raise
 
-                except requests.RequestException as e:
-                    raise OpenDataSoftExplorerError("Failed to download resource", e)
-                except ClientError as e:
-                    logger.error(f"Error: {e}")
-                    return
+# START TO WRANGLE / ANALYSE
+# LOAD FRENCH GOUV DATA RESOURCES INTO STORAGE
+class FrenchGouvResourceLoader:
+    """A class to load French Gouv data resources into various formats and storage systems."""
 
-        raise OpenDataSoftExplorerError("No parquet format resource found")
+    SUPPORTED_FORMATS = {
+        "spreadsheet": ["xls", "xlsx"],
+        "csv": ["csv"],
+        "parquet": ["parquet"],
+        "geopackage": ["gpkg", "geopackage"]
+    }
+
+    def __init__(self) -> None:
+        self._validate_dependencies()
+
+    def _validate_dependencies(self):
+        """Validate that all required dependencies are available."""
+        required_modules = {
+            'pandas': pd,
+            'polars': pl,
+            'duckdb': duckdb,
+            'boto3': boto3,
+            'pyarrow': pa
+        }
+        missing = [name for name, module in required_modules.items() if module is None]
+        if missing:
+            raise ImportError(f"Missing required dependencies: {', '.join(missing)}")
+        
+    def validate_resource_data(
+    self, 
+    resource_data: Optional[List[Dict[str, str]]], 
+    format_type: str
+    ) -> str:
+        """Validate resource data and extract download URL."""
+        if not resource_data:
+            raise OpenDataSoftExplorerError("No resource data provided")
+
+        # Get all supported formats
+        all_formats = [fmt for formats in self.SUPPORTED_FORMATS.values() for fmt in formats]
+        
+        # If the provided format_type is a category, get its format
+        valid_formats = (self.SUPPORTED_FORMATS.get(format_type, []) 
+                        if format_type in self.SUPPORTED_FORMATS 
+                        else [format_type])
+        
+        # Validate format type
+        if format_type not in self.SUPPORTED_FORMATS and format_type not in all_formats:
+            raise OpenDataSoftExplorerError(
+                f"Unsupported format: {format_type}. "
+                f"Supported formats: csv, parquet, xls, xlsx, geopackage"
+            )
+
+        # Find matching resource
+        url = next(
+            (r.get('resource_latest') for r in resource_data 
+                if r.get('resource_format', '').lower() in valid_formats),
+            None
+        )
+        
+        # If format provided does not have a url provide the formats that do
+        if not url:
+            available_formats = [r['resource_format'] for r in resource_data]
+            raise OpenDataSoftExplorerError(
+                f"No resource found with format: {format_type}. "
+                f"Available formats: {', '.join(available_formats)}"
+            )
+            
+        return url

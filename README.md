@@ -39,20 +39,21 @@ I'll help format these tables in clean markdown:
 
 ## Supported Catalogues
 
-| Catalogue Name             | Website                          | Catalogue Backend |
-| -------------------------- | -------------------------------- | ----------------- |
-| London Datastore           | data.london.gov.uk               | CKAN              |
-| Subak Data Catalogue       | data.subak.org                   | CKAN              |
-| UK Gov Open Data           | data.gov.uk                      | CKAN              |
-| Humanitarian Data Exchange | data.humdata.org                 | CKAN              |
-| UK Power Networks          | ukpowernetworks.opendatasoft.com | Open Datasoft     |
-| Infrabel                   | opendata.infrabel.be             | Open Datasoft     |
-| Paris                      | opendata.paris.fr                | Open Datasoft     |
-| Toulouse                   | data.toulouse-metropole.fr       | Open Datasoft     |
-| Elia Belgian Energy        | opendata.elia.be                 | Open Datasoft     |
-| EDF Energy                 | opendata.edf.fr                  | Open Datasoft     |
-| Cadent Gas                 | cadentgas.opendatasoft.com       | Open Datasoft     |
-| French Gov Open Data       | data.gouv.fr                     | CKAN              |
+| Catalogue Name                                                            | Website                          | Catalogue Backend |
+| ------------------------------------------------------------------------- | -------------------------------- | ----------------- |
+| London Datastore                                                          | data.london.gov.uk               | CKAN              |
+| Subak Data Catalogue                                                      | data.subak.org                   | CKAN              |
+| UK Gov Open Data                                                          | data.gov.uk                      | CKAN              |
+| Humanitarian Data Exchange                                                | data.humdata.org                 | CKAN              |
+| UK Power Networks                                                         | ukpowernetworks.opendatasoft.com | Open Datasoft     |
+| Infrabel                                                                  | opendata.infrabel.be             | Open Datasoft     |
+| Paris                                                                     | opendata.paris.fr                | Open Datasoft     |
+| Toulouse                                                                  | data.toulouse-metropole.fr       | Open Datasoft     |
+| Elia Belgian Energy                                                       | opendata.elia.be                 | Open Datasoft     |
+| EDF Energy                                                                | opendata.edf.fr                  | Open Datasoft     |
+| Cadent Gas                                                                | cadentgas.opendatasoft.com       | Open Datasoft     |
+| French Gov Open Data                                                      | data.gouv.fr                     | CKAN              |
+| Gestionnaire de Réseaux de Distribution (French equivalent of GDNs in UK) | opendata.agenceore.fr            | Open Datasoft     |
 
 ## In Development
 
@@ -63,7 +64,7 @@ I'll help format these tables in clean markdown:
 | Data Mill North   | datamillnorth.org       | TBC          | Different implementation - may not work with all methods |
 | Canada Open Data  | open.canada.ca          | TBC          | Different implementation needs investigation             |
 
-# Herding-Cats Quick Start!🏃‍♂️‍➡️
+## Herding-Cats Quick Start!🏃‍♂️‍➡️
 
 ## Overview
 
