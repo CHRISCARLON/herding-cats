@@ -1,7 +1,47 @@
 from typing import Optional
 
 class CatSessionError(Exception):
-    pass
+    """
+    Custom exception class for CatSession errors.
+    Used when there are issues with establishing or maintaining catalogue sessions.
+    """
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    RESET = '\033[0m'
+
+    def __init__(
+        self, 
+        message: str, 
+        url: Optional[str] = None, 
+        original_error: Optional[Exception] = None
+    ) -> None:
+        """
+        Initialize the CatSession error with enhanced error information.
+
+        Args:
+            message: The main error message
+            url: The URL that caused the error (if applicable)
+            original_error: The original exception that was caught (if any)
+        """
+        self.message = message
+        self.url = url
+        self.original_error = original_error
+
+        error_msg = f"{self.RED}[CatSession Error] 🐈: {message}{self.RESET}"
+        
+        if url:
+            error_msg += f"\n{self.YELLOW}Failed URL: {url}{self.RESET}"
+        
+        if original_error:
+            error_msg += (
+                f"\n{self.YELLOW}Original error: "
+                f"{str(original_error)}{self.RESET}"
+            )
+
+        super().__init__(error_msg)
+
+    def __str__(self) -> str:
+        return self.args[0]
 
 class CatExplorerError(Exception):
     pass
