@@ -7,7 +7,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import uuid
 
-from ..errors.cats_errors import OpenDataSoftExplorerError
+from ..errors.cats_errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
 
 from typing import Union, overload, Optional, Literal, List, Dict
 from pandas.core.frame import DataFrame as PandasDataFrame
@@ -669,7 +669,7 @@ class FrenchGouvResourceLoader:
     ) -> str:
         """Validate resource data and extract download URL."""
         if not resource_data:
-            raise OpenDataSoftExplorerError("No resource data provided")
+            raise FrenchCatDataLoaderError("No resource data provided")
 
         # Get all supported formats
         all_formats = [fmt for formats in self.SUPPORTED_FORMATS.values() for fmt in formats]
@@ -679,11 +679,9 @@ class FrenchGouvResourceLoader:
                         if format_type in self.SUPPORTED_FORMATS 
                         else [format_type])
         
-        print(valid_formats)
-        
         # Validate format type
         if format_type not in self.SUPPORTED_FORMATS and format_type not in all_formats:
-            raise OpenDataSoftExplorerError(
+            raise FrenchCatDataLoaderError(
                 f"Unsupported format: {format_type}. "
                 f"Supported formats: csv, parquet, xls, xlsx, geopackage"
             )
@@ -698,7 +696,7 @@ class FrenchGouvResourceLoader:
         # If format provided does not have a url provide the formats that do
         if not url:
             available_formats = [r['resource_url'] for r in resource_data]
-            raise OpenDataSoftExplorerError(
+            raise FrenchCatDataLoaderError(
                 f"No resource found with format: {format_type}. "
                 f"Available formats: {', '.join(available_formats)}"
             )
@@ -742,11 +740,11 @@ class FrenchGouvResourceLoader:
             # Verify data was loaded
             sample_data = con.execute("SELECT * FROM data LIMIT 10").fetchall()
             if not sample_data and not api_key:
-                raise OpenDataSoftExplorerError(
+                raise FrenchCatDataLoaderError(
                     "Received empty dataset. This likely means an API key is required."
                 )
             
             return con
             
         except duckdb.Error as e:
-            raise OpenDataSoftExplorerError(f"Failed to load {format_type} resource into DuckDB", e)
+            raise FrenchCatDataLoaderError(f"Failed to load {format_type} resource into DuckDB", e)

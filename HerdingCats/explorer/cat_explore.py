@@ -69,7 +69,7 @@ class CkanCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CatSession("data.london.gov.uk") as session:
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 health_check = explore.check_site_health()
         """
@@ -104,10 +104,10 @@ class CkanCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CatSession("data.london.gov.uk") as session:
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
-                package_count = get_package_count()
-                pprint(package_count)
+                package_count = explore.get_package_count()
+                print(package_count)
         """
 
         url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
@@ -143,10 +143,10 @@ class CkanCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CatSession("data.london.gov.uk") as session:
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 all_packages = explore.get_package_list()
-                pprint(all_packages)
+                print(all_packages)
         """
 
         url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
@@ -167,7 +167,7 @@ class CkanCatExplorer:
         """
         Explore all packages that are available to query as a dataframe
 
-        Must specify a df type:
+        Args: Must specify a df type
             pandas
             polars
 
@@ -196,9 +196,9 @@ class CkanCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CatSession("uk gov") as session:
-                explorer = CkanCatExplorer(session)
-                results = explorer.get_package_list_dataframe('polars')
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+                explore = CkanCatExplorer(session)
+                results = explore.get_package_list_dataframe('polars')
                 print(results)
 
         """
@@ -248,11 +248,17 @@ class CkanCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CatSession("data.london.gov.uk") as session:
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
-                info_extra = get_package_list_extra()
-                pprint(info_extra)
+                info_extra = explore.get_package_list_extra()
+                print(info_extra)
         """
+
+        logger.warning(
+        "Note: get_package_list_extra() may vary between catalogues. "
+        "While typically sorted by last modified date, the exact ordering depends on the catalogue implementation."
+    )
+
         url = (
             self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
         )
@@ -277,7 +283,6 @@ class CkanCatExplorer:
             return dictionary_data
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
-        return
 
     def get_package_list_dataframe_extra(
         self, df_type: Literal["pandas", "polars"]
@@ -327,16 +332,21 @@ class CkanCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CatSession("data.london.gov.uk") as session:
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
-                info_extra = get_package_list_dataframe_extra('pandas')
-                pprint(info_extra)
+                info_extra = explore.get_package_list_dataframe_extra('pandas')
+                print(info_extra)
 
         """
         if df_type.lower() not in ["pandas", "polars"]:
             raise ValueError(
                 f"Invalid df_type: '{df_type}'. DataFrame type must be either 'pandas' or 'polars'."
             )
+
+        logger.warning(
+        "Note: get_package_list_extra() may vary between catalogues. "
+        "While typically sorted by last modified date, the exact ordering depends on the catalogue implementation."
+        )
 
         url = self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
 
@@ -384,9 +394,9 @@ class CkanCatExplorer:
         """
         Returns total number of orgs or maintainers if org endpoint does not work,
         as well as list of the org or mantainers themselves.
-
         """
         url = self.cat_session.base_url + CkanApiPaths.ORGANIZATION_LIST
+
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
@@ -423,12 +433,12 @@ class CkanCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CkanCatSession("data.london.gov.uk") as session:
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 all_packages = explore.package_list_dictionary()
                 census = all_packages.get("2011-boundary-files")
                 census_info = explore.show_package_info(census)
-                pprint(census_info)
+                print(census_info)
         """
 
         if package_name is None:
@@ -452,7 +462,7 @@ class CkanCatExplorer:
 
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
-        
+
     def show_package_info_dataframe(self, package_name: Union[str, dict, Any], df_type: Literal["pandas", "polars"]) -> pd.DataFrame | pl.DataFrame:
         """
         Pass in a package name as a string or as a value from a dictionary.
@@ -468,32 +478,32 @@ class CkanCatExplorer:
                 census_info = explore.show_package_info_dataframe(census)
                 pprint(census_info)
         """
-        
+
         if package_name is None:
             raise ValueError("package name cannot be none")
-            
+
         base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_INFO
         params = {}
         if package_name:
             params["id"] = package_name
         url = f"{base_url}?{urlencode(params)}" if params else base_url
-        
+
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
             result_data = data["result"]
             results = self._extract_resource_data(result_data)
-            
+
             match df_type:
                 case "pandas":
                     return pd.DataFrame(results)
                 case "polars":
                     return pl.DataFrame(results)
-                    
+
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
-        
+
     # ----------------------------
     # Search Packages and store in DataFrames / or keep as Dicts.
     # Unpack data or keep it packed (e.g. don't split out resources into own columns)
@@ -558,7 +568,7 @@ class CkanCatExplorer:
         from pprint import pprint
 
         def main():
-            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+            with hc.CatSession(hc.CkanDataCatalogues.UK_GOV) as session:
                 explore = hc.CkanCatExplorer(session)
                 packages_search = explore.package_search_condense("police", 50)
                 pprint(packages_search)
@@ -647,7 +657,7 @@ class CkanCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CkanCatSession("uk gov") as session:
+            with hc.CatSession(hc.CkanDataCatalogues.UK_GOV) as session:
                 explorer = CkanCatExplorer(session)
                 results = explorer.package_search_condense_dataframe('police', 500, "polars")
                 print(results)
@@ -821,7 +831,6 @@ class CkanCatExplorer:
         'https://data.london.gov.uk/download/violence-reduction-unit/1ef840d0-2c02-499c-ae40-382005b2a0c7/VRU%2520Dataset%2520Q1%2520April-Nov%25202023.xlsx'
         ]
 
-
         Example:
             if __name__ == "__main__":
                 with CkanCatSession("data.london.gov.uk") as session:
@@ -961,13 +970,12 @@ class OpenDataSoftCatExplorer:
 
         Make sure you pass a valid CkanCatSession in - checks if the right type.
 
-
         Args:
             CkanCatSession
 
         # Example usage...
         if __name__ == "__main__":
-            with CatSession("ukpowernetworks.opendatasoft.com") as session:
+            with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
                 explore = CatExplorer(session)
         """
 
@@ -999,7 +1007,7 @@ class OpenDataSoftCatExplorer:
 
         # Example usage...
         if __name__ == "__main__":
-            with CatSession("data.london.gov.uk") as session:
+            with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
                 explore = CkanCatExplorer(session)
                 health_check = explore.check_site_health()
         """
@@ -1091,7 +1099,7 @@ class OpenDataSoftCatExplorer:
                 )
             else:
                 logger.warning(
-                    f"Mismatch in counts: total_count = {total_count}, returned_count = {returned_count}"
+                    f"Mismatch in counts: total_count = {total_count}, returned_count = {returned_count} - please raise an issue"
                 )
             return dataset_dict
         else:
@@ -1170,10 +1178,12 @@ class FrenchGouvCatExplorer:
         import HerdingCats as hc
 
         def main():
-            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
-                explore = hc.CkanCatExplorer(session)
+            with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
+                explore = hc.FrenchGouvCatExplorer(session)
+                dataset = explore.get_all_datasets()
+                print(dataset)
 
-        if __name__ == "__main__":
+        if __name__ =="__main__":
             main()
         """
 
@@ -1226,10 +1236,23 @@ class FrenchGouvCatExplorer:
 
         Returns:
             dict: Dictionary with slugs as keys and dataset IDs as values
+
+        # Example usage...
+        import HerdingCats as hc
+        from pprint import pprint
+
+        def main():
+            with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
+                explore = hc.FrenchGouvCatExplorer(session)
+                dataset = explore.get_all_datasets()
+                pprint(dataset)
+
+        if __name__ =="__main__":
+            main()
         """
 
         try:
-            catalogue = FrenchGouvApiPaths.CATALOGUE    
+            catalogue = FrenchGouvApiPaths.CATALOGUE
 
             with duckdb.connect(':memory:') as con:
                 # Install and load httpfs extension
@@ -1262,6 +1285,19 @@ class FrenchGouvCatExplorer:
 
         Example identifier:
             ID: "674de63d05a9bbeddc66bdc1"
+
+        # Example usage...
+        import HerdingCats as hc
+        from pprint import pprint
+
+        def main():
+            with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
+                explore = hc.FrenchGouvCatExplorer(session)
+                meta = explore.get_dataset_meta("5552083b88ee381e451c0bf3")
+                pprint(meta)
+
+        if __name__ =="__main__":
+            main()
         """
         try:
             # Construct URL for specific dataset
@@ -1298,11 +1334,24 @@ class FrenchGouvCatExplorer:
 
         Example identifier:
             ID: "674de63d05a9bbeddc66bdc1"
+
+        # Example usage...
+        import HerdingCats as hc
+        from pprint import pprint
+
+        def main():
+            with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
+                explore = hc.FrenchGouvCatExplorer(session)
+                meta = explore.get_dataset_meta_dataframe("5552083b88ee381e451c0bf3")
+                pprint(meta)
+
+        if __name__ =="__main__":
+            main()
         """
         try:
             url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS_BY_ID.format(identifier)
             response = self.cat_session.session.get(url)
-            
+
             if response.status_code == 200:
                 data = response.json()
                 logger.success(f"Successfully retrieved dataset: {identifier}")
@@ -1330,6 +1379,19 @@ class FrenchGouvCatExplorer:
 
         Returns:
             dict: Dictionary mapping identifiers to their dataset details
+
+        import HerdingCats as hc
+        from pprint import pprint
+
+        def main():
+            with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
+                explore = hc.FrenchGouvCatExplorer(session)
+                identifiers = ['674de63d05a9bbeddc66bdc1', '5552083b88ee381e451c0bf3']
+                meta = explore.get_multiple_datasets_meta(identifiers)
+                pprint(meta)
+
+        if __name__ =="__main__":
+            main()
         """
         results = {}
 
@@ -1338,14 +1400,9 @@ class FrenchGouvCatExplorer:
                 dataset = self.get_dataset_meta(identifier)
                 if dataset:
                     results[identifier] = dataset
-
-                # Add a small delay to avoid overwhelming the API
-                time.sleep(0.5)
-
             except Exception as e:
                 logger.error(f"Error processing identifier {identifier}: {str(e)}")
                 results[identifier] = {}
-
         logger.success(f"Finished fetching {len(results)} datasets")
         return results
 
@@ -1355,20 +1412,20 @@ class FrenchGouvCatExplorer:
     def get_dataset_resource_export(self, dataset_id: str, resource_id: str) -> dict:
         """
         Fetches metadata for a specific resource within a dataset.
-        
+
         Args:
             dataset_id (str): Dataset ID or slug containing the resource
             resource_id (str): Resource ID to fetch
-        
+
         Returns:
             dict: Resource details or empty dict if not found
         """
         try:
             url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASET_RESOURCE_BY_ID.format(
                 dataset_id) + resource_id
-                
+
             response = self.cat_session.session.get(url)
-            
+
             if response.status_code == 200:
                 data = response.json()
                 logger.success(f"Successfully retrieved resource: {resource_id}")
@@ -1379,19 +1436,18 @@ class FrenchGouvCatExplorer:
             else:
                 logger.error(f"Failed to fetch resource {resource_id} with status {response.status_code}")
                 return {}
-                
         except Exception as e:
             logger.error(f"Error fetching resource {resource_id}: {str(e)}")
             return {}
-        
+
     def get_dataset_resource_dataframe(self, dataset_id: str, resource_id: str, df_type: Literal["pandas", "polars"]) -> pd.DataFrame | pl.DataFrame:
         """
         Fetches metadata for a specific resource within a dataset.
-        
+
         Args:
             dataset_id (str): Dataset ID or slug containing the resource
             resource_id (str): Resource ID to fetch
-        
+
         Returns:
             dict: Resource details or empty dict if not found
         """
@@ -1399,7 +1455,7 @@ class FrenchGouvCatExplorer:
             url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASET_RESOURCE_BY_ID.format(
                 dataset_id) + resource_id
             response = self.cat_session.session.get(url)
-            
+
             if response.status_code == 200:
                 data = response.json()
                 logger.success(f"Successfully retrieved resource: {resource_id}")
@@ -1417,12 +1473,34 @@ class FrenchGouvCatExplorer:
         except Exception as e:
             logger.error(f"Error fetching resource {resource_id}: {str(e)}")
             return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
-    
+
     def get_dataset_resource_meta(self, data: dict) -> List[Dict[str, Any]] | None:
-        
+        """
+        Fetches metadata for a specific resource within a dataset.
+
+        Args:
+            dataset_id (str): Dataset ID or slug containing the resource
+            resource_id (str): Resource ID to fetch
+
+        Returns:
+            dict: Resource details or empty dict if not found
+
+        # Exmaple usage...
+        import HerdingCats as hc
+        from pprint import pprint
+
+        def main():
+            with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
+                explore = hc.FrenchGouvCatExplorer(session)
+                meta = explore.get_dataset_meta("674de63d05a9bbeddc66bdc1")
+                meta2 = explore.get_dataset_resource_meta(meta)
+                pprint(meta2)
+
+        if __name__ =="__main__":
+            main()
+        """
         if len(data) == 0:
             raise ValueError("Data can't be empty")
-        
         try:
             result = self._extract_resource_data(data)
             return result
@@ -1469,7 +1547,7 @@ class FrenchGouvCatExplorer:
             dict: Dictionary with orgs as keys and org IDs as values
         """
         try:
-            catalogue = FrenchGouvApiPaths.CATALOGUE    
+            catalogue = FrenchGouvApiPaths.CATALOGUE
             with duckdb.connect(':memory:') as con:
                 # Install and load httpfs extension
                 con.execute("INSTALL httpfs;")

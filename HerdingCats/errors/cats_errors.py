@@ -72,6 +72,33 @@ class OpenDataSoftExplorerError(Exception):
 
     def __str__(self) -> str:
         return self.args[0]
+    
+class FrenchCatDataLoaderError(Exception):
+    """
+    Custom exception class for OpenDataSoft Explorer errors.
+    """
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    RESET = '\033[0m'
+
+    def __init__(self, message: str, original_error: Optional[Exception] = None) -> None:
+        self.message = message
+        self.original_error = original_error
+
+        error_msg = (
+            f"{self.RED}FrenchCatDataLoaderError Error 🐈‍⬛: {message}{self.RESET}"
+        )
+
+        if original_error:
+            error_msg += (
+                f"\n{self.YELLOW}Original error: "
+                f"{str(original_error)}{self.RESET}"
+            )
+
+        super().__init__(error_msg)
+
+    def __str__(self) -> str:
+        return self.args[0]
 
 class WrongCatalogueError(CatExplorerError):
     """
