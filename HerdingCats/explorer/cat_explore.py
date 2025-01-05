@@ -2,7 +2,6 @@ import requests
 import pandas as pd
 import polars as pl
 import duckdb
-import time
 
 from typing import Any, Dict, Optional, Union, Literal, List, Tuple
 from loguru import logger
@@ -816,47 +815,47 @@ class CkanCatExplorer:
     # Extract specific data from results
     # OR flatten nested data structures
     # ----------------------------
-    def extract_resource_url(
-        self, package_info: List[Dict], resource_name: str
-    ) -> List[str] | None:
+    def extract_resource_url(self, package_info: List[Dict]) -> List[str] | None:
         """
-        Extracts the URL and format of a specific resource from a package.
+        Extracts the download inmformation for resources in a package.
 
-        Specify the name of the resource you want to use.
+        Pass in package info list
 
         Returns:
-        List[format, url]: The format of the resource and the URL.
-        [
-        'spreadsheet',
-        'https://data.london.gov.uk/download/violence-reduction-unit/1ef840d0-2c02-499c-ae40-382005b2a0c7/VRU%2520Dataset%2520Q1%2520April-Nov%25202023.xlsx'
-        ]
+        List[resource_name, resource_created, format, url]
 
-        Example:
-            if __name__ == "__main__":
-                with CkanCatSession("data.london.gov.uk") as session:
-                    explore = CkanCatExplorer(session)
-                    all_packages = explore.package_list_dictionary()
-                    data = all_packages.get("violence-reduction-unit")
-                    info = explore.package_show_info_json(data)
-                    dl_link = explore.extract_resource_url(info, "VRU Q1 2023-24 Dataset")
-                    print(dl_link)
+        # Example:
+        import HerdingCats as hc
+        from pprint import pprint
 
+        def main():
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+                explore = hc.CkanCatExplorer(session)
+                dataset = explore.show_package_info("mps-homicide-dashboard-data")
+                urls = explore.extract_resource_url(dataset)
+                pprint(urls)
+
+        if __name__ =="__main__":
+            main()
         """
 
+        results = []
         for item in package_info:
-            if item.get("resource_name") == resource_name:
+                resource_name = item.get("resource_name")
+                created = item.get("resource_created")
                 url = item.get("resource_url")
                 format = item.get("resource_format")
-                if url and format:
+                if all([resource_name, created, format, url]):
                     logger.success(
                         f"Found URL for resource '{resource_name}'. Format is: {format}"
                     )
-                    return [format, url]
+                    results.append([resource_name, created, format, url])
                 else:
                     logger.warning(
                         f"Resource '{resource_name}' found in package, but no URL available"
                     )
                     return None
+        return results
 
     @staticmethod
     def _extract_condensed_package_data(
@@ -1504,7 +1503,7 @@ class FrenchGouvCatExplorer:
         try:
             result = self._extract_resource_data(data)
             return result
-        except Exception as e:
+        except Exception:
             logger.error("Error fetching resource: {str(e)}")
 
     @staticmethod
