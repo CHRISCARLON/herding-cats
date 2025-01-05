@@ -247,7 +247,7 @@ class CkanCatResourceLoader:
     @validate_inputs
     def duckdb_data_loader(self, resource_data: List, table_name: str, sheet_name: Optional[str] = None) -> duckdb.DuckDBPyConnection:
         """Load resource data into an in-memory DuckDB database via pandas."""
-        if not resource_data is None:
+        if resource_data is not None:
             raise ValueError("Must be a list")
 
         if not isinstance(table_name, str) or not table_name.strip():
