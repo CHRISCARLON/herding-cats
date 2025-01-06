@@ -22,9 +22,12 @@ class CatSession:
 
         Args:
             catalogue: A predefined catalogue from one of the supported enum types
-                      (CkanDataCatalogues, OpenDataSoftDataCatalogues, or FrenchGouvCatalogue)
+            (CkanDataCatalogues, OpenDataSoftDataCatalogues, or FrenchGouvCatalogue)
+
+        Returns:
+            A CatSession Objection
         """
-        self.domain, self.catalogue_type = self._process_catalogue(catalogue)
+        self.domain, self._catalogue_type = self._process_catalogue(catalogue)
         self.session = requests.Session()
         self.base_url = f"https://{self.domain}" if not self.domain.startswith("http") else self.domain
         self._validate_url()
@@ -53,7 +56,7 @@ class CatSession:
                 raise ValueError(
                     "Catalogue must be one of: CkanDataCatalogues, OpenDataSoftDataCatalogues, or FrenchGouvCatalogue"
                 )
-            
+
         parsed_url = urlparse(catalogue.value)
         return parsed_url.netloc if parsed_url.netloc else parsed_url.path, catalog_type
 
@@ -90,7 +93,7 @@ class CatSession:
     def close_session(self) -> None:
         """Close the session."""
         self.session.close()
-        logger.success("Session closed")
+        logger.success("Session Closed")
 
     def __enter__(self):
         """Allow use with the context manager with"""
@@ -101,6 +104,7 @@ class CatSession:
         """Allows use with the context manager with"""
         self.close_session()
 
-    def get_catalogue_type(self) -> CatalogueType:
+    @property
+    def catalogue_type(self) -> CatalogueType:
         """Return the catalog type (CKAN, OpenDataSoft, or French Government)"""
-        return self.catalogue_type
+        return self._catalogue_type

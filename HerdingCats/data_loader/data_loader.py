@@ -57,21 +57,21 @@ class CkanCatResourceLoader:
 
         Format 1: Single List
         ┌─────────── Single Resource List ───────────┐
-        │ [0]: "Homicide Accused.csv"               │
-        │ [1]: "2024-09-20T13:21:02.610Z"          │
-        │ [2]: "csv"         ◄─── Format            │
-        │ [3]: "https://..." ◄─── URL               │
+        │ [0]: "Homicide Accused.csv"                │
+        │ [1]: "2024-09-20T13:21:02.610Z"            │
+        │ [2]: "csv"         ◄─── Format             │
+        │ [3]: "https://..." ◄─── URL                │
         └────────────────────────────────────────────┘
 
         Format 2: List of Lists
         ┌─────────────────────── Outer List ────────────────────────┐
-        │ ┌─────────── Inner List 1 ───────────┐  ┌─── List 2 ───┐ │
-        │ │ [0]: "Homicide Accused.csv"        │  │    ...       │ │
-        │ │ [1]: "2024-09-20T13:21:02.610Z"   │  │    ...       │ │
-        │ │ [2]: "csv"         ◄─── Format     │  │    ...       │ │
-        │ │ [3]: "https://..." ◄─── URL        │  │    ...       │ │
-        │ └─────────────────────────────────────┘  └─────────────┘ │
-        └──────────────────────────────────────────────────────────┘
+        │ ┌─────────── Inner List 1 ───────────┐  ┌─── List 2 ───┐  │
+        │ │ [0]: "Homicide Accused.csv"        │  │    same      │  │
+        │ │ [1]: "2024-09-20T13:21:02.610Z"    │  │    same      │  │  
+        │ │ [2]: "csv"         ◄─── Format     │  │    same      │  │
+        │ │ [3]: "https://..." ◄─── URL        │  │    same      │  │
+        │ └────────────────────────────────────┘  └───────────── ┘  │
+        └────────────────────────────────────────────────────────── ┘
 
         But we only want to focus on the first list and only need format and url.
         """
@@ -85,8 +85,8 @@ class CkanCatResourceLoader:
             # Determine if we have a single resource or multiple resources
             # We check if the first element is a list to determine the structure
             target_resource = (resource_data[0]
-                             if isinstance(resource_data[0], list)
-                             else resource_data)
+                            if isinstance(resource_data[0], list)
+                            else resource_data)
 
             # Validate the resource has all required elements
             if len(target_resource) < 4:
@@ -151,7 +151,7 @@ class CkanCatResourceLoader:
         loader_type: Literal["pandas"] | Literal["polars"]
     ) -> Union[PandasDataFrame, PolarsDataFrame]:
         """
-        Common method to load data into either pandas or polars DataFrame.
+        Common method to load data into either Pandas or Polars DataFrame.
 
         Args:
             binary_data: BytesIO object containing the file data
@@ -170,11 +170,11 @@ class CkanCatResourceLoader:
             match (file_format, loader_type):
                 case ("spreadsheet" | "xlsx", "pandas"):
                     return (pd.read_excel(binary_data, sheet_name=sheet_name)
-                           if sheet_name else pd.read_excel(binary_data))
+                        if sheet_name else pd.read_excel(binary_data))
 
                 case ("spreadsheet" | "xlsx", "polars"):
                     return (pl.read_excel(binary_data, sheet_name=sheet_name)
-                           if sheet_name else pl.read_excel(binary_data))
+                        if sheet_name else pl.read_excel(binary_data))
 
                 case ("csv", "pandas"):
                     return pd.read_csv(binary_data)
@@ -195,7 +195,6 @@ class CkanCatResourceLoader:
         except Exception as e:
             logger.error(f"Failed to load {loader_type} DataFrame: {str(e)}")
             raise
-
 
     @validate_inputs
     def polars_data_loader(self, resource_data: List, sheet_name: Optional[str] = None) -> PolarsDataFrame:
@@ -247,9 +246,6 @@ class CkanCatResourceLoader:
     @validate_inputs
     def duckdb_data_loader(self, resource_data: List, table_name: str, sheet_name: Optional[str] = None) -> duckdb.DuckDBPyConnection:
         """Load resource data into an in-memory DuckDB database via pandas."""
-        if resource_data is not None:
-            raise ValueError("Must be a list")
-
         if not isinstance(table_name, str) or not table_name.strip():
             raise ValueError("Table name must be a non-empty string")
 
@@ -325,7 +321,7 @@ class CkanCatResourceLoader:
 
     @validate_inputs
     def aws_s3_data_loader(self, resource_data: List, bucket_name: str,
-                          custom_name: str, mode: Literal["raw", "parquet"]) -> str:
+                        custom_name: str, mode: Literal["raw", "parquet"]) -> str:
         """Load resource data into remote S3 storage."""
         if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
             raise ValueError("Bucket name and custom name must be non-empty strings")
@@ -757,7 +753,6 @@ class FrenchGouvResourceLoader:
                 f"No resource found with format: {format_type}. "
                 f"Available formats: {', '.join(available_formats)}"
             )
-
         return url
 
     @validate_inputs

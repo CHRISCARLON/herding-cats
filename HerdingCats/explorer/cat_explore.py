@@ -17,6 +17,7 @@ from ..session.cat_session import CatSession, CatalogueType
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For Ckan Catalogues Only
+# TODO add in property class for base_url
 class CkanCatExplorer:
     def __init__(self, cat_session: CatSession):
         """
@@ -24,8 +25,7 @@ class CkanCatExplorer:
 
         Allows user to start exploring data catalogue programatically
 
-        Make sure you pass a valid CkanCatSession in - checks if the right type.
-
+        Make sure you pass a valid CkanCatSession in - it will check if the type is right.
 
         Args:
             CkanCatSession
@@ -73,7 +73,8 @@ class CkanCatExplorer:
                 health_check = explore.check_site_health()
         """
 
-        url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
+        url: str = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
+
         try:
             response = self.cat_session.session.get(url)
 
@@ -109,7 +110,7 @@ class CkanCatExplorer:
                 print(package_count)
         """
 
-        url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
+        url: str = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
 
         try:
             response = self.cat_session.session.get(url)
@@ -130,15 +131,17 @@ class CkanCatExplorer:
             It follows a {"package_name": "package_name"} structure so that you can use the package names for
             additional methods.
 
-            {'--lfb-financial-and-performance-reporting-2021-22': '--lfb-financial-and-performance-reporting-2021-22',
-             '-ghg-emissions-per-capita-from-food-and-non-alcoholic-drinks-': '-ghg-emissions-per-capita-from-food-and-non-alcoholic-drinks-',
-             '100-west-cromwell-road-consultation-documents': '100-west-cromwell-road-consultation-documents',
-             '19-year-olds-qualified-to-nvq-level-3': '19-year-olds-qualified-to-nvq-level-3',
-             '1a---1c-eynsham-drive-public-consultation': '1a---1c-eynsham-drive-public-consultation',
-             '2010-2013-gla-budget-detail': '2010-2013-gla-budget-detail',
-             '2011-boundary-files': '2011-boundary-files',
-             '2011-census-assembly': '2011-census-assembly',
-             '2011-census-demography': '2011-census-demography'}
+            {
+            '--lfb-financial-and-performance-reporting-2021-22': '--lfb-financial-and-performance-reporting-2021-22',
+            '-ghg-emissions-per-capita-from-food-and-non-alcoholic-drinks-': '-ghg-emissions-per-capita-from-food-and-non-alcoholic-drinks-',
+            '100-west-cromwell-road-consultation-documents': '100-west-cromwell-road-consultation-documents',
+            '19-year-olds-qualified-to-nvq-level-3': '19-year-olds-qualified-to-nvq-level-3',
+            '1a---1c-eynsham-drive-public-consultation': '1a---1c-eynsham-drive-public-consultation',
+            '2010-2013-gla-budget-detail': '2010-2013-gla-budget-detail',
+            '2011-boundary-files': '2011-boundary-files',
+            '2011-census-assembly': '2011-census-assembly',
+            '2011-census-demography': '2011-census-demography'
+            }
 
         # Example usage...
         if __name__ == "__main__":
@@ -148,15 +151,15 @@ class CkanCatExplorer:
                 print(all_packages)
         """
 
-        url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
+        url: str = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
 
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
-            dictionary_prep = data["result"]
-            dictionary_data = {item: item for item in dictionary_prep}
-            return dictionary_data
+            list_prep = data["result"]
+            package_list = {item: item for item in list_prep}
+            return package_list
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
@@ -206,25 +209,25 @@ class CkanCatExplorer:
                 f"Invalid df_type: '{df_type}'. DataFrame type must be either 'pandas' or 'polars'."
             )
 
-        url = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
+        url: str = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
 
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
-            result = data["result"]
+            package_list: dict = data["result"]
 
             match df_type.lower():
                 case "polars":
                     try:
-                        return pl.DataFrame(result)
+                        return pl.DataFrame(package_list)
                     except ImportError:
                         raise ImportError(
                             "Polars is not installed. Please run 'pip install polars' to use this option."
                         )
                 case "pandas":
                     try:
-                        return pd.DataFrame(result)
+                        return pd.DataFrame(package_list)
                     except ImportError:
                         raise ImportError(
                             "Pandas is not installed. Please run 'pip install pandas' to use this option."
@@ -235,7 +238,7 @@ class CkanCatExplorer:
         except (requests.RequestException, Exception) as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
-    def get_package_list_extra(self):
+    def get_package_list_extra(self) -> List[Dict[str, Any]]:
         """
         Explore all packages that are available to query.
 
@@ -258,15 +261,14 @@ class CkanCatExplorer:
         "While typically sorted by last modified date, the exact ordering depends on the catalogue implementation."
     )
 
-        url = (
-            self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
-        )
+        url: str = (self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES)
+
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
             dictionary_prep = data["result"]
-            dictionary_data = [
+            package_list = [
                 {
                     "owner_org": entry.get("owner_org"),
                     "name": entry.get("name"),
@@ -279,7 +281,7 @@ class CkanCatExplorer:
                 }
                 for entry in dictionary_prep
             ]
-            return dictionary_data
+            return package_list
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
@@ -335,7 +337,6 @@ class CkanCatExplorer:
                 explore = CkanCatExplorer(session)
                 info_extra = explore.get_package_list_dataframe_extra('pandas')
                 print(info_extra)
-
         """
         if df_type.lower() not in ["pandas", "polars"]:
             raise ValueError(
@@ -347,14 +348,14 @@ class CkanCatExplorer:
         "While typically sorted by last modified date, the exact ordering depends on the catalogue implementation."
         )
 
-        url = self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
+        url: str = self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
 
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
             dictionary_prep = data["result"]
-            dictionary_data = [
+            package_list: list[dict] = [
                 {
                     "owner_org": entry.get("owner_org"),
                     "name": entry.get("name"),
@@ -371,14 +372,14 @@ class CkanCatExplorer:
             match df_type.lower():
                 case "polars":
                     try:
-                        return pl.DataFrame(dictionary_data)
+                        return pl.DataFrame(package_list)
                     except ImportError:
                         raise ImportError(
                             "Polars is not installed. Please run 'pip install polars' to use this option."
                         )
                 case "pandas":
                     try:
-                        return pd.DataFrame(dictionary_data)
+                        return pd.DataFrame(package_list)
                     except ImportError:
                         raise ImportError(
                             "Pandas is not installed. Please run 'pip install pandas' to use this option."
@@ -393,28 +394,35 @@ class CkanCatExplorer:
         """
         Returns total number of orgs or maintainers if org endpoint does not work,
         as well as list of the org or mantainers themselves.
+
+        # Example usage...
+        if __name__ == "__main__":
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
+                explore = CkanCatExplorer(session)
+                orgs_list = explore.get_organisation_list()
+                print(orgs_list)
         """
-        url = self.cat_session.base_url + CkanApiPaths.ORGANIZATION_LIST
+        url: str = self.cat_session.base_url + CkanApiPaths.ORGANIZATION_LIST
 
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
-            organisations = data["result"]
-            length = len(organisations)
+            organisations: list = data["result"]
+            length: int = len(organisations)
             return length, organisations
         except (requests.RequestException, Exception) as e:
             logger.warning(f"Primary organisation search method failed - attempting secondary method that fetches 'maintainers' only - this may still be useful but not as accurate: {e}")
             try:
                 # Secondary method using package endpoint
-                package_url = self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
+                package_url: str = self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
                 package_response = self.cat_session.session.get(package_url)
                 package_response.raise_for_status()
                 data = package_response.json()
 
                 # Convert list of maintainers to a dictionary
-                maintainers = list(set(entry.get("maintainer", "N/A") for entry in data["result"] if entry.get("maintainer")))
-                length = len(maintainers)
+                maintainers: list = list(set(entry.get("maintainer", "N/A") for entry in data["result"] if entry.get("maintainer")))
+                length: int = len(maintainers)
                 return length, maintainers
 
             except (requests.RequestException, Exception) as e:
@@ -443,7 +451,7 @@ class CkanCatExplorer:
         if package_name is None:
             raise ValueError("package name cannot be none")
 
-        base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_INFO
+        base_url: str = self.cat_session.base_url + CkanApiPaths.PACKAGE_INFO
 
         params = {}
         if package_name:
@@ -812,8 +820,7 @@ class CkanCatExplorer:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     # ----------------------------
-    # Extract specific data from results
-    # OR flatten nested data structures
+    # Extract information in pre for Data Loader Class
     # ----------------------------
     def extract_resource_url(self, package_info: List[Dict]) -> List[str] | None:
         """
@@ -857,16 +864,20 @@ class CkanCatExplorer:
                     return None
         return results
 
+    # ----------------------------
+    # Helper Methods
+    # Flatten nested data structures
+    # ----------------------------
     @staticmethod
     def _extract_condensed_package_data(
-        data: List[Dict[str, Any]], fields: List[str], resource_fields: List[str]
+        data: List[Dict[str, Any]], base_fields: List[str], resource_fields: List[str]
     ) -> List[Dict[str, Any]]:
         """
         Static method to extract specified fields from Package Search dataset entries and their resources.
 
         Args:
             data (List[Dict[str, Any]]): List of dataset entries.
-            fields (List[str]): List of field names to extract from each entry.
+            base_fields (List[str]): List of field names to extract from each entry.
             resource_fields (List[str]): List of field names to extract from each resource section.
 
         Returns:
@@ -892,7 +903,7 @@ class CkanCatExplorer:
         """
         return [
             {
-                **{field: entry.get(field) for field in fields},
+                **{field: entry.get(field) for field in base_fields},
                 "resources": [
                     {
                         resource_field: resource.get(resource_field)
@@ -942,9 +953,15 @@ class CkanCatExplorer:
         Returns:
         List[Dict[str, Any]]: A list of dictionaries, each containing the specified fields for a resource.
         """
+
+        group_names = [group["name"] for group in data.get("groups", [])] if data.get("groups") else None
+
         base_fields = {
             "name": data.get("name"),
+            "maintainer": data.get("maintainer"),
+            "maintainer_email": data.get("maintainer_email"),
             "notes_markdown": data.get("notes_markdown"),
+            "groups": group_names,
         }
 
         resource_fields = ["url", "name", "format", "created", "last_modified"]
@@ -1094,11 +1111,11 @@ class OpenDataSoftCatExplorer:
             returned_count = len(dataset_dict)
             if returned_count == total_count:
                 logger.success(
-                    f"total_count = {total_count} AND returned_count = {returned_count}"
+                    f"MATCH: total_count = {total_count} AND returned_count = {returned_count}"
                 )
             else:
                 logger.warning(
-                    f"Mismatch in counts: total_count = {total_count}, returned_count = {returned_count} - please raise an issue"
+                    f"MISMATCH: total_count = {total_count}, returned_count = {returned_count} - please raise an issue"
                 )
             return dataset_dict
         else:
@@ -1407,105 +1424,65 @@ class FrenchGouvCatExplorer:
 
     # ----------------------------
     # Show available resources for a particular dataset
-    # ----------------------------
-    def get_dataset_resource_export(self, dataset_id: str, resource_id: str) -> dict:
-        """
-        Fetches metadata for a specific resource within a dataset.
-
-        Args:
-            dataset_id (str): Dataset ID or slug containing the resource
-            resource_id (str): Resource ID to fetch
-
-        Returns:
-            dict: Resource details or empty dict if not found
-        """
-        try:
-            url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASET_RESOURCE_BY_ID.format(
-                dataset_id) + resource_id
-
-            response = self.cat_session.session.get(url)
-
-            if response.status_code == 200:
-                data = response.json()
-                logger.success(f"Successfully retrieved resource: {resource_id}")
-                return data
-            elif response.status_code == 404:
-                logger.warning(f"Resource not found: {resource_id}")
-                return {}
-            else:
-                logger.error(f"Failed to fetch resource {resource_id} with status {response.status_code}")
-                return {}
-        except Exception as e:
-            logger.error(f"Error fetching resource {resource_id}: {str(e)}")
-            return {}
-
-    def get_dataset_resource_dataframe(self, dataset_id: str, resource_id: str, df_type: Literal["pandas", "polars"]) -> pd.DataFrame | pl.DataFrame:
-        """
-        Fetches metadata for a specific resource within a dataset.
-
-        Args:
-            dataset_id (str): Dataset ID or slug containing the resource
-            resource_id (str): Resource ID to fetch
-
-        Returns:
-            dict: Resource details or empty dict if not found
-        """
-        try:
-            url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASET_RESOURCE_BY_ID.format(
-                dataset_id) + resource_id
-            response = self.cat_session.session.get(url)
-
-            if response.status_code == 200:
-                data = response.json()
-                logger.success(f"Successfully retrieved resource: {resource_id}")
-                match df_type:
-                    case "pandas":
-                        return pd.DataFrame([data])
-                    case "polars":
-                        return pl.DataFrame([data])
-            elif response.status_code == 404:
-                logger.warning(f"Resource not found: {resource_id}")
-                return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
-            else:
-                logger.error(f"Failed to fetch resource {resource_id} with status {response.status_code}")
-                return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
-        except Exception as e:
-            logger.error(f"Error fetching resource {resource_id}: {str(e)}")
-            return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
-
+    # ----------------------------    
     def get_dataset_resource_meta(self, data: dict) -> List[Dict[str, Any]] | None:
         """
         Fetches metadata for a specific resource within a dataset.
 
         Args:
-            dataset_id (str): Dataset ID or slug containing the resource
-            resource_id (str): Resource ID to fetch
+            Dict with meta info
 
         Returns:
             dict: Resource details or empty dict if not found
-
-        # Exmaple usage...
-        import HerdingCats as hc
-        from pprint import pprint
-
-        def main():
-            with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
-                explore = hc.FrenchGouvCatExplorer(session)
-                meta = explore.get_dataset_meta("674de63d05a9bbeddc66bdc1")
-                meta2 = explore.get_dataset_resource_meta(meta)
-                pprint(meta2)
-
-        if __name__ =="__main__":
-            main()
         """
         if len(data) == 0:
-            raise ValueError("Data can't be empty")
+            raise ValueError("Data can't be empty!")
+        
+        resource_title = data.get("resource_title")
+        resource_id = data.get("resource_id")
+
         try:
             result = self._extract_resource_data(data)
             return result
         except Exception:
-            logger.error("Error fetching resource: {str(e)}")
+            logger.error(f"Error fetching {resource_title}. Id number: :{resource_id}")
+    
+    def get_dataset_resource_export_dataframe(
+        self, 
+        data: dict, 
+        df_type: Literal["pandas", "polars"]
+    ) -> pd.DataFrame | pl.DataFrame:
+        """
+        Fetches export data for a specific resource within a dataset.
+        
+        Args:
+            data (dict): Input data dictionary
+            df_type (Literal["pandas", "polars"]): Type of DataFrame to return
+        Returns:
+            pd.DataFrame | pl.DataFrame: Resource details with resource_extras as a column
+        """
+        if len(data) == 0:
+            raise ValueError("Data can't be empty!")
+        
+        resource_title = data.get("resource_title")
+        resource_id = data.get("resource_id")
 
+        try:
+            # Get the extracted data
+            result = self._extract_resource_data(data)
+            # Create DataFrame based on type
+            match df_type:
+                case "pandas":
+                    return pd.DataFrame(result)
+                case "polars":
+                    return pl.DataFrame(result)
+        except Exception as e:
+            logger.error(f"Error fetching {resource_title}. Id number: :{resource_id}")
+            return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
+
+    # ----------------------------
+    # Helper function to flatten meta data
+    # ----------------------------
     @staticmethod
     def _extract_resource_data(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
@@ -1518,22 +1495,24 @@ class FrenchGouvCatExplorer:
         Returns:
         List[Dict[str, Any]]: A list of dictionaries, each containing the specified fields for a resource.
         """
+        try:
+            base_fields = {
+                "dataset_id": data.get("id"),
+                "slug": data.get("slug"),
+            }
 
-        base_fields = {
-            "dataset_id": data.get("id"),
-            "slug": data.get("slug"),
-        }
+            resource_fields = ["created_at", "id", "format", "url", "title", "latest", "last_modified", "frequency", "extras"]
 
-        resource_fields = ["created_at", "id", "format", "url", "title", "latest", "last_modified", "frequency", "extras"]
+            result = []
+            for resource in data.get("resources", []):
+                resource_data = base_fields.copy()
+                for field in resource_fields:
+                    resource_data[f"resource_{field}"] = resource.get(field)
+                result.append(resource_data)
 
-        result = []
-        for resource in data.get("resources", []):
-            resource_data = base_fields.copy()
-            for field in resource_fields:
-                resource_data[f"resource_{field}"] = resource.get(field)
-            result.append(resource_data)
-
-        return result
+            return result
+        except Exception as e:
+            raise e
 
     # ----------------------------
     # Show all organisation available
