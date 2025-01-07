@@ -1,5 +1,10 @@
 # HerdingCATs 🐈‍⬛
 
+> [!IMPORTANT]
+> Version 0.1.7 will be released soon with quite a few breaking changes!
+>
+> There will be lots of updates to the README.
+
 [![codecov](https://codecov.io/gh/CHRISCARLON/Herding-CATs/graph/badge.svg?token=Y9Z0QA39S3)](https://codecov.io/gh/CHRISCARLON/Herding-CATs)
 
 ## Purpose
