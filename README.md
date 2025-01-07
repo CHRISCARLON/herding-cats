@@ -35,8 +35,6 @@ poetry add HerdingCats
 
 Herding-CATs supports the following catalogues by default:
 
-I'll help format these tables in clean markdown:
-
 ## Supported Catalogues
 
 | Catalogue Name                                                            | Website                          | Catalogue Backend |
