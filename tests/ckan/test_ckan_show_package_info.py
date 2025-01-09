@@ -1,23 +1,22 @@
 import pytest
 from HerdingCats.session.cat_session import CatSession
 from HerdingCats.explorer.cat_explore import CkanCatExplorer
+from HerdingCats.endpoints.api_endpoints import CkanDataCatalogues
 import requests
 from loguru import logger
 
-CATALOGUES = ["https://data.london.gov.uk"]
-TEST_PACKAGE = "2011-boundary-files"
 
-@pytest.mark.parametrize("catalogue_url,package_name", [
-    (CATALOGUES[0], TEST_PACKAGE),
-])
-def test_package_show_info_json(catalogue_url, package_name):
+def test_package_show_info_json():
     """
     Test the package_show_info_json functionality
     """
-    with CatSession(catalogue_url) as cat_session:
+    with CatSession(CkanDataCatalogues.LONDON_DATA_STORE) as cat_session:
         explorer = CkanCatExplorer(cat_session)
+
+        package_name = "2011-boundary-files"
+
         try:
-            results = explorer.package_show_info_json(package_name)
+            results = explorer.show_package_info(package_name)
             print(results)
 
             # Basic assertions
@@ -42,7 +41,7 @@ def test_package_show_info_json(catalogue_url, package_name):
                     assert key in first_result, f"Missing expected key: {key}"
 
                 # Verify specific values we know should be there
-                assert first_result['name'] == TEST_PACKAGE
+                assert first_result['name'] == package_name
                 assert first_result['resource_format'] == 'shp'
 
             logger.info(f"Package show info test passed for {package_name}")

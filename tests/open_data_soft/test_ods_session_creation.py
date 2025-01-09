@@ -1,5 +1,6 @@
 import pytest
 from HerdingCats.session.cat_session import CatSession
+from HerdingCats.endpoints.api_endpoints import OpenDataSoftDataCatalogues
 
 @pytest.fixture
 def domain():
@@ -10,7 +11,7 @@ def test_cat_session_creation(domain):
     Check that a valid Ckan session can be created...
     """
     try:
-        session = CatSession(domain)
+        session = CatSession(OpenDataSoftDataCatalogues.UK_POWER_NETWORKS)
         assert isinstance(
             session, CatSession
         ), "OpenDataSoftCatSession object should be created"
@@ -24,7 +25,7 @@ def test_cat_session_creation(domain):
 
 def test_cat_session_start(domain):
     try:
-        with CatSession(domain) as session:
+        with CatSession(OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
             assert session.session is not None, "Session object should be created"
     except Exception as e:
         pytest.fail(f"Failed to start CkanCatSession: {str(e)}")

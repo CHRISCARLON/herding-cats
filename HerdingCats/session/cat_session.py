@@ -93,7 +93,7 @@ class CatSession:
     def close_session(self) -> None:
         """Close the session."""
         self.session.close()
-        logger.success("Session Closed")
+        logger.success(f"Session Closed: {self.base_url}")
 
     def __enter__(self):
         """Allow use with the context manager with"""

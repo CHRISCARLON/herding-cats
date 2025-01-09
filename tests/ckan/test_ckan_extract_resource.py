@@ -1,31 +1,26 @@
 import pytest
 from HerdingCats.session.cat_session import CatSession
 from HerdingCats.explorer.cat_explore import CkanCatExplorer
+from HerdingCats.endpoints.api_endpoints import CkanDataCatalogues
 from loguru import logger
 
-CATALOGUES = ["https://data.london.gov.uk"]
-TEST_PACKAGE = "violence-reduction-unit"
-TEST_RESOURCE = "VRU Q1 2023-24 Dataset"
-
 def test_extract_resource_url():
-   """Test successful resource URL extraction"""
-   with CatSession(CATALOGUES[0]) as cat_session:
-       explorer = CkanCatExplorer(cat_session)
-       try:
-           # First get package info
-           package_info = explorer.package_show_info_json(TEST_PACKAGE)
+    """Test successful resource URL extraction"""
+    with CatSession(CkanDataCatalogues.LONDON_DATA_STORE) as cat_session:
+        explorer = CkanCatExplorer(cat_session)
+        try:
+            # First get package info
+            package_info = explorer.show_package_info("violence-reduction-unit")
+            # Extract resource URL
+            result = explorer.extract_resource_url(package_info)
+            logger.success(result)
+            
+            # Assertions
+            assert result is not None, "Should return result for known resource"
+            assert isinstance(result, list), "Should return a list"
 
-           # Extract resource URL
-           result = explorer.extract_resource_url(package_info, TEST_RESOURCE)
+            assert all(map(lambda x: len(x) == 4 and all(isinstance(i, str) for i in x), result)), \
+            "All sublists should have 4 string elements"
 
-           logger.success(result)
-
-           # Assertions
-           assert result is not None, "Should return result for known resource"
-           assert isinstance(result, list), "Should return a list"
-           assert len(result) == 2, "Should return format and URL"
-           assert isinstance(result[0], str), "Format should be string"
-           assert isinstance(result[1], str), "URL should be string"
-
-       except Exception as e:
-           pytest.fail(f"Failed to extract resource URL: {str(e)}")
+        except Exception as e:
+            pytest.fail(f"Failed to extract resource URL: {str(e)}")

@@ -6,8 +6,6 @@ from HerdingCats.explorer.cat_explore import OpenDataSoftCatExplorer
 from HerdingCats.endpoints.api_endpoints import OpenDataSoftDataCatalogues
 from loguru import logger
 
-
-
 def test_package_list_dictionary():
     """
     Test the package list functionality for predefined data catalogues...

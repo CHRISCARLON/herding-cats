@@ -464,7 +464,6 @@ class CkanCatExplorer:
             response.raise_for_status()
             data = response.json()
             result_data = data["result"]
-
             return self._extract_resource_data(result_data)
 
         except requests.RequestException as e:
@@ -548,6 +547,7 @@ class CkanCatExplorer:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
+            logger.success(f"Showing results for query: {search_query}")
             return data["result"]
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
@@ -608,6 +608,8 @@ class CkanCatExplorer:
                 raise KeyError(
                     "Neither 'result' nor 'results' key found in the API response"
                 )
+            
+            logger.success(f"Showing results for query: {search_query}")
 
             return self._extract_condensed_package_data(
                 result_data,
@@ -698,6 +700,8 @@ class CkanCatExplorer:
                 raise KeyError(
                     "Neither 'result' nor 'results' key found in the API response"
                 )
+
+            logger.success(f"Showing results for query: {search_query}")
 
             extracted_data = self._extract_condensed_package_data(
                 result_data,
@@ -805,6 +809,8 @@ class CkanCatExplorer:
                     "Neither 'result' nor 'results' key found in the API response"
                 )
 
+            logger.success(f"Showing results for query: {search_query}")
+
             extracted_data = self._extract_condensed_package_data(
                 result_data,
                 ["name", "notes_markdown"],
@@ -826,7 +832,8 @@ class CkanCatExplorer:
         """
         Extracts the download inmformation for resources in a package.
 
-        Pass in package info list
+        Args:
+            Pass in package info list.
 
         Returns:
         List[resource_name, resource_created, format, url]
@@ -1325,7 +1332,9 @@ class FrenchGouvCatExplorer:
             # Handle response
             if response.status_code == 200:
                 data = response.json()
-                logger.success(f"Successfully retrieved dataset: {identifier}")
+                resource_title = data.get("title")
+                resource_id = data.get("id")
+                logger.success(f"Successfully retrieved dataset: {resource_title} - ID: {resource_id}")
                 return data
             elif response.status_code == 404:
                 logger.warning(f"Dataset not found: {identifier}")
@@ -1370,20 +1379,22 @@ class FrenchGouvCatExplorer:
 
             if response.status_code == 200:
                 data = response.json()
-                logger.success(f"Successfully retrieved dataset: {identifier}")
+                resource_title = data.get("title")
+                resource_id = data.get("id")
+                logger.success(f"Successfully retrieved dataset: {resource_title} - ID: {resource_id}")
                 match df_type:
                     case "pandas":
                         return pd.DataFrame([data])
                     case "polars":
                         return pl.DataFrame([data])
             elif response.status_code == 404:
-                logger.warning(f"Dataset not found: {identifier}")
+                logger.warning(f"Dataset not found")
                 return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
             else:
-                logger.error(f"Failed to fetch dataset {identifier} with status code {response.status_code}")
+                logger.error(f"Failed to fetch dataset with status code {response.status_code}")
                 return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
         except Exception as e:
-            logger.error(f"Error fetching dataset {identifier}: {str(e)}")
+            logger.error(f"Error fetching dataset: {str(e)}")
             return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
 
     def get_multiple_datasets_meta(self, identifiers: list) -> dict:
@@ -1424,7 +1435,7 @@ class FrenchGouvCatExplorer:
 
     # ----------------------------
     # Show available resources for a particular dataset
-    # ----------------------------    
+    # ----------------------------
     def get_dataset_resource_meta(self, data: dict) -> List[Dict[str, Any]] | None:
         """
         Fetches metadata for a specific resource within a dataset.
@@ -1437,7 +1448,7 @@ class FrenchGouvCatExplorer:
         """
         if len(data) == 0:
             raise ValueError("Data can't be empty!")
-        
+
         resource_title = data.get("resource_title")
         resource_id = data.get("resource_id")
 
@@ -1446,15 +1457,15 @@ class FrenchGouvCatExplorer:
             return result
         except Exception:
             logger.error(f"Error fetching {resource_title}. Id number: :{resource_id}")
-    
-    def get_dataset_resource_export_dataframe(
-        self, 
-        data: dict, 
+
+    def get_dataset_resource_meta_dataframe(
+        self,
+        data: dict,
         df_type: Literal["pandas", "polars"]
     ) -> pd.DataFrame | pl.DataFrame:
         """
         Fetches export data for a specific resource within a dataset.
-        
+
         Args:
             data (dict): Input data dictionary
             df_type (Literal["pandas", "polars"]): Type of DataFrame to return
@@ -1463,7 +1474,7 @@ class FrenchGouvCatExplorer:
         """
         if len(data) == 0:
             raise ValueError("Data can't be empty!")
-        
+
         resource_title = data.get("resource_title")
         resource_id = data.get("resource_id")
 

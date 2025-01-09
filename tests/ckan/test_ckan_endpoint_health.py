@@ -1,19 +1,16 @@
 import pytest
 from HerdingCats.session.cat_session import CatSession
 from HerdingCats.endpoints.api_endpoints import CkanApiPaths
+from HerdingCats.endpoints.api_endpoints import CkanDataCatalogues
 import requests
 from loguru import logger
 
-CATALOGUES = [
-    "https://data.london.gov.uk"
-]
 
-@pytest.mark.parametrize("catalogue_url", CATALOGUES)
-def test_ckan_health_check(catalogue_url):
+def test_ckan_health_check():
     """
     Check that predefined data catalogues are healthy and available
     """
-    with CatSession(catalogue_url) as cat_session:
+    with CatSession(CkanDataCatalogues.LONDON_DATA_STORE) as cat_session:
         url = cat_session.base_url + CkanApiPaths.PACKAGE_LIST
         try:
             response = cat_session.session.get(url)
@@ -24,15 +21,15 @@ def test_ckan_health_check(catalogue_url):
 
             # Check data is not empty
             data = response.json()
-            assert data, f"Received empty data from {catalogue_url}"
+            assert data, f"Received empty data from {cat_session.base_url}"
 
             # Additional check for 'success' key if your API returns it
             if 'success' in data:
-                assert data['success'], f"CKAN returned success=False for {catalogue_url}"
+                assert data['success'], f"CKAN returned success=False for {cat_session.base_url}"
 
-            logger.info(f"Health check passed for {catalogue_url}")
+            logger.info(f"Health check passed for {cat_session.base_url}")
 
         except requests.RequestException as e:
-            pytest.fail(f"Failed to connect to CKAN endpoint for {catalogue_url}: {str(e)}")
+            pytest.fail(f"Failed to connect to CKAN endpoint for {cat_session.base_url}: {str(e)}")
         except AssertionError as e:
             pytest.fail(str(e))

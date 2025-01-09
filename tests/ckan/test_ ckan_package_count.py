@@ -1,20 +1,17 @@
 import pytest
 from HerdingCats.session.cat_session import CatSession
 from HerdingCats.explorer.cat_explore import CkanCatExplorer
+from HerdingCats.endpoints.api_endpoints import CkanDataCatalogues
 import requests
 from loguru import logger
 
-CATALOGUES = [
-    "https://data.london.gov.uk"
-]
 
-@pytest.mark.parametrize("catalogue_url", CATALOGUES)
-def test_get_package_count(catalogue_url):
+def test_get_package_count():
     """
     Test that the get_package_count method returns a valid count of datasets
     for predefined data catalogues
     """
-    with CatSession(catalogue_url) as cat_session:
+    with CatSession(CkanDataCatalogues.LONDON_DATA_STORE) as cat_session:
         explorer = CkanCatExplorer(cat_session)
         try:
             # Get the package count
@@ -26,9 +23,9 @@ def test_get_package_count(catalogue_url):
             # Assert that the count is positive
             assert package_count > 0, f"Expected positive package count, got {package_count}"
 
-            logger.info(f"Successfully retrieved package count for {catalogue_url}: {package_count} packages")
+            logger.info(f"Successfully retrieved package count for {cat_session.base_url}: {package_count} packages")
 
         except requests.RequestException as e:
-            pytest.fail(f"Failed to connect to CKAN endpoint for {catalogue_url}: {str(e)}")
+            pytest.fail(f"Failed to connect to CKAN endpoint for {cat_session.base_url}: {str(e)}")
         except AssertionError as e:
             pytest.fail(str(e))
