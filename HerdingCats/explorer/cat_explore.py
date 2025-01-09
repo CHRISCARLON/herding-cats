@@ -1388,7 +1388,7 @@ class FrenchGouvCatExplorer:
                     case "polars":
                         return pl.DataFrame([data])
             elif response.status_code == 404:
-                logger.warning(f"Dataset not found")
+                logger.warning("Dataset not found")
                 return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
             else:
                 logger.error(f"Failed to fetch dataset with status code {response.status_code}")
@@ -1487,7 +1487,7 @@ class FrenchGouvCatExplorer:
                     return pd.DataFrame(result)
                 case "polars":
                     return pl.DataFrame(result)
-        except Exception as e:
+        except Exception:
             logger.error(f"Error fetching {resource_title}. Id number: :{resource_id}")
             return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
 
