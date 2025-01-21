@@ -77,17 +77,33 @@ class CkanCatResourceLoader:
         But we only want to focus on the first list and only need format and url.
         """
         @wraps(func)
-        def wrapper(self, resource_data: Optional[List], *args, **kwargs):
+        def wrapper(self, resource_data: Optional[List], desired_format: Optional[str] = None, *args, **kwargs):
             # First validate we have a list
             if not isinstance(resource_data, list) or not resource_data:
                 logger.error("Invalid resource data: must be a non-empty list")
                 raise ValueError("Resource data must be a non-empty list")
 
-            # Determine if we have a single resource or multiple resources
-            # We check if the first element is a list to determine the structure
-            target_resource = (resource_data[0]
-                            if isinstance(resource_data[0], list)
-                            else resource_data)
+            # If we have multiple resources (list of lists)
+            if isinstance(resource_data[0], list):
+                if desired_format:
+                    # Find the resource with matching format
+                    target_resource = next(
+                        (res for res in resource_data if res[2].lower() == desired_format.lower()),
+                        None
+                    )
+                    if not target_resource:
+                        available_formats = [res[2] for res in resource_data]
+                        logger.error(f"No resource found with format: {desired_format}")
+                        raise ValueError(
+                            f"No resource with format '{desired_format}' found. "
+                            f"Available formats: {', '.join(available_formats)}"
+                        )
+                else:
+                    # If no format specified, use first resource
+                    target_resource = resource_data[0]
+            else:
+                # Single resource case
+                target_resource = resource_data
 
             # Validate the resource has all required elements
             if len(target_resource) < 4:
@@ -106,9 +122,6 @@ class CkanCatResourceLoader:
             # Create the modified resource in the expected format
             modified_resource = [format_type, url]
             logger.info(f"You're currently working with this resource {modified_resource}")
-
-            # Log what type of resource we processed
-            logger.debug(f"Processed {'multiple' if isinstance(resource_data[0], list) else 'single'} resource format")
 
             return func(self, modified_resource, *args, **kwargs)
         return wrapper
@@ -198,8 +211,20 @@ class CkanCatResourceLoader:
             raise
 
     @validate_inputs
-    def polars_data_loader(self, resource_data: List, sheet_name: Optional[str] = None) -> PolarsDataFrame:
-        """Load a resource into a Polars DataFrame."""
+    def polars_data_loader(
+        self, 
+        resource_data: List, 
+        desired_format: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> PolarsDataFrame:
+        """
+        Load a resource into a Polars DataFrame.
+        
+        Args:
+            resource_data: List of resources or single resource
+            desired_format: Optional format to load (e.g., 'csv', 'xlsx')
+            sheet_name: Optional sheet name for Excel files
+        """
         binary_data = self._fetch_data(resource_data[1])
         return self._load_dataframe(
             binary_data,
@@ -209,7 +234,12 @@ class CkanCatResourceLoader:
         )
 
     @validate_inputs
-    def pandas_data_loader(self, resource_data: List, sheet_name: Optional[str] = None) -> PandasDataFrame:
+    def pandas_data_loader(
+        self, 
+        resource_data: List, 
+        desired_format: Optional[str] = None, 
+        sheet_name: Optional[str] = None
+        ) -> PandasDataFrame:
         """Load a resource into a Pandas DataFrame."""
         binary_data = self._fetch_data(resource_data[1])
         return self._load_dataframe(

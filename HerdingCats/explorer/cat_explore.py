@@ -29,6 +29,9 @@ class CkanCatExplorer:
 
         Args:
             CkanCatSession
+        
+        Returns:
+            CkanCatExplorer
 
         # Example usage...
         import HerdingCats as hc
@@ -64,7 +67,11 @@ class CkanCatExplorer:
         """
         Make sure the Ckan endpoints are healthy and reachable
 
-        This calls the Ckan package_list endpoint to check if site is still reacheable.
+        This calls the Ckan package_list endpoint to check if the site is still reacheable.
+
+        Returns:
+            Success message if the site is healthy
+            Error message if the site is not healthy
 
         # Example usage...
         if __name__ == "__main__":
@@ -95,7 +102,7 @@ class CkanCatExplorer:
     # ----------------------------
     def get_package_count(self) -> int:
         """
-        Quick way to see how 'big' a data catalogue is
+        A quick way to see how 'big' a data catalogue is
 
         E.g how many datasets (packages) there are
 
@@ -169,12 +176,12 @@ class CkanCatExplorer:
         """
         Explore all packages that are available to query as a dataframe
 
-        Args: Must specify a df type
+        Args:
             pandas
             polars
 
         Returns:
-            Dataframe with all dataset names
+            pd.DataFrame or pl.DataFrame with all dataset names
 
         Example ouput:
             shape: (68_995, 1)
@@ -242,11 +249,16 @@ class CkanCatExplorer:
         """
         Explore all packages that are available to query.
 
-        With extra resource and meta information.
+        Output provides extra resource and meta information.
 
         Sorted by most recently updated dataset first.
 
         This is sometimes implemented different depending on the organisation.
+        
+        This may not work for all catalogues as expected for all catalogues 100% of the time.
+
+        Returns:
+            List[Dict[str, Any]]
 
         # Example usage...
         if __name__ == "__main__":
@@ -257,7 +269,7 @@ class CkanCatExplorer:
         """
 
         logger.warning(
-        "Note: get_package_list_extra() may vary between catalogues. "
+        "Note: get_package_list_extra() implementation may vary between catalogues."
         "While typically sorted by last modified date, the exact ordering depends on the catalogue implementation."
     )
 
@@ -291,12 +303,17 @@ class CkanCatExplorer:
         """
         Explore all packages that are available to query.
 
-        With extra resource and meta information.
+        Output provides extra resource and meta information.
 
         Sorted by most recently updated dataset first.
 
-        Returned as a dataframe.
+        This is sometimes implemented different depending on the organisation.
+        
+        This may not work for all catalogues as expected for all catalogues 100% of the time.
 
+        Returns:
+            pd.DataFrame or pl.DataFrame
+        
         shape: (1_229, 8)
         ┌───────────────────┬───────────────────┬───────────────────┬──────────────────┬─────────────────
         │ owner_org         ┆ name              ┆ title             ┆ maintainer       ┆ metadata_created ┆ metadata_modifie ┆ resources        ┆ groups           │
@@ -344,7 +361,7 @@ class CkanCatExplorer:
             )
 
         logger.warning(
-        "Note: get_package_list_extra() may vary between catalogues. "
+        "Note: get_package_list_extra() may vary between catalogues."
         "While typically sorted by last modified date, the exact ordering depends on the catalogue implementation."
         )
 
@@ -392,8 +409,10 @@ class CkanCatExplorer:
 
     def get_organisation_list(self) -> Tuple[int, list]:
         """
-        Returns total number of orgs or maintainers if org endpoint does not work,
-        as well as list of the org or mantainers themselves.
+        Returns total number of orgs or maintainers if the org endpoint does not work - as well as list of the org or mantainers themselves.
+
+        Returns:
+            Tuple[int, list]
 
         # Example usage...
         if __name__ == "__main__":
@@ -438,14 +457,20 @@ class CkanCatExplorer:
 
         This will return package metadata including resource information and download links for the data.
 
+        Args:
+            package_name: Union[str, dict, Any]
+
+        Returns:
+            List[Dict]
+
         # Example usage...
         if __name__ == "__main__":
             with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 all_packages = explore.package_list_dictionary()
-                census = all_packages.get("2011-boundary-files")
-                census_info = explore.show_package_info(census)
-                print(census_info)
+                package = all_packages.get(insert_package_name)
+                package_info = explore.show_package_info(package)
+                print(package_info)
         """
 
         if package_name is None:
@@ -474,15 +499,22 @@ class CkanCatExplorer:
         Pass in a package name as a string or as a value from a dictionary.
 
         This will return package metadata including resource information and download links for the data.
+        
+        Args:
+            package_name: Union[str, dict, Any]
+            df_type: Literal["pandas", "polars"]
+
+        Returns:
+            pd.DataFrame or pl.DataFrame
 
         # Example usage...
         if __name__ == "__main__":
             with CkanCatSession("data.london.gov.uk") as session:
                 explore = CkanCatExplorer(session)
                 all_packages = explore.package_list_dictionary()
-                census = all_packages.get("2011-boundary-files")
-                census_info = explore.show_package_info_dataframe(census)
-                pprint(census_info)
+                package = all_packages.get("package_name")
+                package_info = explore.show_package_info_dataframe(package, "pandas")
+                print(package_info)
         """
 
         if package_name is None:
@@ -520,6 +552,13 @@ class CkanCatExplorer:
 
         Specify the number of rows if the 'count' is large
 
+        Args:
+            search_query: str
+            num_rows: int
+
+        Returns:
+            List[Dict]
+
         # Example usage...
         import HerdingCats as hc
 
@@ -531,7 +570,6 @@ class CkanCatExplorer:
 
         if __name__ =="__main__":
             main()
-
         """
 
         base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_SEARCH
@@ -557,10 +595,13 @@ class CkanCatExplorer:
     ) -> Optional[List[Dict]]:
         """
         Args:
-            Search query: str
-            Number of rows: int
-
-        Returns a more condensed view of package informaton focusing on:
+            search_query: str
+            num_rows: int
+        
+        Returns:
+            List[Dict]
+        
+        A more condensed view of package informaton focusing on:
             name
             number of resources
             notes
@@ -582,7 +623,6 @@ class CkanCatExplorer:
 
         if __name__ =="__main__":
             main()
-
         """
         base_url = self.cat_session.base_url + CkanApiPaths.PACKAGE_SEARCH
 
@@ -628,10 +668,14 @@ class CkanCatExplorer:
     ) -> Union[pd.DataFrame, "pl.DataFrame"]:
         """
         Args:
-            Search query: str
-            Number of rows: int
+            search_query: str
+            num_rows: int
+            df_type: Literal["pandas", "polars"]
 
-        Returns a more condensed view of package informaton focusing on:
+        Returns:
+            pd.DataFrame or pl.DataFrame
+        
+        A more condensed view of package informaton focusing on:
             name
             number of resources
             notes
@@ -691,7 +735,7 @@ class CkanCatExplorer:
             data = response.json()
             data_prep = data["result"]
 
-            # Check for both 'result' and 'results' keys
+            # Check for both 'result' and 'results' keys as sometimes the key is 'results' and sometimes it's 'result'
             if "result" in data_prep:
                 result_data = data_prep["result"]
             elif "results" in data_prep:
@@ -725,10 +769,14 @@ class CkanCatExplorer:
     ) -> Union[pd.DataFrame, "pl.DataFrame"]:
         """
         Args:
-            Search query: str
-            Number of rows: int
+            search_query: str
+            num_rows: int
+            df_type: Literal["pandas", "polars"]
 
-        Returns a more condensed view of package informaton focusing on:
+        Returns:
+            pd.DataFrame or pl.DataFrame
+        
+        A more condensed view of package informaton focusing on:
             name
             number of resources
             notes
@@ -799,7 +847,7 @@ class CkanCatExplorer:
             data = response.json()
             data_prep = data["result"]
 
-            # Check for both 'result' and 'results' keys
+            # Check for both 'result' and 'results' keys as sometimes the key is 'results' and sometimes it's 'result'
             if "result" in data_prep:
                 result_data = data_prep["result"]
             elif "results" in data_prep:
@@ -828,15 +876,17 @@ class CkanCatExplorer:
     # ----------------------------
     # Extract information in pre for Data Loader Class
     # ----------------------------
-    def extract_resource_url(self, package_info: List[Dict]) -> List[str] | None:
+    def extract_resource_url(self, package_info: List[Dict]) -> List[str]:
         """
         Extracts the download inmformation for resources in a package.
 
+        Tip: this accepts the output of show_package_info()
+
         Args:
-            Pass in package info list.
+            package_info: List[Dict]
 
         Returns:
-        List[resource_name, resource_created, format, url]
+            List[resource_name, resource_created, format, url]
 
         # Example:
         import HerdingCats as hc
@@ -845,8 +895,8 @@ class CkanCatExplorer:
         def main():
             with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = hc.CkanCatExplorer(session)
-                dataset = explore.show_package_info("mps-homicide-dashboard-data")
-                urls = explore.extract_resource_url(dataset)
+                package = explore.show_package_info(insert_package_name)
+                urls = explore.extract_resource_url(package)
                 pprint(urls)
 
         if __name__ =="__main__":
@@ -868,12 +918,13 @@ class CkanCatExplorer:
                     logger.warning(
                         f"Resource '{resource_name}' found in package, but no URL available"
                     )
-                    return None
+                    return ["NONE"]
         return results
 
     # ----------------------------
     # Helper Methods
     # Flatten nested data structures
+    # Extract specific fields from a package
     # ----------------------------
     @staticmethod
     def _extract_condensed_package_data(
