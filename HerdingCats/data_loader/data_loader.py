@@ -17,7 +17,6 @@ from botocore.exceptions import ClientError
 from functools import wraps
 from io import BytesIO
 from loguru import logger
-from tqdm import tqdm
 
 
 # START TO WRANGLE / ANALYSE
