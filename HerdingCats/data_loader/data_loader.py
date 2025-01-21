@@ -17,6 +17,7 @@ from botocore.exceptions import ClientError
 from functools import wraps
 from io import BytesIO
 from loguru import logger
+from tqdm import tqdm
 
 
 # START TO WRANGLE / ANALYSE
@@ -67,7 +68,7 @@ class CkanCatResourceLoader:
         ┌─────────────────────── Outer List ────────────────────────┐
         │ ┌─────────── Inner List 1 ───────────┐  ┌─── List 2 ───┐  │
         │ │ [0]: "Homicide Accused.csv"        │  │    same      │  │
-        │ │ [1]: "2024-09-20T13:21:02.610Z"    │  │    same      │  │  
+        │ │ [1]: "2024-09-20T13:21:02.610Z"    │  │    same      │  │
         │ │ [2]: "csv"         ◄─── Format     │  │    same      │  │
         │ │ [3]: "https://..." ◄─── URL        │  │    same      │  │
         │ └────────────────────────────────────┘  └───────────── ┘  │
@@ -416,7 +417,7 @@ class OpenDataSoftResourceLoader:
         # Find matching resource
         url = next(
             (r.get('download_url') for r in resource_data
-             if r.get('format', '').lower() in valid_formats),
+            if r.get('format', '').lower() in valid_formats),
             None
         )
 
@@ -558,7 +559,6 @@ class OpenDataSoftResourceLoader:
         con.execute("LOAD spatial")
 
         try:
-            # Use match statement for format handling
             match format_type:
                 case "parquet":
                     con.execute("CREATE TABLE data AS SELECT * FROM read_parquet(?)", [url])
@@ -719,7 +719,7 @@ class FrenchGouvResourceLoader:
     self,
     resource_data: Optional[List[Dict[str, str]]],
     format_type: str
-    ) -> str:
+    ) -> tuple[str, str]:
         """Validate resource data and extract download URL."""
         if not resource_data:
             raise FrenchCatDataLoaderError("No resource data provided")
@@ -739,21 +739,26 @@ class FrenchGouvResourceLoader:
                 f"Supported formats: csv, parquet, xls, xlsx, geopackage"
             )
 
-        # Find matching resource
-        url = next(
-            (r.get('resource_url') for r in resource_data
-                if r.get('resource_format', '').lower() in valid_formats),
+        # Find matching resource and its title
+        matching_resource = next(
+            (r for r in resource_data if r.get('resource_format', '').lower() in valid_formats),
             None
         )
 
-        # If format provided does not have a url provide the formats that do
-        if not url:
-            available_formats = [r['resource_url'] for r in resource_data]
+        if not matching_resource:
+            available_formats = [r['resource_format'] for r in resource_data]
             raise FrenchCatDataLoaderError(
                 f"No resource found with format: {format_type}. "
                 f"Available formats: {', '.join(available_formats)}"
             )
-        return url
+
+        url = matching_resource.get('resource_url')
+        title = matching_resource.get('resource_title', 'Unnamed Resource')
+
+        if not url:
+            raise FrenchCatDataLoaderError("Resource URL not found in data")
+
+        return url, title
 
     @validate_inputs
     def duckdb_data_loader(
@@ -775,7 +780,6 @@ class FrenchGouvResourceLoader:
         con.execute("LOAD spatial")
 
         try:
-            # Use match statement for format handling
             match format_type:
                 case "parquet":
                     con.execute("CREATE TABLE data AS SELECT * FROM read_parquet(?)", [url])
@@ -800,3 +804,151 @@ class FrenchGouvResourceLoader:
 
         except duckdb.Error as e:
             raise FrenchCatDataLoaderError(f"Failed to load {format_type} resource into DuckDB", e)
+
+    def _fetch_data(self, url: str, api_key: Optional[str] = None) -> BytesIO:
+        """Fetch data from URL and return as BytesIO object."""
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            return BytesIO(response.content)
+        except requests.RequestException as e:
+            logger.error(f"Error fetching data from URL: {e}")
+            raise
+
+    def _verify_data(self, df: Union[pd.DataFrame, pl.DataFrame], api_key: Optional[str]) -> None:
+        """Verify that the DataFrame is not empty when no API key is provided."""
+        is_empty = df.empty if isinstance(df, pd.DataFrame) else df.height == 0
+        if is_empty and not api_key:
+            raise FrenchCatDataLoaderError(
+                "Received empty DataFrame. This likely means an API key is required. "
+                "Please provide an API key and try again."
+            )
+
+    @overload
+    def _load_to_frame(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: str,
+        loader_type: Literal["pandas"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> PandasDataFrame: ...
+
+    @overload
+    def _load_to_frame(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: str,
+        loader_type: Literal["polars"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> PolarsDataFrame: ...
+
+    def _load_to_frame(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: str,
+        loader_type: Literal["pandas", "polars"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None,
+        **csv_options
+    ) -> Union[pd.DataFrame, pl.DataFrame]:
+        """Common method for loading data into pandas or polars DataFrame."""
+        url, title = self._validate_resource_data(resource_data, format_type)
+        logger.info(f"Loading data from {title} into {loader_type} DataFrame")
+        binary_data = self._fetch_data(url, api_key)
+        df = self._load_dataframe(binary_data, format_type, loader_type, sheet_name, **csv_options)
+        self._verify_data(df, api_key)
+        return df
+
+    def _load_dataframe(
+        self,
+        binary_data: BytesIO,
+        format_type: str,
+        loader_type: Literal["pandas", "polars"],
+        sheet_name: Optional[str] = None,
+        **csv_options
+    ) -> Union[pd.DataFrame, pl.DataFrame]:
+        """Load binary data into specified DataFrame type."""
+        try:
+            match (format_type, loader_type):
+                case ("parquet", "pandas"):
+                    return pd.read_parquet(binary_data)
+                case ("parquet", "polars"):
+                    return pl.read_parquet(binary_data)
+                case ("csv", "pandas"):
+                    # If no separator specified, try to detect it
+                    if 'sep' not in csv_options:
+                        # Read first chunk of data to detect separator
+                        sample = binary_data.read(1024).decode('utf-8')
+                        binary_data.seek(0)
+
+                        # Count potential separators
+                        separators = {
+                            ',': sample.count(','),
+                            '\t': sample.count('\t'),
+                            ';': sample.count(';'),
+                            '|': sample.count('|')
+                        }
+                        most_common_sep = max(separators.items(), key=lambda x: x[1])[0]
+                        csv_options['sep'] = most_common_sep
+
+                    # Set default options if not provided
+                    csv_options.setdefault('encoding', 'utf-8')
+                    csv_options.setdefault('on_bad_lines', 'warn')
+
+                    return pd.read_csv(binary_data, **csv_options)
+                case ("csv", "polars"):
+                    # If no separator specified, try to detect it
+                    if 'separator' not in csv_options:
+                        # Read first chunk of data to detect separator
+                        sample = binary_data.read(1024).decode('utf-8')
+                        binary_data.seek(0)  #
+
+                        # Count potential separators
+                        separators = {
+                            ',': sample.count(','),
+                            '\t': sample.count('\t'),
+                            ';': sample.count(';'),
+                            '|': sample.count('|')
+                        }
+                        most_common_sep = max(separators.items(), key=lambda x: x[1])[0]
+                        csv_options['separator'] = most_common_sep
+
+                    # Set default options for polars
+                    csv_options.setdefault('encoding', 'utf-8')
+                    csv_options.setdefault('truncate_ragged_lines', True)
+
+                    return pl.read_csv(binary_data, infer_schema_length=10000, **csv_options)
+                case (("xls" | "xlsx"), "pandas"):
+                    return pd.read_excel(binary_data, sheet_name=sheet_name) if sheet_name else pd.read_excel(binary_data)
+                case (("xls" | "xlsx"), "polars"):
+                    return pl.read_excel(binary_data, sheet_name=sheet_name) if sheet_name else pl.read_excel(binary_data)
+                case (("geopackage" | "gpkg"), _):
+                    raise ValueError("Geopackage format requires using geopandas or a specialized GIS library")
+                case _:
+                    raise ValueError(f"Unsupported format {format_type} or loader type {loader_type}")
+        except Exception as e:
+            raise FrenchCatDataLoaderError(f"Failed to load {loader_type} DataFrame: {str(e)}", e)
+
+    @validate_inputs
+    def polars_data_loader(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: Literal["csv", "parquet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> pl.DataFrame:
+        """Load data from a resource URL into a Polars DataFrame."""
+        return self._load_to_frame(resource_data, format_type, "polars", api_key, sheet_name)
+
+    @validate_inputs
+    def pandas_data_loader(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None
+    ) -> pd.DataFrame:
+        """Load data from a resource URL into a Pandas DataFrame."""
+        return self._load_to_frame(resource_data, format_type, "pandas", api_key, sheet_name)
