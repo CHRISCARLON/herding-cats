@@ -25,20 +25,26 @@ class CkanDataCatalogues(Enum):
     SUBAK = "https://data.subak.org"
     HUMANITARIAN_DATA_STORE = "https://data.humdata.org"
     OPEN_AFRICA = "https://open.africa"
+    NATIONAL_GRID_DNO = "https://connecteddata.nationalgrid.co.uk"
+    SSEN_DNO = "https://ckan-prod.sse.datopian.com"
     # CANADA_GOV = "https://search.open.canada.ca/opendata" NEED TO LOOK INTO THIS ONE MORE
     # NORTHERN_DATA_MILL = "https://datamillnorth.org" NEED TO LOOK INTO THIS ONE MORE
     # Add more catalogues as needed...
 
 # OPEN DATASOFT
 class OpenDataSoftDataCatalogues(Enum):
-    UK_POWER_NETWORKS = "https://ukpowernetworks.opendatasoft.com"
+    UK_POWER_NETWORKS_DNO = "https://ukpowernetworks.opendatasoft.com"
     INFRABEL = "https://opendata.infrabel.be"
     PARIS = "https://opendata.paris.fr"
     TOULOUSE = "https://data.toulouse-metropole.fr"
     ELIA_BELGIAN_ENERGY = "https://opendata.elia.be"
     EDF_ENERGY = "https://opendata.edf.fr"
-    CADENT_GAS = "https://cadentgas.opendatasoft.com"
+    CADENT_GAS_GDN = "https://cadentgas.opendatasoft.com"
     GRD_FRANCE = "https://opendata.agenceore.fr"
+    NORTHERN_POWERGRID_DNO = "https://northernpowergrid.opendatasoft.com"
+    ELECTRICITY_NORTH_WEST_DNO = "https://electricitynorthwest.opendatasoft.com"
+    SSEN_TRANSMISSION = "https://ssentransmission.opendatasoft.com"
+    SP_ENERGY_NETWORKS_DNO  = "https://spenergynetworks.opendatasoft.com"
     # Add more catalogues as needed...
 
 class OpenDataSoftApiPaths:

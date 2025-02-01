@@ -10,7 +10,7 @@ def test_package_list_dictionary():
     """
     Test the package list functionality for predefined data catalogues...
     """
-    catalogue_url = OpenDataSoftDataCatalogues.UK_POWER_NETWORKS
+    catalogue_url = OpenDataSoftDataCatalogues.UK_POWER_NETWORKS_DNO
     with CatSession(catalogue_url) as cat_session:
         explorer = OpenDataSoftCatExplorer(cat_session)
         try:

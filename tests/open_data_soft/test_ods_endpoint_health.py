@@ -9,7 +9,7 @@ def test_ckan_health_check():
     """
     Check that predefined data catalogues are healthy and available
     """
-    with CatSession(OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as cat_session:
+    with CatSession(OpenDataSoftDataCatalogues.UK_POWER_NETWORKS_DNO) as cat_session:
         url = cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASETS
         try:
             response = cat_session.session.get(url)

@@ -451,7 +451,7 @@ class CkanCatExplorer:
     # ----------------------------
     # Show metadata using a package name
     # ----------------------------
-    def show_package_info(self, package_name: Union[str, dict, Any]) -> List[Dict]:
+    def show_package_info(self, package_name: Union[str, dict, Any], api_key = None) -> List[Dict]:
         """
         Pass in a package name as a string or as a value from a dictionary.
 
@@ -485,7 +485,11 @@ class CkanCatExplorer:
         url = f"{base_url}?{urlencode(params)}" if params else base_url
 
         try:
-            response = self.cat_session.session.get(url)
+            headers = {}
+            if api_key:
+                headers["Authorization"] = api_key
+
+            response = self.cat_session.session.get(url, headers=headers)
             response.raise_for_status()
             data = response.json()
             result_data = data["result"]
@@ -494,7 +498,7 @@ class CkanCatExplorer:
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
-    def show_package_info_dataframe(self, package_name: Union[str, dict, Any], df_type: Literal["pandas", "polars"]) -> pd.DataFrame | pl.DataFrame:
+    def show_package_info_dataframe(self, package_name: Union[str, dict, Any], df_type: Literal["pandas", "polars"], api_key = None) -> pd.DataFrame | pl.DataFrame:
         """
         Pass in a package name as a string or as a value from a dictionary.
 
@@ -527,7 +531,11 @@ class CkanCatExplorer:
         url = f"{base_url}?{urlencode(params)}" if params else base_url
 
         try:
-            response = self.cat_session.session.get(url)
+            headers = {}
+            if api_key:
+                headers["Authorization"] = api_key
+
+            response = self.cat_session.session.get(url, headers=headers)
             response.raise_for_status()
             data = response.json()
             result_data = data["result"]
@@ -1169,11 +1177,11 @@ class OpenDataSoftCatExplorer:
             returned_count = len(dataset_dict)
             if returned_count == total_count:
                 logger.success(
-                    f"MATCH: total_count = {total_count} AND returned_count = {returned_count}"
+                    f"Total Datasets Found: {total_count}"
                 )
             else:
                 logger.warning(
-                    f"MISMATCH: total_count = {total_count}, returned_count = {returned_count} - please raise an issue"
+                    f"WARNING MISMATCH: total_count = {total_count}, returned_count = {returned_count} - please raise an issue"
                 )
             return dataset_dict
         else:
