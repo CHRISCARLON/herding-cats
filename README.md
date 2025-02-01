@@ -90,7 +90,7 @@ if __name__ == "__main__":
     main()
 ```
 
-##### Methods
+##### Methods Ckan
 
 1. `check_site_health()`: Checks the health of the CKAN site
 2. `get_package_count()`: Returns the total number of packages in a catalogue
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     main()
 ```
 
-##### Methods
+##### Methods OpenDataSoft
 
 1. `check_site_health()`: Checks the health of the OpenDataSoft site
 2. `fetch_all_datasets()`: Retrieves all datasets from an OpenDataSoft catalogue
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     main()
 ```
 
-##### Methods
+##### Methods FrenchGouv
 
 1. `check_health_check()`: Checks the health of the French Government data portal
 2. `get_all_datasets()`: Returns a dictionary of all available datasets
