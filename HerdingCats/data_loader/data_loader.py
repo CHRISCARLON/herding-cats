@@ -361,68 +361,6 @@ class CkanCatResourceLoader:
             logger.error(f"MotherDuck error: {e}")
             raise
 
-    def _verify_s3_bucket(self, s3_client: Boto3Client, bucket_name: str) -> None:
-        """Verify S3 bucket exists."""
-        try:
-            s3_client.head_bucket(Bucket=bucket_name)
-            logger.info("Bucket Found")
-        except ClientError as e:
-            error_code = int(e.response["Error"]["Code"])
-            if error_code == 404:
-                raise ValueError(f"Bucket '{bucket_name}' does not exist")
-            raise
-
-    def _convert_to_parquet(self, binary_data: BytesIO, file_format: str) -> BytesIO:
-        """Convert input data to parquet format."""
-        match file_format:
-            case "spreadsheet" | "xlsx":
-                df = pd.read_excel(binary_data)
-            case "csv":
-                df = pd.read_csv(binary_data)
-            case "json":
-                df = pd.read_json(binary_data)
-            case _:
-                raise ValueError(f"Unsupported file format for Parquet conversion: {file_format}")
-
-        if df.empty:
-            raise ValueError("No data was loaded from the source file")
-
-        table = pa.Table.from_pandas(df)
-        parquet_buffer = BytesIO()
-        pq.write_table(table, parquet_buffer)
-        parquet_buffer.seek(0)
-        return parquet_buffer
-
-    @validate_inputs
-    def aws_s3_data_loader(self, resource_data: List, bucket_name: str,
-                        custom_name: str, mode: Literal["raw", "parquet"]) -> str:
-        """Load resource data into remote S3 storage."""
-        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
-            raise ValueError("Bucket name and custom name must be non-empty strings")
-
-        file_format = resource_data[0].lower()
-        binary_data = self._fetch_data(resource_data[1])
-        s3_client = boto3.client("s3")
-        self._verify_s3_bucket(s3_client, bucket_name)
-
-        try:
-            match mode:
-                case "raw":
-                    filename = f"{custom_name}-{uuid.uuid4()}.{file_format}"
-                    s3_client.upload_fileobj(binary_data, bucket_name, filename)
-
-                case "parquet":
-                    parquet_buffer = self._convert_to_parquet(binary_data, file_format)
-                    filename = f"{custom_name}-{uuid.uuid4()}.parquet"
-                    s3_client.upload_fileobj(parquet_buffer, bucket_name, filename)
-
-            logger.info(f"File uploaded successfully to S3 as {filename}")
-            return filename
-
-        except Exception as e:
-            logger.error(f"AWS S3 upload error: {e}")
-            raise
-
     @validate_inputs
     def upload_data(
         self,
@@ -436,8 +374,8 @@ class CkanCatResourceLoader:
         if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
             raise ValueError("Bucket name and custom name must be non-empty strings")
 
-        uploader_class = self.STORAGE_TYPES[storage_type]
-        uploader = uploader_class()  # No extra options passed
+        UploaderClass = self.STORAGE_TYPES[storage_type]
+        uploader = UploaderClass()
 
         file_format = resource_data[0].lower()
         binary_data = self._fetch_data(resource_data[1])
