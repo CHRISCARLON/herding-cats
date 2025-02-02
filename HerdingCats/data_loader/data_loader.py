@@ -8,12 +8,11 @@ import pyarrow.parquet as pq
 import uuid
 
 from ..errors.cats_errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
-from .data_loader_stores import DataUploaderTrait, S3Uploader
+from .data_loader_stores import S3Uploader
 
 from typing import Union, overload, Optional, Literal, List, Dict
 from pandas.core.frame import DataFrame as PandasDataFrame
 from polars.dataframe.frame import DataFrame as PolarsDataFrame
-from botocore.client import BaseClient as Boto3Client
 from botocore.exceptions import ClientError
 from functools import wraps
 from io import BytesIO

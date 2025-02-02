@@ -3,7 +3,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from typing import Protocol, Literal, List, Optional
+from typing import Protocol, Literal, Optional
 from io import BytesIO
 from botocore.client import BaseClient as Boto3Client
 from loguru import logger
