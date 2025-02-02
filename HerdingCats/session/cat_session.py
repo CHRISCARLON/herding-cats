@@ -25,7 +25,7 @@ class CatSession:
             (CkanDataCatalogues, OpenDataSoftDataCatalogues, or FrenchGouvCatalogue)
 
         Returns:
-            A CatSession Objection
+            A CatSession Object
         """
         self.domain, self._catalogue_type = self._process_catalogue(catalogue)
         self.session = requests.Session()

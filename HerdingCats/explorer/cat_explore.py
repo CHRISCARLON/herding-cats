@@ -29,7 +29,7 @@ class CkanCatExplorer:
 
         Args:
             CkanCatSession
-        
+
         Returns:
             CkanCatExplorer
 
@@ -254,7 +254,7 @@ class CkanCatExplorer:
         Sorted by most recently updated dataset first.
 
         This is sometimes implemented different depending on the organisation.
-        
+
         This may not work for all catalogues as expected for all catalogues 100% of the time.
 
         Returns:
@@ -308,12 +308,12 @@ class CkanCatExplorer:
         Sorted by most recently updated dataset first.
 
         This is sometimes implemented different depending on the organisation.
-        
+
         This may not work for all catalogues as expected for all catalogues 100% of the time.
 
         Returns:
             pd.DataFrame or pl.DataFrame
-        
+
         shape: (1_229, 8)
         ┌───────────────────┬───────────────────┬───────────────────┬──────────────────┬─────────────────
         │ owner_org         ┆ name              ┆ title             ┆ maintainer       ┆ metadata_created ┆ metadata_modifie ┆ resources        ┆ groups           │
@@ -503,7 +503,7 @@ class CkanCatExplorer:
         Pass in a package name as a string or as a value from a dictionary.
 
         This will return package metadata including resource information and download links for the data.
-        
+
         Args:
             package_name: Union[str, dict, Any]
             df_type: Literal["pandas", "polars"]
@@ -605,10 +605,10 @@ class CkanCatExplorer:
         Args:
             search_query: str
             num_rows: int
-        
+
         Returns:
             List[Dict]
-        
+
         A more condensed view of package informaton focusing on:
             name
             number of resources
@@ -656,7 +656,7 @@ class CkanCatExplorer:
                 raise KeyError(
                     "Neither 'result' nor 'results' key found in the API response"
                 )
-            
+
             logger.success(f"Showing results for query: {search_query}")
 
             return self._extract_condensed_package_data(
@@ -682,7 +682,7 @@ class CkanCatExplorer:
 
         Returns:
             pd.DataFrame or pl.DataFrame
-        
+
         A more condensed view of package informaton focusing on:
             name
             number of resources
@@ -783,7 +783,7 @@ class CkanCatExplorer:
 
         Returns:
             pd.DataFrame or pl.DataFrame
-        
+
         A more condensed view of package informaton focusing on:
             name
             number of resources
@@ -1060,7 +1060,6 @@ class OpenDataSoftCatExplorer:
             with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
                 explore = CatExplorer(session)
         """
-
 
         if not hasattr(cat_session, 'catalogue_type'):
             raise WrongCatalogueError(

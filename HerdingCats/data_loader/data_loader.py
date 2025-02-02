@@ -8,6 +8,7 @@ import pyarrow.parquet as pq
 import uuid
 
 from ..errors.cats_errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
+from .data_loader_stores import DataUploaderTrait, S3Uploader
 
 from typing import Union, overload, Optional, Literal, List, Dict
 from pandas.core.frame import DataFrame as PandasDataFrame
@@ -29,6 +30,10 @@ class CkanCatResourceLoader:
         "csv": ["csv"],
         "json": ["json"],
         "parquet": ["parquet"]
+    }
+
+    STORAGE_TYPES = {
+        "s3": S3Uploader
     }
 
     def __init__(self):
@@ -161,7 +166,8 @@ class CkanCatResourceLoader:
         file_format: str,
         *,
         sheet_name: Optional[str] = None,
-        loader_type: Literal["pandas"] | Literal["polars"]
+        loader_type: Literal["pandas"] | Literal["polars"],
+        **csv_options
     ) -> Union[PandasDataFrame, PolarsDataFrame]:
         """
         Common method to load data into either Pandas or Polars DataFrame.
@@ -190,10 +196,48 @@ class CkanCatResourceLoader:
                         if sheet_name else pl.read_excel(binary_data))
 
                 case ("csv", "pandas"):
-                    return pd.read_csv(binary_data)
+                    # If no separator specified, try to detect it
+                    if 'sep' not in csv_options:
+                        # Read first chunk of data to detect separator
+                        sample = binary_data.read(1024).decode('utf-8')
+                        binary_data.seek(0)
 
+                        # Count potential separators
+                        separators = {
+                            ',': sample.count(','),
+                            '\t': sample.count('\t'),
+                            ';': sample.count(';'),
+                            '|': sample.count('|')
+                        }
+                        most_common_sep = max(separators.items(), key=lambda x: x[1])[0]
+                        csv_options['sep'] = most_common_sep
+
+                    # Set default options if not provided
+                    csv_options.setdefault('encoding', 'utf-8')
+                    csv_options.setdefault('on_bad_lines', 'warn')
+
+                    return pd.read_csv(binary_data, **csv_options)
                 case ("csv", "polars"):
-                    return pl.read_csv(binary_data)
+                    # If no separator specified, try to detect it
+                    if 'separator' not in csv_options:
+                        # Read first chunk of data to detect separator
+                        sample = binary_data.read(1024).decode('utf-8')
+                        binary_data.seek(0)  #
+
+                        # Count potential separators
+                        separators = {
+                            ',': sample.count(','),
+                            '\t': sample.count('\t'),
+                            ';': sample.count(';'),
+                            '|': sample.count('|')
+                        }
+                        most_common_sep = max(separators.items(), key=lambda x: x[1])[0]
+                        csv_options['separator'] = most_common_sep
+
+                    # Set default options for polars
+                    csv_options.setdefault('encoding', 'utf-8')
+                    csv_options.setdefault('truncate_ragged_lines', True)
+                    return pl.read_csv(binary_data, infer_schema_length=10000, **csv_options)
 
                 case ("parquet", "pandas"):
                     return pd.read_parquet(binary_data)
@@ -211,14 +255,14 @@ class CkanCatResourceLoader:
 
     @validate_inputs
     def polars_data_loader(
-        self, 
-        resource_data: List, 
+        self,
+        resource_data: List,
         desired_format: Optional[str] = None,
         sheet_name: Optional[str] = None
     ) -> PolarsDataFrame:
         """
         Load a resource into a Polars DataFrame.
-        
+
         Args:
             resource_data: List of resources or single resource
             desired_format: Optional format to load (e.g., 'csv', 'xlsx')
@@ -234,9 +278,9 @@ class CkanCatResourceLoader:
 
     @validate_inputs
     def pandas_data_loader(
-        self, 
-        resource_data: List, 
-        desired_format: Optional[str] = None, 
+        self,
+        resource_data: List,
+        desired_format: Optional[str] = None,
         sheet_name: Optional[str] = None
         ) -> PandasDataFrame:
         """Load a resource into a Pandas DataFrame."""
@@ -379,6 +423,35 @@ class CkanCatResourceLoader:
             logger.error(f"AWS S3 upload error: {e}")
             raise
 
+    @validate_inputs
+    def upload_data(
+        self,
+        resource_data: List,
+        bucket_name: str,
+        custom_name: str,
+        mode: Literal["raw", "parquet"],
+        storage_type: Literal["s3"],
+        **storage_options
+    ):
+        """Upload data using specified uploader"""
+        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
+            raise ValueError("Bucket name and custom name must be non-empty strings")
+
+        uploader_class = self.STORAGE_TYPES[storage_type]
+        uploader = uploader_class(**storage_options)
+
+        file_format = resource_data[0].lower()
+        binary_data = self._fetch_data(resource_data[1])
+
+        key = f"{custom_name}-{uuid.uuid4()}"
+        return uploader.upload(
+            data=binary_data,
+            bucket=bucket_name,
+            key=key,
+            mode=mode,
+            file_format=file_format
+        )
+
 # START TO WRANGLE / ANALYSE
 # LOAD OPEN DATA SOFT DATA RESOURCES INTO STORAGE
 class OpenDataSoftResourceLoader:
@@ -487,7 +560,8 @@ class OpenDataSoftResourceLoader:
         binary_data: BytesIO,
         format_type: str,
         loader_type: Literal["pandas", "polars"],
-        sheet_name: Optional[str] = None
+        sheet_name: Optional[str] = None,
+        **csv_options
     ) -> Union[pd.DataFrame, pl.DataFrame]:
         """Load binary data into specified DataFrame type."""
         try:
@@ -497,9 +571,48 @@ class OpenDataSoftResourceLoader:
                 case ("parquet", "polars"):
                     return pl.read_parquet(binary_data)
                 case ("csv", "pandas"):
-                    return pd.read_csv(binary_data)
+                    # If no separator specified, try to detect it
+                    if 'sep' not in csv_options:
+                        # Read first chunk of data to detect separator
+                        sample = binary_data.read(1024).decode('utf-8')
+                        binary_data.seek(0)
+
+                        # Count potential separators
+                        separators = {
+                            ',': sample.count(','),
+                            '\t': sample.count('\t'),
+                            ';': sample.count(';'),
+                            '|': sample.count('|')
+                        }
+                        most_common_sep = max(separators.items(), key=lambda x: x[1])[0]
+                        csv_options['sep'] = most_common_sep
+
+                    # Set default options if not provided
+                    csv_options.setdefault('encoding', 'utf-8')
+                    csv_options.setdefault('on_bad_lines', 'warn')
+
+                    return pd.read_csv(binary_data, **csv_options)
                 case ("csv", "polars"):
-                    return pl.read_csv(binary_data)
+                    # If no separator specified, try to detect it
+                    if 'separator' not in csv_options:
+                        # Read first chunk of data to detect separator
+                        sample = binary_data.read(1024).decode('utf-8')
+                        binary_data.seek(0)  #
+
+                        # Count potential separators
+                        separators = {
+                            ',': sample.count(','),
+                            '\t': sample.count('\t'),
+                            ';': sample.count(';'),
+                            '|': sample.count('|')
+                        }
+                        most_common_sep = max(separators.items(), key=lambda x: x[1])[0]
+                        csv_options['separator'] = most_common_sep
+
+                    # Set default options for polars
+                    csv_options.setdefault('encoding', 'utf-8')
+                    csv_options.setdefault('truncate_ragged_lines', True)
+                    return pl.read_csv(binary_data, infer_schema_length=10000, **csv_options)
                 case (("xls" | "xlsx" | "spreadsheet"), "pandas"):
                     return pd.read_excel(binary_data, sheet_name=sheet_name) if sheet_name else pd.read_excel(binary_data)
                 case (("xls" | "xlsx" | "spreadsheet"), "polars"):
