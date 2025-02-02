@@ -48,8 +48,3 @@ Need to understand the structure of what we pass to the data loaders of each cat
 | resource_title | String |
 | resource_url | String URL |
 | slug | String |
-
-### Summary:
-- SSEN: Each list element contains 4 fields
-- UK Power Networks: Each dictionary contains 2 key-value pairs
-- Data.gouv.fr: Each dictionary contains 11 key-value pairs
