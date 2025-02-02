@@ -430,15 +430,14 @@ class CkanCatResourceLoader:
         bucket_name: str,
         custom_name: str,
         mode: Literal["raw", "parquet"],
-        storage_type: Literal["s3"],
-        **storage_options
-    ):
+        storage_type: Literal["s3"]
+    ) -> str:
         """Upload data using specified uploader"""
         if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
             raise ValueError("Bucket name and custom name must be non-empty strings")
 
         uploader_class = self.STORAGE_TYPES[storage_type]
-        uploader = uploader_class(**storage_options)
+        uploader = uploader_class()  # No extra options passed
 
         file_format = resource_data[0].lower()
         binary_data = self._fetch_data(resource_data[1])

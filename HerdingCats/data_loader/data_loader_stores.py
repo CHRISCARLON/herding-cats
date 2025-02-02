@@ -19,7 +19,7 @@ class DataUploaderTrait(Protocol):
         file_format: Optional[str] = None
     ) -> str: ...
 
-class S3Uploader:
+class S3Uploader(DataUploaderTrait):
     def __init__(self, client: Optional[Boto3Client] = None):
         self.client = client or boto3.client("s3")
 
@@ -60,7 +60,7 @@ class S3Uploader:
         data: BytesIO,
         bucket: str,
         key: str,
-        mode: Literal["raw", "parquet"] = "raw",
+        mode: Literal["raw", "parquet"] = "parquet",
         file_format: Optional[str] = None
     ) -> str:
         """Upload data to S3 with support for raw and parquet modes."""
