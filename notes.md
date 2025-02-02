@@ -4,9 +4,10 @@
 
 Reduce code duplication in each of the catalogues data loaders...
 
-So..
+So...
 
 Implement a shared DataUploader trait/protocol for motherduck and aws s3 for all catalogues
+
 Implement a shared DataFrameLoader trait/protocol for all catalogues
 
 ## Notes for implementing shared loaders behaviours
