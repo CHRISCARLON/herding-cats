@@ -12,7 +12,7 @@ Implement a shared DataFrameLoader trait/protocol for all catalogues
 
 ## Notes for implementing shared loaders behaviours
 
-Need to understand the structure of we pass to the data loaders of eacgh catalogues first
+Need to understand the structure of what we pass to the data loaders of each catalogues first
 
 ## SSEN (Scottish and Southern Electricity Networks) Data
 **Return Type:** `List[List]`
