@@ -14,7 +14,7 @@ Implement a shared DataFrameLoader trait/protocol for all catalogues
 
 Need to understand the structure of what we pass to the data loaders of each catalogues first
 
-## SSEN (Scottish and Southern Electricity Networks) Data
+## CKAN Data
 **Return Type:** `List[List]`
 
 | Field | Data Structure |
@@ -24,7 +24,7 @@ Need to understand the structure of what we pass to the data loaders of each cat
 | Index 2 (Format) | String |
 | Index 3 (URL) | String URL |
 
-## UK Power Networks Data
+## OPEN DATASOFT Data
 **Return Type:** `List[Dict]`
 
 | Field | Data Structure |
