@@ -197,4 +197,3 @@ src/os_open_usrn_functions/explore_and_prep.py
 .test_venv
 settings.json*
 main.py
-notes.md

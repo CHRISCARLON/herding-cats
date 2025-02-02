@@ -1499,7 +1499,7 @@ class FrenchGouvCatExplorer:
         Fetches metadata for a specific resource within a dataset.
 
         Args:
-            Dict with meta info
+            Dict with dataset meta info
 
         Returns:
             dict: Resource details or empty dict if not found
