@@ -9,6 +9,10 @@ from botocore.client import BaseClient as Boto3Client
 from loguru import logger
 from botocore.exceptions import ClientError
 
+# TODO: This is a protocol for the data uploader trait
+# We can use this to define the methods that any data uploader must implement
+# This is useful for type checking and ensuring that the data uploader is compatible with the data loader
+# We need a more reusable pattern for defining data loaders
 class DataUploaderTrait(Protocol):
     def upload(
         self,

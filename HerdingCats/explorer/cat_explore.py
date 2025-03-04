@@ -16,6 +16,11 @@ from ..endpoints.api_endpoints import (
 from ..errors.cats_errors import CatExplorerError, WrongCatalogueError
 from ..session.cat_session import CatSession, CatalogueType
 
+# At the moment we have a lot of duplicate code between the explorers
+# TODO: Find a better way to do this
+# OR keep as is because each catalogue has a different API and different data structures.
+# Could be a good idea to maintain a very strong separation between the explorers
+
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For Ckan Catalogues Only
 # TODO add in property class for base_url
@@ -1615,6 +1620,8 @@ class FrenchGouvCatExplorer:
             logger.error(f"Error processing parquet file: {str(e)}")
             return {}
 
+# FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
+# For ONS Nomis data catalogue Only
 class ONSNomisCatExplorer:
     def __init__(self, cat_session: CatSession):
         """

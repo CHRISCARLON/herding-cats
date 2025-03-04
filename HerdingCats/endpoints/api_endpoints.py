@@ -1,7 +1,12 @@
 from enum import Enum
 
 # TODO: probably going to have to organise this better in the future
-# CKAN
+# It's ok for common catalogues backends like CKAN and OpenDataSoft
+# But for more niche catalogues like ONS Nomis we need to be able to handle the different API endpoints
+# Depending on how many niche catalogues we end up with, it might be worth while to create a new file just for the niche catalogues?
+# Core catalogies = ckan, opendatasoft
+# Catalogue extensions = ons_nomis, data_gov_uk, etc ???
+
 class CkanApiPathsDocs:
     PACKAGE_LIST = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_list"
     PACKAGE_SEARCH = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_search"
