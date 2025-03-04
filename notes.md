@@ -2,6 +2,8 @@
 
 ## Breadcrumbs for next time
 
+<img width="1015" alt="Screenshot 2025-03-04 at 15 14 08" src="https://github.com/user-attachments/assets/b90c9513-2525-441a-bda6-17804f534cca" />
+
 Reduce code duplication in each of the catalogues data loaders...
 
 So...
@@ -52,4 +54,5 @@ Need to understand the structure of what we pass to the data loaders of each cat
 | resource_url           | String URL                             |
 | slug                   | String                                 |
 
-Start to implement ONS Nomis API as a catalogue
+## Start to implement ONS Nomis API as a catalogue
+Started!
