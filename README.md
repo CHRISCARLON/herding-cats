@@ -1,7 +1,7 @@
 # HerdingCATs 🐈‍⬛
 
 > [!NOTE]  
-> Version 0.1.7 Documentation
+> Version 0.1.0 PyPi coming soon.
 
 [![codecov](https://codecov.io/gh/CHRISCARLON/Herding-CATs/graph/badge.svg?token=Y9Z0QA39S3)](https://codecov.io/gh/CHRISCARLON/Herding-CATs)
 
@@ -15,7 +15,7 @@ This will improve and speed up how users:
 - Find the data that they need
 - Get that data into a format and/or location for further analysis
 
-Simply...
+TBC...
 
 ```bash
 pip install HerdingCats

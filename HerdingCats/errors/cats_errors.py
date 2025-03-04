@@ -1,5 +1,6 @@
 from typing import Optional
 
+# TODO: Define better custom errors for each explorer and dataloader types
 class CatSessionError(Exception):
     """
     Custom exception class for CatSession errors.

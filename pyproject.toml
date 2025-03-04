@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "HerdingCats"
-version = "0.1.7"
+version = "0.1.0"
 description = "A tool for exploring open data catalogues"
 authors = [
     "christophercarlon <chris@enmeshed.dev>",

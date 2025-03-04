@@ -10,7 +10,8 @@ from urllib.parse import urlencode
 from ..endpoints.api_endpoints import (
     CkanApiPaths,
     OpenDataSoftApiPaths,
-    FrenchGouvApiPaths
+    FrenchGouvApiPaths, 
+    ONSNomisApiPaths
 )
 from ..errors.cats_errors import CatExplorerError, WrongCatalogueError
 from ..session.cat_session import CatSession, CatalogueType
@@ -1613,3 +1614,123 @@ class FrenchGouvCatExplorer:
         except Exception as e:
             logger.error(f"Error processing parquet file: {str(e)}")
             return {}
+
+class ONSNomisCatExplorer:
+    def __init__(self, cat_session: CatSession):
+        """
+        Takes in a CatSession
+
+        Allows user to start exploring data catalogue programatically
+        """
+        # Check if the CatSession has a catalogue_type attribute
+        if not hasattr(cat_session, 'catalogue_type'):
+            raise WrongCatalogueError(
+                "CatSession missing catalogue_type attribute",
+                expected_catalogue=str(CatalogueType.ONS_NOMIS),
+                received_catalogue="Unknown"
+            )
+
+        if cat_session.catalogue_type != CatalogueType.ONS_NOMIS:
+            raise WrongCatalogueError(
+                "Invalid catalogue type. ONSNomisCatExplorer requires a ONS Nomis catalogue session.",
+                expected_catalogue=str(CatalogueType.ONS_NOMIS),
+                received_catalogue=str(cat_session.catalogue_type)
+            )
+
+        self.cat_session = cat_session
+    
+    # ----------------------------
+    # Check Nomis site health
+    # ----------------------------
+    def check_health_check(self) -> None:
+        """Check the health of the Nomis catalogue endpoint """
+
+        url = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASETS
+        try:
+            response = self.cat_session.session.get(url)
+
+            if response.status_code == 200:
+                logger.success("Health Check Passed: Nomisis running and available")
+            else:
+                logger.error(f"Health Check Failed: Nomis responded with status code {response.status_code}")
+
+        except requests.RequestException as e:
+            logger.error(f"Health Check Failed: Unable to connect to Nomis {str(e)}")
+
+    # ----------------------------
+    # Get all datasets
+    # ----------------------------
+    def get_package_list(self):
+        """
+        TBC
+        """
+
+        url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASETS
+        datasets = []
+
+        try:
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            data = response.json()
+
+            if 'structure' in data and 'keyfamilies' in data['structure'] and 'keyfamily' in data['structure']['keyfamilies']:
+                key_families = data['structure']['keyfamilies']['keyfamily']
+                
+                # Loop through each keyfamily
+                for key_family in key_families:
+                    # Extract the ID
+                    dataset_id = key_family.get('id', 'No ID available')
+                    
+                    # Extract the name (if it exists)
+                    name = 'No name available'
+                    if 'name' in key_family and 'value' in key_family['name']:
+                        name = key_family['name']['value']
+                    
+                    # Add to our results list
+                    datasets.append({
+                        'id': dataset_id,
+                        'name': name
+                    })
+            
+            return datasets
+        except requests.RequestException as e:
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+    
+    def get_dataset_info(self, dataset_id: str) -> dict:
+        """
+        Get the metadata for a specific dataset
+        """
+
+        try:
+            url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASET_INFO.format(dataset_id)
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+    
+    def get_dataset_overview(self, dataset_id: str) -> dict:
+        """
+        Get the metadata for a specific dataset
+        """
+
+        try:
+            url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASET_INFO.format(dataset_id)
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+        
+    def get_dataset_geographies(self, dataset_id: str) -> dict:
+        """
+        Get the metadata for a specific dataset
+        """
+
+        try:
+            url: str = self.cat_session.base_url + ONSNomisApiPaths.GET_GEOGRAPHIES.format(dataset_id)
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")

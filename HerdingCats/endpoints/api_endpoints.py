@@ -1,5 +1,6 @@
 from enum import Enum
 
+# TODO: probably going to have to organise this better in the future
 # CKAN
 class CkanApiPathsDocs:
     PACKAGE_LIST = "https://docs.ckan.org/en/2.11/api/index.html#ckan.logic.action.get.package_list"
@@ -80,3 +81,14 @@ class FrenchGouvApiPaths:
 
 class FrenchGouvCatalogue(Enum):
     GOUV_FR = "https://www.data.gouv.fr"
+
+# ONS NOMI -
+class ONSNomisDataCatalogues(Enum):
+    ONS_NOMI = "https://www.nomisweb.co.uk/"
+
+class ONSNomisApiPaths:
+    BASE_PATH = "/api/v01/{}"
+    SHOW_DATASETS = BASE_PATH.format("dataset/def.sdmx.json")
+    SHOW_DATASET_INFO = BASE_PATH.format("dataset/{}/def.sdmx.json")
+    SHOW_DATASET_OVERVIEW = BASE_PATH.format("dataset/{}.overview.json")
+    GET_GEOGRAPHIES = BASE_PATH.format("dataset/{}/geography.def.sdmx.json")
