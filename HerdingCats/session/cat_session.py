@@ -7,6 +7,7 @@ from ..endpoints.api_endpoints import CkanDataCatalogues, OpenDataSoftDataCatalo
 from ..errors.cats_errors import CatSessionError
 
 #TODO: We need to find a better pattern than just chaining match statements
+# We could add a dictionary mapping for the catalogue types instead
 # Current Supported Catalogue Types
 class CatalogueType(Enum):
     CKAN = "ckan"

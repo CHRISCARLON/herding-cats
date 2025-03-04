@@ -96,4 +96,4 @@ class ONSNomisApiPaths:
     SHOW_DATASETS = BASE_PATH.format("dataset/def.sdmx.json")
     SHOW_DATASET_INFO = BASE_PATH.format("dataset/{}/def.sdmx.json")
     SHOW_DATASET_OVERVIEW = BASE_PATH.format("dataset/{}.overview.json")
-    GET_GEOGRAPHIES = BASE_PATH.format("dataset/{}/geography.def.sdmx.json")
+    # Add in codelists
