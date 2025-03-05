@@ -40,6 +40,10 @@ class ONSNomisApiPaths:
     SHOW_DATASETS = BASE_PATH.format("dataset/def.sdmx.json")
     SHOW_DATASET_INFO = BASE_PATH.format("dataset/{}/def.sdmx.json")
     SHOW_DATASET_OVERVIEW = BASE_PATH.format("dataset/{}.overview.json")
-    GENERATE_DATASET_DOWNLOAD_URL = BASE_PATH.format("dataset/{}.data.xlsx")
+    GENERATE_DATASET_DOWNLOAD_URL = BASE_PATH.format("dataset/{}.data.xlsx?date=latest{}")
     SHOW_CODELIST_DETAILS = BASE_PATH.format("codelist/{}.def.sdmx.json")
     # Add in codelists
+
+class ONSNomisQueryParams:
+    GEOGRAPHY = "&geography="
+    

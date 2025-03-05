@@ -11,10 +11,12 @@ from ..config.source_endpoints import (
     CkanApiPaths,
     OpenDataSoftApiPaths,
     FrenchGouvApiPaths, 
-    ONSNomisApiPaths
+    ONSNomisApiPaths,
+    ONSNomisQueryParams
 )
 from ..errors.errors import CatExplorerError, WrongCatalogueError
 from ..session.session import CatSession, CatalogueType
+from ..config.codelists import ONSNomisGeographyTemplates
 
 # At the moment we have a lot of duplicate code between the explorers
 # TODO: Find a better way to do this
@@ -1488,7 +1490,7 @@ class ONSNomisCatExplorer:
     # ----------------------------
     # Check Nomis site health
     # ----------------------------
-    def check_health_check(self) -> None:
+    def check_health_check(self) -> bool:
         """Check the health of the Nomis catalogue endpoint """
 
         url = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASETS
@@ -1497,20 +1499,25 @@ class ONSNomisCatExplorer:
 
             if response.status_code == 200:
                 logger.success("Health Check Passed: Nomisis running and available")
+                return True
             else:
                 logger.error(f"Health Check Failed: Nomis responded with status code {response.status_code}")
+                return False
 
         except requests.RequestException as e:
             logger.error(f"Health Check Failed: Unable to connect to Nomis {str(e)}")
-
+            return False
+        
     # ----------------------------
     # Explore the Nomis data catalogue
     # ----------------------------
-    def get_datasets(self):
+    def get_datasets(self) -> list[dict]:
         """
-        TBC
-        """
+        Get all the datasets from the Nomis data catalogue
 
+        Returns:
+            list: List of dictionaries containing dataset information
+        """
         url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASETS
         datasets = []
 
@@ -1546,7 +1553,6 @@ class ONSNomisCatExplorer:
         """
         Get the metadata for a specific dataset
         """
-
         try:
             url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASET_INFO.format(dataset_id)
             response = self.cat_session.session.get(url)
@@ -1559,7 +1565,6 @@ class ONSNomisCatExplorer:
         """
         Get the metadata for a specific dataset
         """
-
         try:
             url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASET_INFO.format(dataset_id)
             response = self.cat_session.session.get(url)
@@ -1571,10 +1576,29 @@ class ONSNomisCatExplorer:
     # ----------------------------
     # Generate download URLs
     # ----------------------------
-    def generate_full_dataset_download_url(self, dataset_id: str) -> str:
+    def generate_full_dataset_download_url(self, dataset_id: str, geography_template: ONSNomisGeographyTemplates | None = None) -> str:
         """
-        Generate a download URL for a specific dataset
+        Generate a download URL for a specific dataset with optional geography template.
+
+        This will always download the latest data for the dataset.
+
+        Args:
+            dataset_id (str): The ID of the dataset to download
+            geography_template (ONSNomisGeographyTemplates, optional): Geography template to filter the data
+
+        Returns:
+            str: The complete download URL
+
+        Example:
+            >>> explorer.generate_full_dataset_download_url(
+            ...     "NM_2077_1",
+            ...     ONSNomisGeographyTemplates.LA_COUNTY_UNITARY_APR_23
+            ... )
         """
-        url: str = self.cat_session.base_url + ONSNomisApiPaths.GENERATE_DATASET_DOWNLOAD_URL.format(dataset_id)
-        return url
+        base_url: str = self.cat_session.base_url + ONSNomisApiPaths.GENERATE_DATASET_DOWNLOAD_URL.format(dataset_id, "")
+        
+        if geography_template:
+            base_url += ONSNomisQueryParams.GEOGRAPHY + geography_template.value
+        
+        return base_url
 
