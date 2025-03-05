@@ -53,8 +53,9 @@ Herding-CATs supports the following catalogues by default:
 | Elia Belgian Energy                     | opendata.elia.be                 | Open Datasoft     |
 | EDF Energy                              | opendata.edf.fr                  | Open Datasoft     |
 | Cadent Gas                              | cadentgas.opendatasoft.com       | Open Datasoft     |
-| French Gov Open Data                    | data.gouv.fr                     | Bespoke backend   |
+| French Gov Open Data                    | data.gouv.fr                     | Bespoke API       |
 | Gestionnaire de Réseaux de Distribution | opendata.agenceore.fr            | Open Datasoft     |
+| ONS Nomis                               | opendata.agenceore.fr            | Bespoke API       |
 
 ## Overview
 
