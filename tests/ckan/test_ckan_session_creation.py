@@ -1,6 +1,6 @@
 import pytest
-from HerdingCats.session.cat_session import CatSession
-from HerdingCats.endpoints.api_endpoints import CkanDataCatalogues
+from HerdingCats.session.session import CatSession
+from HerdingCats.config.sources import CkanDataCatalogues
 
 
 def test_cat_session_creation():

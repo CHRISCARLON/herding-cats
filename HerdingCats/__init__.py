@@ -1,8 +1,8 @@
-from .data_loader.data_loader import CkanCatResourceLoader, OpenDataSoftResourceLoader, FrenchGouvResourceLoader
-from .explorer.cat_explore import CkanCatExplorer, OpenDataSoftCatExplorer, FrenchGouvCatExplorer, ONSNomisCatExplorer
-from .session.cat_session import CatSession
-from .errors.cats_errors import CatSessionError, CatExplorerError, OpenDataSoftExplorerError
-from .endpoints.api_endpoints import CkanDataCatalogues, OpenDataSoftDataCatalogues, CkanApiPathsDocs, FrenchGouvCatalogue, ONSNomisDataCatalogues
+from .loader.loader import CkanCatResourceLoader, OpenDataSoftResourceLoader, FrenchGouvResourceLoader
+from .explorer.explore import CkanCatExplorer, OpenDataSoftCatExplorer, FrenchGouvCatExplorer, ONSNomisCatExplorer
+from .session.session import CatSession
+from .errors.errors import CatSessionError, CatExplorerError, OpenDataSoftExplorerError
+from .config.sources import CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisAPI
 
 __all__ = [
     "CkanCatResourceLoader",
@@ -13,14 +13,13 @@ __all__ = [
     "CkanDataCatalogues",
     "OpenDataSoftDataCatalogues",
     "OpenDataSoftCatExplorer",
-    "CkanApiPathsDocs",
     "OpenDataSoftResourceLoader",
     "OpenDataSoftExplorerError",
     "FrenchGouvCatExplorer",
     "FrenchGouvCatalogue",
     "FrenchGouvResourceLoader",
     "ONSNomisCatExplorer",
-    "ONSNomisDataCatalogues"
+    "ONSNomisAPI"
 ]
 
 __version__ = "0.1.0"

@@ -7,8 +7,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import uuid
 
-from ..errors.cats_errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
-from .data_loader_stores import S3Uploader
+from ..errors.errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
+from .loader_stores import S3Uploader
 
 from typing import Union, overload, Optional, Literal, List, Dict
 from pandas.core.frame import DataFrame as PandasDataFrame

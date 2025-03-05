@@ -1,6 +1,6 @@
 import pytest
-from HerdingCats.session.cat_session import CatSession
-from HerdingCats.endpoints.api_endpoints import OpenDataSoftDataCatalogues
+from HerdingCats.session.session import CatSession
+from HerdingCats.config.sources import OpenDataSoftDataCatalogues
 
 @pytest.fixture
 def domain():

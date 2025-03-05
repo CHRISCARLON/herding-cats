@@ -7,7 +7,7 @@
 
 ## Purpose
 
-**The aim of this project is simple: create a basic Python library to explore and interact with open data catalogues**.
+**The aim of this project is simple: create a basic Python library to explore and interact with open data sources**.
 
 This will improve and speed up how users:
 

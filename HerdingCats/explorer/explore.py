@@ -7,14 +7,14 @@ from typing import Any, Dict, Optional, Union, Literal, List, Tuple
 from loguru import logger
 from urllib.parse import urlencode
 
-from ..endpoints.api_endpoints import (
+from ..config.source_endpoints import (
     CkanApiPaths,
     OpenDataSoftApiPaths,
     FrenchGouvApiPaths, 
     ONSNomisApiPaths
 )
-from ..errors.cats_errors import CatExplorerError, WrongCatalogueError
-from ..session.cat_session import CatSession, CatalogueType
+from ..errors.errors import CatExplorerError, WrongCatalogueError
+from ..session.session import CatSession, CatalogueType
 
 # At the moment we have a lot of duplicate code between the explorers
 # TODO: Find a better way to do this
@@ -1504,7 +1504,7 @@ class ONSNomisCatExplorer:
             logger.error(f"Health Check Failed: Unable to connect to Nomis {str(e)}")
 
     # ----------------------------
-    # Get all datasets
+    # Explore the Nomis data catalogue
     # ----------------------------
     def get_datasets(self):
         """
@@ -1567,3 +1567,14 @@ class ONSNomisCatExplorer:
             return response.json()
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+
+    # ----------------------------
+    # Generate download URLs
+    # ----------------------------
+    def generate_full_dataset_download_url(self, dataset_id: str) -> str:
+        """
+        Generate a download URL for a specific dataset
+        """
+        url: str = self.cat_session.base_url + ONSNomisApiPaths.GENERATE_DATASET_DOWNLOAD_URL.format(dataset_id)
+        return url
+

@@ -1,9 +1,9 @@
 import pytest
 import requests
 
-from HerdingCats.session.cat_session import CatSession
-from HerdingCats.explorer.cat_explore import FrenchGouvCatExplorer
-from HerdingCats.endpoints.api_endpoints import FrenchGouvCatalogue
+from HerdingCats.session.session import CatSession
+from HerdingCats.explorer.explore import FrenchGouvCatExplorer
+from HerdingCats.config.sources import FrenchGouvCatalogue
 from loguru import logger
 
 def test_ckan_health_check():

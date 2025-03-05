@@ -1,9 +1,9 @@
 import pytest
 import requests
 
-from HerdingCats.session.cat_session import CatSession
-from HerdingCats.explorer.cat_explore import OpenDataSoftCatExplorer
-from HerdingCats.endpoints.api_endpoints import OpenDataSoftDataCatalogues
+from HerdingCats.session.session import CatSession
+from HerdingCats.explorer.explore import OpenDataSoftCatExplorer
+from HerdingCats.config.sources import OpenDataSoftDataCatalogues
 from loguru import logger
 
 def test_package_list_dictionary():

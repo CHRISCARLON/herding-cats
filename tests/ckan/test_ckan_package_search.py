@@ -1,9 +1,9 @@
 import pytest
 import requests
 from pprint import pprint
-from HerdingCats.session.cat_session import CatSession
-from HerdingCats.explorer.cat_explore import CkanCatExplorer
-from HerdingCats.endpoints.api_endpoints import CkanDataCatalogues
+from HerdingCats.session.session import CatSession
+from HerdingCats.explorer.explore import CkanCatExplorer
+from HerdingCats.config.sources import CkanDataCatalogues
 from loguru import logger
 
 def test_package_search_json():

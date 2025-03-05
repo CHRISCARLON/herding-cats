@@ -1,8 +1,9 @@
 import pytest
 import requests
 
-from HerdingCats.session.cat_session import CatSession
-from HerdingCats.endpoints.api_endpoints import OpenDataSoftApiPaths, OpenDataSoftDataCatalogues
+from HerdingCats.session.session import CatSession
+from HerdingCats.config.source_endpoints import OpenDataSoftApiPaths
+from HerdingCats.config.sources import OpenDataSoftDataCatalogues
 from loguru import logger
 
 def test_ckan_health_check():

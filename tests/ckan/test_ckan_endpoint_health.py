@@ -1,7 +1,7 @@
 import pytest
-from HerdingCats.session.cat_session import CatSession
-from HerdingCats.endpoints.api_endpoints import CkanApiPaths
-from HerdingCats.endpoints.api_endpoints import CkanDataCatalogues
+from HerdingCats.session.session import CatSession
+from HerdingCats.config.source_endpoints import CkanApiPaths
+from HerdingCats.config.sources import CkanDataCatalogues
 import requests
 from loguru import logger
 

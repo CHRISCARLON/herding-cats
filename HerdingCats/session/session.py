@@ -3,8 +3,8 @@ from typing import Union
 from loguru import logger
 from urllib.parse import urlparse
 from enum import Enum
-from ..endpoints.api_endpoints import CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisDataCatalogues
-from ..errors.cats_errors import CatSessionError
+from ..config.sources import CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisAPI
+from ..errors.errors import CatSessionError
 
 #TODO: We need to find a better pattern than just chaining match statements
 # We could add a dictionary mapping for the catalogue types instead
@@ -18,7 +18,7 @@ class CatalogueType(Enum):
 # START A SESSION WITH A DATA CATALOGUE
 class CatSession:
     def __init__(
-        self, catalogue: Union[CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisDataCatalogues]
+        self, catalogue: Union[CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisAPI]
     ) -> None:
         """
         Initialise a session with a predefined catalog.
@@ -37,7 +37,7 @@ class CatSession:
 
     @staticmethod
     def _process_catalogue(
-        catalogue: Union[CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisDataCatalogues]
+        catalogue: Union[CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisAPI]
     ) -> tuple[str, CatalogueType]:
         """
         Process the predefined catalogue to extract domain and type.
@@ -55,7 +55,7 @@ class CatSession:
                 catalog_type = CatalogueType.CKAN
             case OpenDataSoftDataCatalogues():
                 catalog_type = CatalogueType.OPENDATA_SOFT
-            case ONSNomisDataCatalogues():
+            case ONSNomisAPI():
                 catalog_type = CatalogueType.ONS_NOMIS
             case _:
                 raise ValueError(
