@@ -15,7 +15,7 @@ import polars as pl
 from pandas.core.frame import DataFrame as PandasDataFrame
 from polars.dataframe.frame import DataFrame as PolarsDataFrame
 
-# We can use protocols to define the methods that implementers must implement
+# We can use protocols to define the methods that implementations must implement
 # This is useful for having a more reusable pattern for defining shared behaviours
 
 # This is a protocol for the remote storage uploader trait
@@ -196,12 +196,6 @@ class DataFrameLoader(DataFrameLoaderTrait):
                     return (pl.read_excel(data, sheet_name=sheet_name) 
                            if sheet_name else pl.read_excel(data))
                 
-                case ("csv", "pandas"):
-                    return pd.read_csv(data)
-                
-                case ("csv", "polars"):
-                    return pl.read_csv(data)
-                
                 case ("json", "pandas"):
                     return pd.read_json(data)
                 
@@ -209,7 +203,7 @@ class DataFrameLoader(DataFrameLoaderTrait):
                     return pl.read_json(data)
                 
                 case (("geopackage" | "gpkg"), _):
-                    raise ValueError("Geopackage format requires using geopandas")
+                    raise ValueError("Geopackage format not implemented yet")
                 
                 case _:
                     raise ValueError(f"Unsupported format {format_type} or loader type {loader_type}")

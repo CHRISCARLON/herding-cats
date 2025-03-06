@@ -16,10 +16,11 @@ from io import BytesIO
 from loguru import logger
 
 #TODO: Start building proper data loader stores for different formats and locations
+#TODO: further harmonise how the loader deal with the input data
 
 # START TO WRANGLE / ANALYSE
 # LOAD CKAN DATA RESOURCES INTO STORAGE
-class CkanCatResourceLoader:
+class CkanLoader:
     """A class to load data resources into various formats and storage systems."""
 
     STORAGE_TYPES = {
@@ -120,7 +121,7 @@ class CkanCatResourceLoader:
 
 # START TO WRANGLE / ANALYSE
 # LOAD OPEN DATA SOFT DATA RESOURCES INTO STORAGE
-class OpenDataSoftResourceLoader:
+class OpenDataSoftLoader:
     """A class to load OpenDataSoft resources into various formats and storage systems."""
 
     SUPPORTED_FORMATS = {
@@ -191,7 +192,6 @@ class OpenDataSoftResourceLoader:
     def _fetch_data(self, url: str, api_key: Optional[str] = None) -> BytesIO:
         """Fetch data from URL and return as BytesIO object."""
         try:
-            # Add API key to URL if provided
             if api_key:
                 url = f"{url}?apikey={api_key}"
 
@@ -250,10 +250,9 @@ class OpenDataSoftResourceLoader:
         self._verify_data(df, api_key)
         return df
 
-
 # START TO WRANGLE / ANALYSE
 # LOAD FRENCH GOUV DATA RESOURCES INTO STORAGE
-class FrenchGouvResourceLoader:
+class FrenchGouvLoader:
     """A class to load French Gouv data resources into various formats and storage systems."""
 
     SUPPORTED_FORMATS = {
@@ -329,7 +328,6 @@ class FrenchGouvResourceLoader:
     def _fetch_data(self, url: str, api_key: Optional[str] = None) -> BytesIO:
         """Fetch data from URL and return as BytesIO object."""
         try:
-            # Add API key to URL if provided
             if api_key:
                 url = f"{url}?apikey={api_key}"
 
@@ -390,7 +388,7 @@ class FrenchGouvResourceLoader:
 
 # LOAD ONS NOMIS DATA RESOURCES INTO STORAGE
 # TODO: Add support for other formats
-class ONSNomisResourceLoader:
+class ONSNomisLoader:
     """A class to load ONS Nomis data resources into various formats and storage systems."""
 
     SUPPORTED_FORMATS = {

@@ -28,10 +28,10 @@ from .explorer.explore import (
 
 # Resource loader components
 from .loader.loader import (
-    CkanCatResourceLoader,
-    OpenDataSoftResourceLoader,
-    FrenchGouvResourceLoader,
-    ONSNomisResourceLoader,
+    CkanLoader,
+    OpenDataSoftLoader,
+    FrenchGouvLoader,
+    ONSNomisLoader,
 )
 
 # Configuration components
@@ -65,10 +65,10 @@ __all__ = [
     "ONSNomisCatExplorer",
     
     # Resource Loaders
-    "CkanCatResourceLoader",
-    "OpenDataSoftResourceLoader",
-    "FrenchGouvResourceLoader",
-    "ONSNomisResourceLoader",
+    "CkanLoader",
+    "OpenDataSoftLoader",
+    "FrenchGouvLoader",
+    "ONSNomisLoader",
     
     # Configuration
     "CkanDataCatalogues",
