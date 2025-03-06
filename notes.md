@@ -2,7 +2,7 @@
 
 ## Breadcrumbs for next time
 
-<img width="1015" alt="Screenshot 2025-03-04 at 15 14 08" src="https://github.com/user-attachments/assets/b90c9513-2525-441a-bda6-17804f534cca" />
+<img width="1015" alt="Screenshot 2025-03-04 at 15 14 08" src="https://github.com/user-attachments/assets b90c9513-2525-441a-bda6-17804f534cca" />
 
 Reduce code duplication in each of the catalogues data loaders...
 
@@ -55,4 +55,7 @@ Need to understand the structure of what we pass to the data loaders of each cat
 | slug                   | String                                 |
 
 ## Start to implement ONS Nomis API as a catalogue
+
 Started!
+
+## We need a singular data type that is passed into the data loaders
