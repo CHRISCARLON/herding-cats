@@ -1573,6 +1573,18 @@ class ONSNomisCatExplorer:
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
+    def get_codelist_info(self, codelist_id: str) -> dict:
+        """
+        Get the metadata for a specific codelist
+        """
+        try:
+            url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_CODELIST_DETAILS.format(codelist_id)
+            response = self.cat_session.session.get(url)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+
     # ----------------------------
     # Generate download URLs
     # ----------------------------
