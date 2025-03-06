@@ -1,25 +1,85 @@
-from .loader.loader import CkanCatResourceLoader, OpenDataSoftResourceLoader, FrenchGouvResourceLoader
-from .explorer.explore import CkanCatExplorer, OpenDataSoftCatExplorer, FrenchGouvCatExplorer, ONSNomisCatExplorer
-from .session.session import CatSession
-from .errors.errors import CatSessionError, CatExplorerError, OpenDataSoftExplorerError
-from .config.sources import CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisAPI
+"""
+The aim of this project is simple: create a basic Python library to explore and interact with open data sources.
 
+This will improve and speed up how users:
+
+- Navigate open data catalogues
+- Find the data that they need
+- Get that data into a format and/or location for further analysis
+"""
+
+from importlib.metadata import version
+
+try:
+    __version__ = version("HerdingCats")
+except Exception:
+    __version__ = "0.1.0"
+
+# Core components
+from .session.session import CatSession
+
+# Explorer components
+from .explorer.explore import (
+    CkanCatExplorer,
+    OpenDataSoftCatExplorer,
+    FrenchGouvCatExplorer,
+    ONSNomisCatExplorer,
+)
+
+# Resource loader components
+from .loader.loader import (
+    CkanCatResourceLoader,
+    OpenDataSoftResourceLoader,
+    FrenchGouvResourceLoader,
+    ONSNomisResourceLoader,
+)
+
+# Configuration components
+from .config.sources import (
+    CkanDataCatalogues,
+    OpenDataSoftDataCatalogues,
+    FrenchGouvCatalogue,
+    ONSNomisAPI,
+)
+from .config.codelists import (
+    ONSNomisGeographyTemplates,
+    ONSNomisCodelists,
+)
+
+# Error handling components
+from .errors.errors import (
+    CatSessionError,
+    CatExplorerError,
+    OpenDataSoftExplorerError,
+)
+
+# Public API definition
 __all__ = [
-    "CkanCatResourceLoader",
-    "CkanCatExplorer",
+    # Core
     "CatSession",
-    "CatSessionError",
-    "CatExplorerError",
+    
+    # Explorers
+    "CkanCatExplorer",
+    "OpenDataSoftCatExplorer",
+    "FrenchGouvCatExplorer",
+    "ONSNomisCatExplorer",
+    
+    # Resource Loaders
+    "CkanCatResourceLoader",
+    "OpenDataSoftResourceLoader",
+    "FrenchGouvResourceLoader",
+    "ONSNomisResourceLoader",
+    
+    # Configuration
     "CkanDataCatalogues",
     "OpenDataSoftDataCatalogues",
-    "OpenDataSoftCatExplorer",
-    "OpenDataSoftResourceLoader",
-    "OpenDataSoftExplorerError",
-    "FrenchGouvCatExplorer",
     "FrenchGouvCatalogue",
-    "FrenchGouvResourceLoader",
-    "ONSNomisCatExplorer",
-    "ONSNomisAPI"
+    "ONSNomisAPI",
+    "ONSNomisGeographyTemplates",
+    "ONSNomisCodelists",
+    
+    # Errors
+    "CatSessionError",
+    "CatExplorerError",
+    "OpenDataSoftExplorerError",
 ]
-
-__version__ = "0.1.0"

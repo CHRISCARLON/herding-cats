@@ -18,6 +18,7 @@ from functools import wraps
 from io import BytesIO
 from loguru import logger
 
+#TODO: Start building proper data loader stores for different formats and locations
 
 # START TO WRANGLE / ANALYSE
 # LOAD CKAN DATA RESOURCES INTO STORAGE
@@ -1030,3 +1031,44 @@ class FrenchGouvResourceLoader:
     ) -> pd.DataFrame:
         """Load data from a resource URL into a Pandas DataFrame."""
         return self._load_to_frame(resource_data, format_type, "pandas", api_key, sheet_name)
+
+# LOAD ONS NOMIS DATA RESOURCES INTO STORAGE
+# TODO: Add support for other formats
+class ONSNomisResourceLoader:
+    """A class to load ONS Nomis data resources into various formats and storage systems."""
+
+    SUPPORTED_FORMATS = {
+        "xlsx": ["xlsx"],
+    }
+
+    def __init__(self) -> None:
+        self._validate_dependencies()
+
+    def _validate_dependencies(self):
+        """Validate that all required dependencies are available."""
+        required_modules = {
+            'pandas': pd,
+            'polars': pl,
+            'duckdb': duckdb,
+            'boto3': boto3,
+            'pyarrow': pa
+        }
+        missing = [name for name, module in required_modules.items() if module is None]
+        if missing:
+            raise ImportError(f"Missing required dependencies: {', '.join(missing)}")
+        
+    def _fetch_data(self, url: str) -> BytesIO:
+        """Fetch data from URL and return as BytesIO object."""
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            return BytesIO(response.content)
+        except requests.RequestException as e:
+            logger.error(f"Error fetching data from URL: {e}")
+            raise
+    
+    # Temporary method to load data from a resource URL into a Polars DataFrame until loader stores are built
+    def polars_data_loader(self, url: str) -> pl.DataFrame:
+        """Load data from a resource URL into a Polars DataFrame."""
+        binary_data = self._fetch_data(url)
+        return pl.read_excel(binary_data)
