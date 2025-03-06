@@ -2,7 +2,7 @@
 
 ## Breadcrumbs for next time
 
-<img width="1015" alt="Screenshot 2025-03-04 at 15 14 08" src="https://github.com/user-attachments/assets b90c9513-2525-441a-bda6-17804f534cca" />
+<img width="995" alt="Screenshot 2025-03-06 at 16 38 25" src="https://github.com/user-attachments/assets/5a25b2a8-2177-49a9-a581-0103f5d3f82b" />
 
 Reduce code duplication in each of the catalogues data loaders...
 
