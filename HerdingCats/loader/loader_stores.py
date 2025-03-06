@@ -12,7 +12,6 @@ from botocore.exceptions import ClientError
 
 import polars as pl
 
-from typing import Union
 from pandas.core.frame import DataFrame as PandasDataFrame
 from polars.dataframe.frame import DataFrame as PolarsDataFrame
 

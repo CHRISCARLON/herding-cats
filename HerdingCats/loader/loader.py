@@ -4,17 +4,14 @@ import polars as pl
 import duckdb
 import boto3
 import pyarrow as pa
-import pyarrow.parquet as pq
 import uuid
 
 from ..errors.errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
 from .loader_stores import S3Uploader, DataFrameLoader
 
-from typing import Union, overload, Optional, Literal, List, Dict
+from typing import Union, Optional, Literal, List, Dict
 from pandas.core.frame import DataFrame as PandasDataFrame
 from polars.dataframe.frame import DataFrame as PolarsDataFrame
-from botocore.exceptions import ClientError
-from functools import wraps
 from io import BytesIO
 from loguru import logger
 
