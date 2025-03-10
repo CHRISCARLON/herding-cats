@@ -191,7 +191,7 @@ if __name__ == "__main__":
 
 ### Resource Loaders
 
-All three resource loader classes (`CkanLoader`, `OpenDataSoftLoader`, and `FrenchGouvLoader, NomisLoader`) support the following methods:
+All resource loader classes (`CkanLoader`, `OpenDataSoftLoader`, `FrenchGouvLoader`, `NomisLoader`) support the following methods:
 
 #### DataFrame Loaders
 
@@ -201,6 +201,13 @@ All three resource loader classes (`CkanLoader`, `OpenDataSoftLoader`, and `Fren
 #### Cloud Storage Loaders
 
 - `aws_s3_data_loader()`: Loads data into AWS S3 as either raw data (depending on the format) or parquet file (if you choose to load as parquet)
+
+---
+
+> [!NOTE]
+> We will be supporting DuckDB and MotherDuck soon.
+
+---
 
 ## Examples
 
@@ -288,8 +295,8 @@ def main():
     with hc.CatSession(hc.ONSNomisAPI.ONS_NOMI) as session:
         explore = hc.ONSNomisCatExplorer(session)
         loader = hc.ONSNomisLoader()
-        # data = explore.get_dataset_overview("NM_57_1")
-        # print(data)
+        data = explore.get_dataset_overview("NM_57_1")
+        print(data)
 
         url = explore.generate_full_dataset_download_url("NM_57_1", hc.ONSNomisGeographyTemplates.LA_COUNTY_UNITARY_APR_23)
         print(url)
