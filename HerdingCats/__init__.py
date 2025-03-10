@@ -57,19 +57,16 @@ from .errors.errors import (
 __all__ = [
     # Core
     "CatSession",
-    
     # Explorers
     "CkanCatExplorer",
     "OpenDataSoftCatExplorer",
     "FrenchGouvCatExplorer",
     "ONSNomisCatExplorer",
-    
     # Resource Loaders
     "CkanLoader",
     "OpenDataSoftLoader",
     "FrenchGouvLoader",
     "ONSNomisLoader",
-    
     # Configuration
     "CkanDataCatalogues",
     "OpenDataSoftDataCatalogues",
@@ -77,7 +74,6 @@ __all__ = [
     "ONSNomisAPI",
     "ONSNomisGeographyTemplates",
     "ONSNomisCodelists",
-    
     # Errors
     "CatSessionError",
     "CatExplorerError",

@@ -10,9 +10,9 @@ from urllib.parse import urlencode
 from ..config.source_endpoints import (
     CkanApiPaths,
     OpenDataSoftApiPaths,
-    FrenchGouvApiPaths, 
+    FrenchGouvApiPaths,
     ONSNomisApiPaths,
-    ONSNomisQueryParams
+    ONSNomisQueryParams,
 )
 from ..errors.errors import CatExplorerError, WrongCatalogueError
 from ..session.session import CatSession, CatalogueType
@@ -22,6 +22,7 @@ from ..config.codelists import ONSNomisGeographyTemplates
 # TODO: Find a better way to do this
 # OR keep as is because each catalogue has a different API and different data structures.
 # Could be a good idea to maintain a very strong separation between the explorers
+
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For Ckan Catalogues Only
@@ -52,18 +53,18 @@ class CkanCatExplorer:
             main()
         """
 
-        if not hasattr(cat_session, 'catalogue_type'):
+        if not hasattr(cat_session, "catalogue_type"):
             raise WrongCatalogueError(
                 "CatSession missing catalogue_type attribute",
                 expected_catalogue=str(CatalogueType.CKAN),
-                received_catalogue="Unknown"
+                received_catalogue="Unknown",
             )
 
         if cat_session.catalogue_type != CatalogueType.CKAN:
             raise WrongCatalogueError(
                 "Invalid catalogue type. CkanCatExplorer requires a Ckan catalogue session.",
                 expected_catalogue=str(CatalogueType.CKAN),
-                received_catalogue=str(cat_session.catalogue_type)
+                received_catalogue=str(cat_session.catalogue_type),
             )
 
         self.cat_session = cat_session
@@ -98,9 +99,13 @@ class CkanCatExplorer:
                 if data:
                     logger.success("Health Check Passed: CKAN is running and available")
                 else:
-                    logger.warning("Health Check Warning: CKAN responded with an empty dataset")
+                    logger.warning(
+                        "Health Check Warning: CKAN responded with an empty dataset"
+                    )
             else:
-                logger.error(f"Health Check Failed: CKAN responded with status code {response.status_code}")
+                logger.error(
+                    f"Health Check Failed: CKAN responded with status code {response.status_code}"
+                )
 
         except requests.RequestException as e:
             logger.error(f"Health Check Failed: Unable to connect to CKAN - {str(e)}")
@@ -277,16 +282,27 @@ class CkanCatExplorer:
             length: int = len(organisations)
             return length, organisations
         except (requests.RequestException, Exception) as e:
-            logger.warning(f"Primary organisation search method failed - attempting secondary method that fetches 'maintainers' only - this may still be useful but not as accurate: {e}")
+            logger.warning(
+                f"Primary organisation search method failed - attempting secondary method that fetches 'maintainers' only - this may still be useful but not as accurate: {e}"
+            )
             try:
                 # Secondary method using package endpoint
-                package_url: str = self.cat_session.base_url + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
+                package_url: str = (
+                    self.cat_session.base_url
+                    + CkanApiPaths.CURRENT_PACKAGE_LIST_WITH_RESOURCES
+                )
                 package_response = self.cat_session.session.get(package_url)
                 package_response.raise_for_status()
                 data = package_response.json()
 
                 # Convert list of maintainers to a dictionary
-                maintainers: list = list(set(entry.get("maintainer", "N/A") for entry in data["result"] if entry.get("maintainer")))
+                maintainers: list = list(
+                    set(
+                        entry.get("maintainer", "N/A")
+                        for entry in data["result"]
+                        if entry.get("maintainer")
+                    )
+                )
                 length: int = len(maintainers)
                 return length, maintainers
 
@@ -297,7 +313,9 @@ class CkanCatExplorer:
     # ----------------------------
     # Show metadata using a package name
     # ----------------------------
-    def show_package_info(self, package_name: Union[str, dict, Any], api_key = None) -> List[Dict]:
+    def show_package_info(
+        self, package_name: Union[str, dict, Any], api_key=None
+    ) -> List[Dict]:
         """
         Pass in a package name as a string or as a value from a dictionary.
 
@@ -344,7 +362,12 @@ class CkanCatExplorer:
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
-    def show_package_info_dataframe(self, package_name: Union[str, dict, Any], df_type: Literal["pandas", "polars"], api_key = None) -> pd.DataFrame | pl.DataFrame:
+    def show_package_info_dataframe(
+        self,
+        package_name: Union[str, dict, Any],
+        df_type: Literal["pandas", "polars"],
+        api_key=None,
+    ) -> pd.DataFrame | pl.DataFrame:
         """
         Pass in a package name as a string or as a value from a dictionary.
 
@@ -760,20 +783,20 @@ class CkanCatExplorer:
 
         results = []
         for item in package_info:
-                resource_name = item.get("resource_name")
-                created = item.get("resource_created")
-                url = item.get("resource_url")
-                format = item.get("resource_format")
-                if all([resource_name, created, format, url]):
-                    logger.success(
-                        f"Found URL for resource '{resource_name}'. Format is: {format}"
-                    )
-                    results.append([resource_name, created, format, url])
-                else:
-                    logger.warning(
-                        f"Resource '{resource_name}' found in package, but no URL available"
-                    )
-                    return ["NONE"]
+            resource_name = item.get("resource_name")
+            created = item.get("resource_created")
+            url = item.get("resource_url")
+            format = item.get("resource_format")
+            if all([resource_name, created, format, url]):
+                logger.success(
+                    f"Found URL for resource '{resource_name}'. Format is: {format}"
+                )
+                results.append([resource_name, created, format, url])
+            else:
+                logger.warning(
+                    f"Resource '{resource_name}' found in package, but no URL available"
+                )
+                return ["NONE"]
         return results
 
     # ----------------------------
@@ -867,7 +890,11 @@ class CkanCatExplorer:
         List[Dict[str, Any]]: A list of dictionaries, each containing the specified fields for a resource.
         """
 
-        group_names = [group["name"] for group in data.get("groups", [])] if data.get("groups") else None
+        group_names = (
+            [group["name"] for group in data.get("groups", [])]
+            if data.get("groups")
+            else None
+        )
 
         base_fields = {
             "name": data.get("name"),
@@ -887,6 +914,7 @@ class CkanCatExplorer:
             result.append(resource_data)
 
         return result
+
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For Open Datasoft Catalogues Only
@@ -908,18 +936,18 @@ class OpenDataSoftCatExplorer:
                 explore = CatExplorer(session)
         """
 
-        if not hasattr(cat_session, 'catalogue_type'):
+        if not hasattr(cat_session, "catalogue_type"):
             raise WrongCatalogueError(
                 "CatSession missing catalogue_type attribute",
                 expected_catalogue=str(CatalogueType.OPENDATA_SOFT),
-                received_catalogue="Unknown"
+                received_catalogue="Unknown",
             )
 
         if cat_session.catalogue_type != CatalogueType.OPENDATA_SOFT:
             raise WrongCatalogueError(
                 "Invalid catalogue type. OpenDataSoft requires an OpenDataSoft catalogue session.",
                 expected_catalogue=str(CatalogueType.OPENDATA_SOFT),
-                received_catalogue=str(cat_session.catalogue_type)
+                received_catalogue=str(cat_session.catalogue_type),
             )
 
         self.cat_session = cat_session
@@ -947,14 +975,22 @@ class OpenDataSoftCatExplorer:
             if response.status_code == 200:
                 data = response.json()
                 if data:
-                    logger.success("Health Check Passed: OpenDataSoft is running and available")
+                    logger.success(
+                        "Health Check Passed: OpenDataSoft is running and available"
+                    )
                 else:
-                    logger.warning("Health Check Warning: OpenDataSoft responded with an empty dataset")
+                    logger.warning(
+                        "Health Check Warning: OpenDataSoft responded with an empty dataset"
+                    )
             else:
-                logger.error(f"Health Check Failed: OpenDataSoft responded with status code {response.status_code}")
+                logger.error(
+                    f"Health Check Failed: OpenDataSoft responded with status code {response.status_code}"
+                )
 
         except requests.RequestException as e:
-            logger.error(f"Health Check Failed: Unable to connect to OpenDataSoft - {str(e)}")
+            logger.error(
+                f"Health Check Failed: Unable to connect to OpenDataSoft - {str(e)}"
+            )
 
     # ----------------------------
     # Get all datasets available on the catalogue
@@ -1022,9 +1058,7 @@ class OpenDataSoftCatExplorer:
         if dataset_dict:
             returned_count = len(dataset_dict)
             if returned_count == total_count:
-                logger.success(
-                    f"Total Datasets Found: {total_count}"
-                )
+                logger.success(f"Total Datasets Found: {total_count}")
             else:
                 logger.warning(
                     f"WARNING MISMATCH: total_count = {total_count}, returned_count = {returned_count} - please raise an issue"
@@ -1039,8 +1073,10 @@ class OpenDataSoftCatExplorer:
     # ----------------------------
     def show_dataset_info(self, dataset_id):
         urls = [
-            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_INFO.format(dataset_id),
-            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_INFO.format(dataset_id),
+            self.cat_session.base_url
+            + OpenDataSoftApiPaths.SHOW_DATASET_INFO.format(dataset_id),
+            self.cat_session.base_url
+            + OpenDataSoftApiPaths.SHOW_DATASET_INFO.format(dataset_id),
         ]
         last_error = []
         for url in urls:
@@ -1060,8 +1096,10 @@ class OpenDataSoftCatExplorer:
     # ----------------------------
     def show_dataset_export_options(self, dataset_id):
         urls = [
-            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_EXPORTS.format(dataset_id),
-            self.cat_session.base_url + OpenDataSoftApiPaths.SHOW_DATASET_EXPORTS_2.format(dataset_id),
+            self.cat_session.base_url
+            + OpenDataSoftApiPaths.SHOW_DATASET_EXPORTS.format(dataset_id),
+            self.cat_session.base_url
+            + OpenDataSoftApiPaths.SHOW_DATASET_EXPORTS_2.format(dataset_id),
         ]
         last_error = []
         for url in urls:
@@ -1072,12 +1110,11 @@ class OpenDataSoftCatExplorer:
 
                 # Extract download links and formats
                 export_options = []
-                for link in data['links']:
-                    if link['rel'] != 'self':
-                        export_options.append({
-                            'format': link['rel'],
-                            'download_url': link['href']
-                        })
+                for link in data["links"]:
+                    if link["rel"] != "self":
+                        export_options.append(
+                            {"format": link["rel"], "download_url": link["href"]}
+                        )
 
                 return export_options
 
@@ -1087,6 +1124,7 @@ class OpenDataSoftCatExplorer:
 
         error_msg = f"\033[91mFailed to fetch dataset: {str(last_error)}. Are you sure this dataset exists? Check again.\033[0m"
         raise CatExplorerError(error_msg)
+
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For French Gouv data catalogue Only
@@ -1115,18 +1153,18 @@ class FrenchGouvCatExplorer:
             main()
         """
 
-        if not hasattr(cat_session, 'catalogue_type'):
+        if not hasattr(cat_session, "catalogue_type"):
             raise WrongCatalogueError(
                 "CatSession missing catalogue_type attribute",
                 expected_catalogue=str(CatalogueType.GOUV_FR),
-                received_catalogue="Unknown"
+                received_catalogue="Unknown",
             )
 
         if cat_session.catalogue_type != CatalogueType.GOUV_FR:
             raise WrongCatalogueError(
                 "Invalid catalogue type. FrenchGouvCatExplorer requires a French Government catalogue session.",
                 expected_catalogue=str(CatalogueType.GOUV_FR),
-                received_catalogue=str(cat_session.catalogue_type)
+                received_catalogue=str(cat_session.catalogue_type),
             )
 
         self.cat_session = cat_session
@@ -1146,14 +1184,22 @@ class FrenchGouvCatExplorer:
             if response.status_code == 200:
                 data = response.json()
                 if data:
-                    logger.success("Health Check Passed: French Gouv is running and available")
+                    logger.success(
+                        "Health Check Passed: French Gouv is running and available"
+                    )
                 else:
-                    logger.warning("Health Check Warning: French Gouv responded with an empty dataset")
+                    logger.warning(
+                        "Health Check Warning: French Gouv responded with an empty dataset"
+                    )
             else:
-                logger.error(f"Health Check Failed: French Gouv responded with status code {response.status_code}")
+                logger.error(
+                    f"Health Check Failed: French Gouv responded with status code {response.status_code}"
+                )
 
         except requests.RequestException as e:
-            logger.error(f"Health Check Failed: Unable to connect to French Gouv - {str(e)}")
+            logger.error(
+                f"Health Check Failed: Unable to connect to French Gouv - {str(e)}"
+            )
 
     # ----------------------------
     # Get datasets available
@@ -1182,7 +1228,7 @@ class FrenchGouvCatExplorer:
         try:
             catalogue = FrenchGouvApiPaths.CATALOGUE
 
-            with duckdb.connect(':memory:') as con:
+            with duckdb.connect(":memory:") as con:
                 # Install and load httpfs extension
                 con.execute("INSTALL httpfs;")
                 con.execute("LOAD httpfs;")
@@ -1229,7 +1275,10 @@ class FrenchGouvCatExplorer:
         """
         try:
             # Construct URL for specific dataset
-            url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS_BY_ID.format(identifier)
+            url = (
+                self.cat_session.base_url
+                + FrenchGouvApiPaths.SHOW_DATASETS_BY_ID.format(identifier)
+            )
 
             # Make request
             response = self.cat_session.session.get(url)
@@ -1239,20 +1288,26 @@ class FrenchGouvCatExplorer:
                 data = response.json()
                 resource_title = data.get("title")
                 resource_id = data.get("id")
-                logger.success(f"Successfully retrieved dataset: {resource_title} - ID: {resource_id}")
+                logger.success(
+                    f"Successfully retrieved dataset: {resource_title} - ID: {resource_id}"
+                )
                 return data
             elif response.status_code == 404:
                 logger.warning(f"Dataset not found: {identifier}")
                 return {}
             else:
-                logger.error(f"Failed to fetch dataset {identifier} with status code {response.status_code}")
+                logger.error(
+                    f"Failed to fetch dataset {identifier} with status code {response.status_code}"
+                )
                 return {}
 
         except Exception as e:
             logger.error(f"Error fetching dataset {identifier}: {str(e)}")
             return {}
 
-    def get_dataset_meta_dataframe(self, identifier: str, df_type: Literal["pandas", "polars"]) -> pd.DataFrame | pl.DataFrame:
+    def get_dataset_meta_dataframe(
+        self, identifier: str, df_type: Literal["pandas", "polars"]
+    ) -> pd.DataFrame | pl.DataFrame:
         """
         Fetches a metadata for a specific dataset using either its ID or slug.
 
@@ -1279,14 +1334,19 @@ class FrenchGouvCatExplorer:
             main()
         """
         try:
-            url = self.cat_session.base_url + FrenchGouvApiPaths.SHOW_DATASETS_BY_ID.format(identifier)
+            url = (
+                self.cat_session.base_url
+                + FrenchGouvApiPaths.SHOW_DATASETS_BY_ID.format(identifier)
+            )
             response = self.cat_session.session.get(url)
 
             if response.status_code == 200:
                 data = response.json()
                 resource_title = data.get("title")
                 resource_id = data.get("id")
-                logger.success(f"Successfully retrieved dataset: {resource_title} - ID: {resource_id}")
+                logger.success(
+                    f"Successfully retrieved dataset: {resource_title} - ID: {resource_id}"
+                )
                 match df_type:
                     case "pandas":
                         return pd.DataFrame([data])
@@ -1296,7 +1356,9 @@ class FrenchGouvCatExplorer:
                 logger.warning("Dataset not found")
                 return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
             else:
-                logger.error(f"Failed to fetch dataset with status code {response.status_code}")
+                logger.error(
+                    f"Failed to fetch dataset with status code {response.status_code}"
+                )
                 return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
         except Exception as e:
             logger.error(f"Error fetching dataset: {str(e)}")
@@ -1364,9 +1426,7 @@ class FrenchGouvCatExplorer:
             logger.error(f"Error fetching {resource_title}. Id number: :{resource_id}")
 
     def get_dataset_resource_meta_dataframe(
-        self,
-        data: dict,
-        df_type: Literal["pandas", "polars"]
+        self, data: dict, df_type: Literal["pandas", "polars"]
     ) -> pd.DataFrame | pl.DataFrame:
         """
         Fetches export data for a specific resource within a dataset.
@@ -1417,7 +1477,17 @@ class FrenchGouvCatExplorer:
                 "slug": data.get("slug"),
             }
 
-            resource_fields = ["created_at", "id", "format", "url", "title", "latest", "last_modified", "frequency", "extras"]
+            resource_fields = [
+                "created_at",
+                "id",
+                "format",
+                "url",
+                "title",
+                "latest",
+                "last_modified",
+                "frequency",
+                "extras",
+            ]
 
             result = []
             for resource in data.get("resources", []):
@@ -1442,7 +1512,7 @@ class FrenchGouvCatExplorer:
         """
         try:
             catalogue = FrenchGouvApiPaths.CATALOGUE
-            with duckdb.connect(':memory:') as con:
+            with duckdb.connect(":memory:") as con:
                 # Install and load httpfs extension
                 con.execute("INSTALL httpfs;")
                 con.execute("LOAD httpfs;")
@@ -1455,11 +1525,15 @@ class FrenchGouvCatExplorer:
                 # Execute query and fetch results
                 result = con.execute(query, parameters=[catalogue]).fetchall()
                 # Convert results to dictionary
-                organisations = {organization: organization_id for organization, organization_id in result}
+                organisations = {
+                    organization: organization_id
+                    for organization, organization_id in result
+                }
                 return organisations
         except Exception as e:
             logger.error(f"Error processing parquet file: {str(e)}")
             return {}
+
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For ONS Nomis data catalogue Only
@@ -1471,27 +1545,27 @@ class ONSNomisCatExplorer:
         Allows user to start exploring data catalogue programatically
         """
         # Check if the CatSession has a catalogue_type attribute
-        if not hasattr(cat_session, 'catalogue_type'):
+        if not hasattr(cat_session, "catalogue_type"):
             raise WrongCatalogueError(
                 "CatSession missing catalogue_type attribute",
                 expected_catalogue=str(CatalogueType.ONS_NOMIS),
-                received_catalogue="Unknown"
+                received_catalogue="Unknown",
             )
 
         if cat_session.catalogue_type != CatalogueType.ONS_NOMIS:
             raise WrongCatalogueError(
                 "Invalid catalogue type. ONSNomisCatExplorer requires a ONS Nomis catalogue session.",
                 expected_catalogue=str(CatalogueType.ONS_NOMIS),
-                received_catalogue=str(cat_session.catalogue_type)
+                received_catalogue=str(cat_session.catalogue_type),
             )
 
         self.cat_session = cat_session
-    
+
     # ----------------------------
     # Check Nomis site health
     # ----------------------------
     def check_health_check(self) -> bool:
-        """Check the health of the Nomis catalogue endpoint """
+        """Check the health of the Nomis catalogue endpoint"""
 
         url = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASETS
         try:
@@ -1501,13 +1575,15 @@ class ONSNomisCatExplorer:
                 logger.success("Health Check Passed: Nomisis running and available")
                 return True
             else:
-                logger.error(f"Health Check Failed: Nomis responded with status code {response.status_code}")
+                logger.error(
+                    f"Health Check Failed: Nomis responded with status code {response.status_code}"
+                )
                 return False
 
         except requests.RequestException as e:
             logger.error(f"Health Check Failed: Unable to connect to Nomis {str(e)}")
             return False
-        
+
     # ----------------------------
     # Explore the Nomis data catalogue
     # ----------------------------
@@ -1526,47 +1602,54 @@ class ONSNomisCatExplorer:
             response.raise_for_status()
             data = response.json()
 
-            if 'structure' in data and 'keyfamilies' in data['structure'] and 'keyfamily' in data['structure']['keyfamilies']:
-                key_families = data['structure']['keyfamilies']['keyfamily']
-                
+            if (
+                "structure" in data
+                and "keyfamilies" in data["structure"]
+                and "keyfamily" in data["structure"]["keyfamilies"]
+            ):
+                key_families = data["structure"]["keyfamilies"]["keyfamily"]
+
                 # Loop through each keyfamily
                 for key_family in key_families:
                     # Extract the ID
-                    dataset_id = key_family.get('id', 'No ID available')
-                    
+                    dataset_id = key_family.get("id", "No ID available")
+
                     # Extract the name (if it exists)
-                    name = 'No name available'
-                    if 'name' in key_family and 'value' in key_family['name']:
-                        name = key_family['name']['value']
-                    
+                    name = "No name available"
+                    if "name" in key_family and "value" in key_family["name"]:
+                        name = key_family["name"]["value"]
+
                     # Add to our results list
-                    datasets.append({
-                        'id': dataset_id,
-                        'name': name
-                    })
-            
+                    datasets.append({"id": dataset_id, "name": name})
+
             return datasets
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
-    
+
     def get_dataset_info(self, dataset_id: str) -> dict:
         """
         Get the metadata for a specific dataset
         """
         try:
-            url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASET_INFO.format(dataset_id)
+            url: str = (
+                self.cat_session.base_url
+                + ONSNomisApiPaths.SHOW_DATASET_INFO.format(dataset_id)
+            )
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
-    
+
     def get_dataset_overview(self, dataset_id: str) -> dict:
         """
         Get the metadata for a specific dataset
         """
         try:
-            url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASET_INFO.format(dataset_id)
+            url: str = (
+                self.cat_session.base_url
+                + ONSNomisApiPaths.SHOW_DATASET_INFO.format(dataset_id)
+            )
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             return response.json()
@@ -1578,7 +1661,10 @@ class ONSNomisCatExplorer:
         Get the metadata for a specific codelist
         """
         try:
-            url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_CODELIST_DETAILS.format(codelist_id)
+            url: str = (
+                self.cat_session.base_url
+                + ONSNomisApiPaths.SHOW_CODELIST_DETAILS.format(codelist_id)
+            )
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             return response.json()
@@ -1588,7 +1674,11 @@ class ONSNomisCatExplorer:
     # ----------------------------
     # Generate download URLs
     # ----------------------------
-    def generate_full_dataset_download_url(self, dataset_id: str, geography_template: ONSNomisGeographyTemplates | None = None) -> str:
+    def generate_full_dataset_download_url(
+        self,
+        dataset_id: str,
+        geography_template: ONSNomisGeographyTemplates | None = None,
+    ) -> str:
         """
         Generate a download URL for a specific dataset with optional geography template.
 
@@ -1607,10 +1697,12 @@ class ONSNomisCatExplorer:
             ...     ONSNomisGeographyTemplates.LA_COUNTY_UNITARY_APR_23
             ... )
         """
-        base_url: str = self.cat_session.base_url + ONSNomisApiPaths.GENERATE_DATASET_DOWNLOAD_URL.format(dataset_id, "")
-        
+        base_url: str = (
+            self.cat_session.base_url
+            + ONSNomisApiPaths.GENERATE_DATASET_DOWNLOAD_URL.format(dataset_id, "")
+        )
+
         if geography_template:
             base_url += ONSNomisQueryParams.GEOGRAPHY + geography_template.value
-        
-        return base_url
 
+        return base_url

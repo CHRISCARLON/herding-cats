@@ -3,10 +3,16 @@ from typing import Union
 from loguru import logger
 from urllib.parse import urlparse
 from enum import Enum
-from ..config.sources import CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisAPI
+from ..config.sources import (
+    CkanDataCatalogues,
+    OpenDataSoftDataCatalogues,
+    FrenchGouvCatalogue,
+    ONSNomisAPI,
+)
 from ..errors.errors import CatSessionError
 
-#TODO: We need to find a better pattern than just chaining match statements
+
+# TODO: We need to find a better pattern than just chaining match statements
 # We could add a dictionary mapping for the catalogue types instead
 # Current Supported Catalogue Types
 class CatalogueType(Enum):
@@ -15,10 +21,17 @@ class CatalogueType(Enum):
     GOUV_FR = "french_gov"
     ONS_NOMIS = "ons_nomis"
 
+
 # START A SESSION WITH A DATA CATALOGUE
 class CatSession:
     def __init__(
-        self, catalogue: Union[CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisAPI]
+        self,
+        catalogue: Union[
+            CkanDataCatalogues,
+            OpenDataSoftDataCatalogues,
+            FrenchGouvCatalogue,
+            ONSNomisAPI,
+        ],
     ) -> None:
         """
         Initialise a session with a predefined catalog.
@@ -32,12 +45,21 @@ class CatSession:
         """
         self.domain, self._catalogue_type = self._process_catalogue(catalogue)
         self.session = requests.Session()
-        self.base_url = f"https://{self.domain}" if not self.domain.startswith("http") else self.domain
+        self.base_url = (
+            f"https://{self.domain}"
+            if not self.domain.startswith("http")
+            else self.domain
+        )
         self._validate_url()
 
     @staticmethod
     def _process_catalogue(
-        catalogue: Union[CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, ONSNomisAPI]
+        catalogue: Union[
+            CkanDataCatalogues,
+            OpenDataSoftDataCatalogues,
+            FrenchGouvCatalogue,
+            ONSNomisAPI,
+        ],
     ) -> tuple[str, CatalogueType]:
         """
         Process the predefined catalogue to extract domain and type.
@@ -78,7 +100,7 @@ class CatSession:
             raise CatSessionError(
                 message="Invalid or unreachable URL",
                 url=self.base_url,
-                original_error=e
+                original_error=e,
             )
 
     def start_session(self) -> None:
@@ -90,9 +112,7 @@ class CatSession:
         except requests.RequestException as e:
             logger.error(f"Failed to start session: {e}")
             raise CatSessionError(
-                message="Failed to start session",
-                url=self.base_url,
-                original_error=e
+                message="Failed to start session", url=self.base_url, original_error=e
             )
 
     def close_session(self) -> None:

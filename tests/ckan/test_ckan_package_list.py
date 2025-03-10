@@ -18,7 +18,9 @@ def test_package_list_dictionary():
             print(results)
 
             # Assert that we got a result
-            assert results is not None, f"No results returned for {cat_session.base_url}"
+            assert results is not None, (
+                f"No results returned for {cat_session.base_url}"
+            )
 
             logger.info(f"Package search test passed for {cat_session.base_url}")
         except requests.RequestException as e:
@@ -41,10 +43,14 @@ def test_package_list_dataframe():
             print(results_pandas)
 
             # Assert that we got a result
-            assert results_pandas is not None, f"No results returned for {cat_session.base_url}"
+            assert results_pandas is not None, (
+                f"No results returned for {cat_session.base_url}"
+            )
 
             # Check if we got the expected number of rows
-            assert len(results_pandas) > 100, "There could be a problem - check manually"
+            assert len(results_pandas) > 100, (
+                "There could be a problem - check manually"
+            )
 
             logger.info(f"Package search test passed for {cat_session.base_url}")
         except requests.RequestException as e:

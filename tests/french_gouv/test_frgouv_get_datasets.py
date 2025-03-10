@@ -6,6 +6,7 @@ from HerdingCats.explorer.explore import FrenchGouvCatExplorer
 from HerdingCats.config.sources import FrenchGouvCatalogue
 from loguru import logger
 
+
 def test_ckan_health_check():
     """
     Check that predefined data catalogue fetches all data catalogs available.

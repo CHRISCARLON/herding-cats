@@ -10,6 +10,7 @@ class CkanApiPaths:
     ORGANIZATION_LIST = BASE_PATH.format("organization_list")
     # Add more paths as needed...
 
+
 # OPEN DATASOFT
 class OpenDataSoftApiPaths:
     # Normal base paths...
@@ -26,6 +27,7 @@ class OpenDataSoftApiPaths:
     SHOW_DATASET_EXPORTS_2 = BASE_PATH_2.format("datasets/{}/exports")
     # Add more paths as needed...
 
+
 # DATA GOUV FR
 class FrenchGouvApiPaths:
     BASE_PATH = "/api/1/{}"
@@ -34,16 +36,19 @@ class FrenchGouvApiPaths:
     SHOW_DATASET_RESOURCE_BY_ID = BASE_PATH.format("datasets/{}/resources/")
     CATALOGUE = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/b06842f8ee27a0302ebbaaa344d35e4c.parquet"
 
+
 # ONS NOMI
 class ONSNomisApiPaths:
     BASE_PATH = "/api/v01/{}"
     SHOW_DATASETS = BASE_PATH.format("dataset/def.sdmx.json")
     SHOW_DATASET_INFO = BASE_PATH.format("dataset/{}/def.sdmx.json")
     SHOW_DATASET_OVERVIEW = BASE_PATH.format("dataset/{}.overview.json")
-    GENERATE_DATASET_DOWNLOAD_URL = BASE_PATH.format("dataset/{}.data.xlsx?date=latest{}")
+    GENERATE_DATASET_DOWNLOAD_URL = BASE_PATH.format(
+        "dataset/{}.data.xlsx?date=latest{}"
+    )
     SHOW_CODELIST_DETAILS = BASE_PATH.format("codelist/{}.def.sdmx.json")
     # Add in codelists
 
+
 class ONSNomisQueryParams:
     GEOGRAPHY = "&geography="
-    

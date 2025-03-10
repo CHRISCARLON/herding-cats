@@ -5,6 +5,7 @@ from HerdingCats.config.sources import CkanDataCatalogues
 import requests
 from loguru import logger
 
+
 def test_package_list_dictionary():
     """
     Test the package list functionality for predefined data catalogues
@@ -17,7 +18,9 @@ def test_package_list_dictionary():
             print(results)
 
             # Assert that we got a result
-            assert results is not None, f"No results returned for {cat_session.base_url}"
+            assert results is not None, (
+                f"No results returned for {cat_session.base_url}"
+            )
 
             logger.info(f"Org list search test passed for {cat_session.base_url}")
         except requests.RequestException as e:

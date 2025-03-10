@@ -15,18 +15,16 @@ from polars.dataframe.frame import DataFrame as PolarsDataFrame
 from io import BytesIO
 from loguru import logger
 
-#TODO: Start building proper data loader stores for different formats and locations
-#TODO: further harmonise how the loader deal with the input data
+# TODO: Start building proper data loader stores for different formats and locations
+# TODO: further harmonise how the loader deal with the input data
+
 
 # START TO WRANGLE / ANALYSE
 # LOAD CKAN DATA RESOURCES INTO STORAGE
 class CkanLoader:
     """A class to load data resources into various formats and storage systems."""
 
-    STORAGE_TYPES = {
-        "s3": S3Uploader,
-        "local": LocalUploader
-    }
+    STORAGE_TYPES = {"s3": S3Uploader, "local": LocalUploader}
 
     def __init__(self):
         self._validate_dependencies()
@@ -35,11 +33,11 @@ class CkanLoader:
     def _validate_dependencies(self):
         """Validate that all required dependencies are available."""
         required_modules = {
-            'pandas': pd,
-            'polars': pl,
-            'duckdb': duckdb,
-            'boto3': boto3,
-            'pyarrow': pa
+            "pandas": pd,
+            "polars": pl,
+            "duckdb": duckdb,
+            "boto3": boto3,
+            "pyarrow": pa,
         }
         missing = [name for name, module in required_modules.items() if module is None]
         if missing:
@@ -57,9 +55,7 @@ class CkanLoader:
 
     @DataFrameLoader.validate_ckan_resource
     def polars_data_loader(
-        self,
-        resource_data: List,
-        sheet_name: Optional[str] = None
+        self, resource_data: List, sheet_name: Optional[str] = None
     ) -> PolarsDataFrame:
         """
         Load a resource into a Polars DataFrame.
@@ -73,7 +69,7 @@ class CkanLoader:
             binary_data,
             resource_data[0].lower(),
             sheet_name=sheet_name,
-            loader_type="polars"
+            loader_type="polars",
         )
 
     @DataFrameLoader.validate_ckan_resource
@@ -81,15 +77,15 @@ class CkanLoader:
         self,
         resource_data: List,
         desired_format: Optional[str] = None,
-        sheet_name: Optional[str] = None
-        ) -> PandasDataFrame:
+        sheet_name: Optional[str] = None,
+    ) -> PandasDataFrame:
         """Load a resource into a Pandas DataFrame."""
         binary_data = self._fetch_data(resource_data[1])
         return self.df_loader.create_dataframe(
             binary_data,
             resource_data[0].lower(),
             sheet_name=sheet_name,
-            loader_type="pandas"
+            loader_type="pandas",
         )
 
     @S3Uploader.validate_ckan_resource
@@ -99,10 +95,12 @@ class CkanLoader:
         bucket_name: str,
         custom_name: str,
         mode: Literal["raw", "parquet"],
-        storage_type: Literal["s3"]
+        storage_type: Literal["s3"],
     ) -> str:
         """Upload data using specified uploader"""
-        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
+        if not all(
+            isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]
+        ):
             raise ValueError("Bucket name and custom name must be non-empty strings")
 
         UploaderClass = self.STORAGE_TYPES[storage_type]
@@ -117,8 +115,9 @@ class CkanLoader:
             bucket=bucket_name,
             key=key,
             mode=mode,
-            file_format=file_format
+            file_format=file_format,
         )
+
 
 # START TO WRANGLE / ANALYSE
 # LOAD OPEN DATA SOFT DATA RESOURCES INTO STORAGE
@@ -129,13 +128,10 @@ class OpenDataSoftLoader:
         "spreadsheet": ["xls", "xlsx"],
         "csv": ["csv"],
         "parquet": ["parquet"],
-        "geopackage": ["gpkg", "geopackage"]
+        "geopackage": ["gpkg", "geopackage"],
     }
 
-    STORAGE_TYPES = {
-        "s3": S3Uploader,
-        "local": LocalUploader
-    }
+    STORAGE_TYPES = {"s3": S3Uploader, "local": LocalUploader}
 
     def __init__(self) -> None:
         self._validate_dependencies()
@@ -144,32 +140,34 @@ class OpenDataSoftLoader:
     def _validate_dependencies(self):
         """Validate that all required dependencies are available."""
         required_modules = {
-            'pandas': pd,
-            'polars': pl,
-            'duckdb': duckdb,
-            'boto3': boto3,
-            'pyarrow': pa
+            "pandas": pd,
+            "polars": pl,
+            "duckdb": duckdb,
+            "boto3": boto3,
+            "pyarrow": pa,
         }
         missing = [name for name, module in required_modules.items() if module is None]
         if missing:
             raise ImportError(f"Missing required dependencies: {', '.join(missing)}")
 
     def _extract_resource_data(
-        self,
-        resource_data: Optional[List[Dict[str, str]]],
-        format_type: str
+        self, resource_data: Optional[List[Dict[str, str]]], format_type: str
     ) -> str:
         """Validate resource data and extract download URL."""
         if not resource_data:
             raise OpenDataSoftExplorerError("No resource data provided")
 
         # Get all supported formats
-        all_formats = [fmt for formats in self.SUPPORTED_FORMATS.values() for fmt in formats]
+        all_formats = [
+            fmt for formats in self.SUPPORTED_FORMATS.values() for fmt in formats
+        ]
 
         # If the provided format_type is a category, get its format
-        valid_formats = (self.SUPPORTED_FORMATS.get(format_type, [])
-                        if format_type in self.SUPPORTED_FORMATS
-                        else [format_type])
+        valid_formats = (
+            self.SUPPORTED_FORMATS.get(format_type, [])
+            if format_type in self.SUPPORTED_FORMATS
+            else [format_type]
+        )
 
         # Validate format type
         if format_type not in self.SUPPORTED_FORMATS and format_type not in all_formats:
@@ -180,14 +178,17 @@ class OpenDataSoftLoader:
 
         # Find matching resource
         url = next(
-            (r.get('download_url') for r in resource_data
-            if r.get('format', '').lower() in valid_formats),
-            None
+            (
+                r.get("download_url")
+                for r in resource_data
+                if r.get("format", "").lower() in valid_formats
+            ),
+            None,
         )
 
         # If format provided does not have a url provide the formats that do
         if not url:
-            available_formats = [r['format'] for r in resource_data]
+            available_formats = [r["format"] for r in resource_data]
             raise OpenDataSoftExplorerError(
                 f"No resource found with format: {format_type}. "
                 f"Available formats: {', '.join(available_formats)}"
@@ -207,7 +208,9 @@ class OpenDataSoftLoader:
         except requests.RequestException as e:
             raise OpenDataSoftExplorerError(f"Failed to download resource: {str(e)}", e)
 
-    def _verify_data(self, df: Union[pd.DataFrame, pl.DataFrame], api_key: Optional[str]) -> None:
+    def _verify_data(
+        self, df: Union[pd.DataFrame, pl.DataFrame], api_key: Optional[str]
+    ) -> None:
         """Verify that the DataFrame is not empty when no API key is provided."""
         is_empty = df.empty if isinstance(df, pd.DataFrame) else df.height == 0
         if is_empty and not api_key:
@@ -222,36 +225,30 @@ class OpenDataSoftLoader:
         resource_data: Optional[List[Dict[str, str]]],
         format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
         api_key: Optional[str] = None,
-        sheet_name: Optional[str] = None
+        sheet_name: Optional[str] = None,
     ) -> pl.DataFrame:
         """Load data from a resource URL into a Polars DataFrame."""
         url = self._extract_resource_data(resource_data, format_type)
         binary_data = self._fetch_data(url, api_key)
         df = self.df_loader.create_dataframe(
-            binary_data,
-            format_type,
-            "polars",
-            sheet_name
+            binary_data, format_type, "polars", sheet_name
         )
         self._verify_data(df, api_key)
         return df
-    
+
     @DataFrameLoader.validate_opendata_resource
     def pandas_data_loader(
         self,
         resource_data: Optional[List[Dict[str, str]]],
         format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
         api_key: Optional[str] = None,
-        sheet_name: Optional[str] = None
+        sheet_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """Load data from a resource URL into a Pandas DataFrame."""
         url = self._extract_resource_data(resource_data, format_type)
         binary_data = self._fetch_data(url, api_key)
         df = self.df_loader.create_dataframe(
-            binary_data,
-            format_type,
-            "pandas",
-            sheet_name
+            binary_data, format_type, "pandas", sheet_name
         )
         self._verify_data(df, api_key)
         return df
@@ -265,10 +262,12 @@ class OpenDataSoftLoader:
         format_type: str,
         mode: Literal["raw", "parquet"],
         storage_type: Literal["s3"] = "s3",
-        api_key: Optional[str] = None
+        api_key: Optional[str] = None,
     ) -> str:
         """Upload data using specified uploader"""
-        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
+        if not all(
+            isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]
+        ):
             raise ValueError("Bucket name and custom name must be non-empty strings")
 
         UploaderClass = self.STORAGE_TYPES[storage_type]
@@ -276,7 +275,7 @@ class OpenDataSoftLoader:
 
         # Extract the URL using the existing method
         url = self._extract_resource_data(resource_data, format_type)
-        
+
         # Fetch the data with optional API key
         binary_data = self._fetch_data(url, api_key)
 
@@ -287,8 +286,9 @@ class OpenDataSoftLoader:
             bucket=bucket_name,
             key=key,
             mode=mode,
-            file_format=format_type
+            file_format=format_type,
         )
+
 
 # START TO WRANGLE / ANALYSE
 # LOAD FRENCH GOUV DATA RESOURCES INTO STORAGE
@@ -300,13 +300,10 @@ class FrenchGouvLoader:
         "xlsx": ["xlsx"],
         "csv": ["csv"],
         "parquet": ["parquet"],
-        "geopackage": ["gpkg", "geopackage"]
+        "geopackage": ["gpkg", "geopackage"],
     }
 
-    STORAGE_TYPES = {
-        "s3": S3Uploader,
-        "local": LocalUploader
-    }
+    STORAGE_TYPES = {"s3": S3Uploader, "local": LocalUploader}
 
     def __init__(self) -> None:
         self._validate_dependencies()
@@ -315,32 +312,34 @@ class FrenchGouvLoader:
     def _validate_dependencies(self):
         """Validate that all required dependencies are available."""
         required_modules = {
-            'pandas': pd,
-            'polars': pl,
-            'duckdb': duckdb,
-            'boto3': boto3,
-            'pyarrow': pa
+            "pandas": pd,
+            "polars": pl,
+            "duckdb": duckdb,
+            "boto3": boto3,
+            "pyarrow": pa,
         }
         missing = [name for name, module in required_modules.items() if module is None]
         if missing:
             raise ImportError(f"Missing required dependencies: {', '.join(missing)}")
 
     def _extract_resource_data(
-    self,
-    resource_data: Optional[List[Dict[str, str]]],
-    format_type: str
+        self, resource_data: Optional[List[Dict[str, str]]], format_type: str
     ) -> tuple[str, str]:
         """Validate resource data and extract download URL."""
         if not resource_data:
             raise FrenchCatDataLoaderError("No resource data provided")
 
         # Get all supported formats
-        all_formats = [fmt for formats in self.SUPPORTED_FORMATS.values() for fmt in formats]
+        all_formats = [
+            fmt for formats in self.SUPPORTED_FORMATS.values() for fmt in formats
+        ]
 
         # If the provided format_type is a category, get its format
-        valid_formats = (self.SUPPORTED_FORMATS.get(format_type, [])
-                        if format_type in self.SUPPORTED_FORMATS
-                        else [format_type])
+        valid_formats = (
+            self.SUPPORTED_FORMATS.get(format_type, [])
+            if format_type in self.SUPPORTED_FORMATS
+            else [format_type]
+        )
 
         # Validate format type
         if format_type not in self.SUPPORTED_FORMATS and format_type not in all_formats:
@@ -351,19 +350,23 @@ class FrenchGouvLoader:
 
         # Find matching resource and its title
         matching_resource = next(
-            (r for r in resource_data if r.get('resource_format', '').lower() in valid_formats),
-            None
+            (
+                r
+                for r in resource_data
+                if r.get("resource_format", "").lower() in valid_formats
+            ),
+            None,
         )
 
         if not matching_resource:
-            available_formats = [r['resource_format'] for r in resource_data]
+            available_formats = [r["resource_format"] for r in resource_data]
             raise FrenchCatDataLoaderError(
                 f"No resource found with format: {format_type}. "
                 f"Available formats: {', '.join(available_formats)}"
             )
 
-        url = matching_resource.get('resource_url')
-        title = matching_resource.get('resource_title', 'Unnamed Resource')
+        url = matching_resource.get("resource_url")
+        title = matching_resource.get("resource_title", "Unnamed Resource")
 
         if not url:
             raise FrenchCatDataLoaderError("Resource URL not found in data")
@@ -382,7 +385,9 @@ class FrenchGouvLoader:
         except requests.RequestException as e:
             raise OpenDataSoftExplorerError(f"Failed to download resource: {str(e)}", e)
 
-    def _verify_data(self, df: Union[pd.DataFrame, pl.DataFrame], api_key: Optional[str]) -> None:
+    def _verify_data(
+        self, df: Union[pd.DataFrame, pl.DataFrame], api_key: Optional[str]
+    ) -> None:
         """Verify that the DataFrame is not empty when no API key is provided."""
         is_empty = df.empty if isinstance(df, pd.DataFrame) else df.height == 0
         if is_empty and not api_key:
@@ -390,23 +395,20 @@ class FrenchGouvLoader:
                 "Received empty DataFrame. This likely means an API key is required. "
                 "Please provide an API key and try again."
             )
-  
+
     @DataFrameLoader.validate_french_gouv_resource
     def polars_data_loader(
         self,
         resource_data: Optional[List[Dict[str, str]]],
         format_type: Literal["csv", "parquet", "xls", "xlsx"],
         api_key: Optional[str] = None,
-        sheet_name: Optional[str] = None
+        sheet_name: Optional[str] = None,
     ) -> pl.DataFrame:
         """Load data from a resource URL into a Polars DataFrame."""
         url, title = self._extract_resource_data(resource_data, format_type)
         binary_data = self._fetch_data(url, api_key)
         df = self.df_loader.create_dataframe(
-            binary_data,
-            format_type,
-            "polars",
-            sheet_name
+            binary_data, format_type, "polars", sheet_name
         )
         self._verify_data(df, api_key)
         return df
@@ -417,20 +419,20 @@ class FrenchGouvLoader:
         resource_data: Optional[List[Dict[str, str]]],
         format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
         api_key: Optional[str] = None,
-        sheet_name: Optional[str] = None
+        sheet_name: Optional[str] = None,
     ) -> pd.DataFrame:
-        """Load data from a resource URL into a Pandas DataFrame.""""""Load data from a resource URL into a Polars DataFrame."""
+        (
+            """Load data from a resource URL into a Pandas DataFrame."""
+            """Load data from a resource URL into a Polars DataFrame."""
+        )
         url, title = self._extract_resource_data(resource_data, format_type)
         binary_data = self._fetch_data(url, api_key)
         df = self.df_loader.create_dataframe(
-            binary_data,
-            format_type,
-            "pandas",
-            sheet_name
+            binary_data, format_type, "pandas", sheet_name
         )
         self._verify_data(df, api_key)
         return df
-    
+
     @S3Uploader.validate_ckan_resource
     def upload_data(
         self,
@@ -440,22 +442,24 @@ class FrenchGouvLoader:
         format_type: str,
         mode: Literal["raw", "parquet"],
         storage_type: Literal["s3"] = "s3",
-        api_key: Optional[str] = None
+        api_key: Optional[str] = None,
     ) -> str:
         """Upload data using specified uploader"""
-        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
+        if not all(
+            isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]
+        ):
             raise ValueError("Bucket name and custom name must be non-empty strings")
 
         # Define STORAGE_TYPES if not already defined
         if not hasattr(self, "STORAGE_TYPES"):
             self.STORAGE_TYPES = {"s3": S3Uploader}
-        
+
         UploaderClass = self.STORAGE_TYPES[storage_type]
         uploader = UploaderClass()
 
         # Extract URL using the existing method
         url, _ = self._extract_resource_data(resource_data, format_type)
-        
+
         # Fetch the data
         binary_data = self._fetch_data(url, api_key)
 
@@ -466,8 +470,9 @@ class FrenchGouvLoader:
             bucket=bucket_name,
             key=key,
             mode=mode,
-            file_format=format_type
+            file_format=format_type,
         )
+
 
 # LOAD ONS NOMIS DATA RESOURCES INTO STORAGE
 # TODO: Add support for other formats
@@ -478,10 +483,7 @@ class ONSNomisLoader:
         "xlsx": ["xlsx"],
     }
 
-    STORAGE_TYPES = {
-        "s3": S3Uploader,
-        "local": LocalUploader
-    }
+    STORAGE_TYPES = {"s3": S3Uploader, "local": LocalUploader}
 
     def __init__(self) -> None:
         self._validate_dependencies()
@@ -490,16 +492,16 @@ class ONSNomisLoader:
     def _validate_dependencies(self):
         """Validate that all required dependencies are available."""
         required_modules = {
-            'pandas': pd,
-            'polars': pl,
-            'duckdb': duckdb,
-            'boto3': boto3,
-            'pyarrow': pa
+            "pandas": pd,
+            "polars": pl,
+            "duckdb": duckdb,
+            "boto3": boto3,
+            "pyarrow": pa,
         }
         missing = [name for name, module in required_modules.items() if module is None]
         if missing:
             raise ImportError(f"Missing required dependencies: {', '.join(missing)}")
-        
+
     def _fetch_data(self, url: str) -> BytesIO:
         """Fetch data from URL and return as BytesIO object."""
         try:
@@ -509,26 +511,21 @@ class ONSNomisLoader:
         except requests.RequestException as e:
             logger.error(f"Error fetching data from URL: {e}")
             raise
-    
+
     @DataFrameLoader.validate_ons_nomis_resource
     def polars_data_loader(self, url: str) -> pl.DataFrame:
         """Load data from a resource URL into a Polars DataFrame."""
         binary_data = self._fetch_data(url)
-        return self.df_loader.create_dataframe(
-            binary_data,
-            "xlsx",
-            "polars"
-        )
-    
+        return self.df_loader.create_dataframe(binary_data, "xlsx", "polars")
+
     @DataFrameLoader.validate_ons_nomis_resource
-    def pandas_data_loader(self, url: str, sheet_name: Optional[str] = None) -> pd.DataFrame:
+    def pandas_data_loader(
+        self, url: str, sheet_name: Optional[str] = None
+    ) -> pd.DataFrame:
         """Load data from a resource URL into a Pandas DataFrame."""
         binary_data = self._fetch_data(url)
         return self.df_loader.create_dataframe(
-            binary_data,
-            "xlsx",
-            "pandas",
-            sheet_name = sheet_name
+            binary_data, "xlsx", "pandas", sheet_name=sheet_name
         )
 
     @S3Uploader.validate_ons_nomis_resource
@@ -538,16 +535,18 @@ class ONSNomisLoader:
         bucket_name: str,
         custom_name: str,
         mode: Literal["raw", "parquet"],
-        storage_type: Literal["s3"] = "s3"
+        storage_type: Literal["s3"] = "s3",
     ) -> str:
         """Upload data using specified uploader"""
-        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
+        if not all(
+            isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]
+        ):
             raise ValueError("Bucket name and custom name must be non-empty strings")
 
         # Define STORAGE_TYPES if not already defined
         if not hasattr(self, "STORAGE_TYPES"):
             self.STORAGE_TYPES = {"s3": S3Uploader}
-            
+
         UploaderClass = self.STORAGE_TYPES[storage_type]
         uploader = UploaderClass()
 
@@ -564,5 +563,5 @@ class ONSNomisLoader:
             bucket=bucket_name,
             key=key,
             mode=mode,
-            file_format=format_type
+            file_format=format_type,
         )

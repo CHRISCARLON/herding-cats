@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class CkanDataCatalogues(Enum):
     LONDON_DATA_STORE = "https://data.london.gov.uk"
     UK_GOV = "https://data.gov.uk"
@@ -11,6 +12,7 @@ class CkanDataCatalogues(Enum):
     # CANADA_GOV = "https://search.open.canada.ca/opendata" NEED TO LOOK INTO THIS ONE MORE
     # NORTHERN_DATA_MILL = "https://datamillnorth.org" NEED TO LOOK INTO THIS ONE MORE
     # Add more catalogues as needed...
+
 
 # OPEN DATASOFT
 class OpenDataSoftDataCatalogues(Enum):
@@ -25,12 +27,14 @@ class OpenDataSoftDataCatalogues(Enum):
     NORTHERN_POWERGRID_DNO = "https://northernpowergrid.opendatasoft.com"
     ELECTRICITY_NORTH_WEST_DNO = "https://electricitynorthwest.opendatasoft.com"
     SSEN_TRANSMISSION = "https://ssentransmission.opendatasoft.com"
-    SP_ENERGY_NETWORKS_DNO  = "https://spenergynetworks.opendatasoft.com"
+    SP_ENERGY_NETWORKS_DNO = "https://spenergynetworks.opendatasoft.com"
     # Add more catalogues as needed...
+
 
 # DATA GOUV FR
 class FrenchGouvCatalogue(Enum):
     GOUV_FR = "https://www.data.gouv.fr"
+
 
 # ONS NOMI
 class ONSNomisAPI(Enum):

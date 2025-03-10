@@ -26,23 +26,25 @@ def test_package_show_info_json():
             # Check structure of returned data
             if results:
                 first_result = results[0]
-                assert isinstance(first_result, dict), "Result items should be dictionaries"
+                assert isinstance(first_result, dict), (
+                    "Result items should be dictionaries"
+                )
 
                 # Check for some expected keys as a basic check
                 expected_keys = [
-                    'name',
-                    'notes_markdown',
-                    'resource_created',
-                    'resource_format',
-                    'resource_name',
-                    'resource_url'
+                    "name",
+                    "notes_markdown",
+                    "resource_created",
+                    "resource_format",
+                    "resource_name",
+                    "resource_url",
                 ]
                 for key in expected_keys:
                     assert key in first_result, f"Missing expected key: {key}"
 
                 # Verify specific values we know should be there
-                assert first_result['name'] == package_name
-                assert first_result['resource_format'] == 'shp'
+                assert first_result["name"] == package_name
+                assert first_result["resource_format"] == "shp"
 
             logger.info(f"Package show info test passed for {package_name}")
 
