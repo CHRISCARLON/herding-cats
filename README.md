@@ -27,6 +27,8 @@ or
 poetry add HerdingCats
 ```
 
+---
+
 > [!NOTE]
 > Herding-CATs is currently under active development. Features may change as the project evolves.
 >
