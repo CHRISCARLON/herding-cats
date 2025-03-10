@@ -39,6 +39,8 @@ poetry add HerdingCats
 > [!NOTE]
 > If the data seems worth it we will maintain methods for bespoke implementations that go beyond typical data catlogue implementations such as CKAN and OpenDataSoft.
 
+---
+
 ## Current Default Open Data Catalogues
 
 Herding-CATs supports the following data sources by default:
