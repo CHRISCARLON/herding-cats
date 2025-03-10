@@ -10,7 +10,7 @@ def test_ckan_health_check():
     """
     Check that predefined data catalogues are healthy and available
     """
-    with CatSession(CkanDataCatalogues.LONDON_DATA_STORE) as cat_session:
+    with CatSession(CkanDataCatalogues.UK_GOV) as cat_session:
         url = cat_session.base_url + CkanApiPaths.PACKAGE_LIST
         try:
             response = cat_session.session.get(url)

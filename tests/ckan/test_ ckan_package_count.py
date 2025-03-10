@@ -11,7 +11,7 @@ def test_get_package_count():
     Test that the get_package_count method returns a valid count of datasets
     for predefined data catalogues...
     """
-    with CatSession(CkanDataCatalogues.LONDON_DATA_STORE) as cat_session:
+    with CatSession(CkanDataCatalogues.HUMANITARIAN_DATA_STORE) as cat_session:
         explorer = CkanCatExplorer(cat_session)
         try:
             # Get the package count

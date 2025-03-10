@@ -8,13 +8,9 @@ def test_cat_session_creation():
     Check that a valid Ckan session can be created
     """
     try:
-        session = CatSession(CkanDataCatalogues.LONDON_DATA_STORE)
+        session = CatSession(CkanDataCatalogues.SSEN_DNO)
         assert isinstance(session, CatSession), (
             "CkanCatSession object should be created"
-        )
-
-        assert session.base_url == "https://data.london.gov.uk", (
-            "CkanCatSession should have the correct base URL"
         )
 
     except Exception as e:

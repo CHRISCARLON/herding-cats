@@ -30,4 +30,6 @@ jobs:
 
       - name: Run Ruff linting
         run: ruff check .
+
+      - name: Run Ruff formatting
         run: ruff format .
