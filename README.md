@@ -34,9 +34,14 @@ poetry add HerdingCats
 >
 > We will do our best to ensure that most methods work across all catalogues and that a good variety of data catalogues is present.
 
+---
+
+> [!NOTE]
+> If the data seems worth it we will maintain methods for bespoke implementations that go beyond typical data catlogue implementations such as CKAN and OpenDataSoft.
+
 ## Current Default Open Data Catalogues
 
-Herding-CATs supports the following catalogues by default:
+Herding-CATs supports the following data sources by default:
 
 ### Supported Catalogues
 
@@ -59,18 +64,21 @@ Herding-CATs supports the following catalogues by default:
 
 ## Overview
 
-This Python library provides a way to explore and interact with CKAN, OpenDataSoft, and French Government data catalogues.
+This Python library provides a way to explore and interact with CKAN, OpenDataSoft, and French Government data catalogues - as well as other bespoke sources.
 
 HerdingCATs follows a Session -> Explorer -> Loader pattern.
 
-It includes six main classes:
+It is structured around the folllwing main classes:
 
 1. `CkanCatExplorer`: For exploring CKAN-based data catalogues
 2. `OpenDataSoftCatExplorer`: For exploring OpenDataSoft-based data catalogues
 3. `FrenchGouvCatExplorer`: For exploring the French Government data catalogue
-4. `CkanCatResourceLoader`: For loading and transforming CKAN catalogue data
-5. `OpenDataSoftResourceLoader`: For loading and transforming OpenDataSoft catalogue data
-6. `FrenchGouvResourceLoader`: For loading and transforming French Government catalogue data
+4. `NomisCatExplorer`: For exploring ONS data
+
+5. `CkanLoader`: For loading CKAN catalogue data
+6. `OpenDataSoftLoader`: For loading OpenDataSoft catalogue data
+7. `FrenchGouvLoader`: For loading French Government catalogue data
+8. `NomisLoader`: For loading ONS Nomis data
 
 All explorer classes work with a `CatSession` object that handles the connection to the chosen data catalogue.
 
@@ -156,19 +164,37 @@ if __name__ == "__main__":
 7. `get_dataset_resource_meta_dataframe(data: dict, df_type: Literal["pandas", "polars"])`: Returns resource metadata as a dataframe
 8. `get_all_orgs()`: Returns all organizations in the catalogue
 
+### ONS Nomis Components
+
+#### NomisCatExplorer
+
+```python
+import HerdingCats as hc
+
+def main():
+    with hc.CatSession(hc.NomisDataCatalogues.ONS_NOMIS) as session:
+        explore = hc.NomisCatExplorer(session)
+
+if __name__ == "__main__":
+    main()
+```
+
+##### Methods Nomis
+
+1. `get_datasets()`: Returns a list of all available datasets
+2. `get_dataset_info(dataset_id: str)`: Returns metadata for a specific dataset
+3. `get_dataset_overview(dataset_id: str)`: Returns an overview of a specific dataset
+4. `get_codelist_info(codelist_id: str)`: Returns metadata for a specific codelist
+5. `generate_full_dataset_download_url(dataset_id: str, geography_template: ONSNomisGeographyTemplates | None = None)`: Generates a full dataset download URL
+
 ### Resource Loaders
 
-All three resource loader classes (`CkanCatResourceLoader`, `OpenDataSoftResourceLoader`, and `FrenchGouvResourceLoader`) support the following methods:
+All three resource loader classes (`CkanLoader`, `OpenDataSoftLoader`, and `FrenchGouvLoader, NomisLoader`) support the following methods:
 
 #### DataFrame Loaders
 
 - `polars_data_loader()`: Loads data into a Polars DataFrame
 - `pandas_data_loader()`: Loads data into a Pandas DataFrame
-
-#### Database Loaders
-
-- `duckdb_data_loader()`: Loads data into a DuckDB database
-- `motherduck_data_loader()`: Loads data into MotherDuck (CKAN only - this will change in the future)
 
 #### Cloud Storage Loaders
 
@@ -245,14 +271,38 @@ def main():
         resource_meta = explore.get_dataset_resource_meta(meta_data)
 
         # Load resource metadata into Polars DataFrame and specify the format of the data you want to load
-        df = loader.polars_data_loader(resource_meta, "csv")
+        df = loader.polars_data_loader(resource_meta, "xlsx")
 
 if __name__ == "__main__":
     main()
 ```
 
+### ONS Nomis Example
+
+```python
+import HerdingCats as hc
+
+def main():
+    with hc.CatSession(hc.ONSNomisAPI.ONS_NOMI) as session:
+        explore = hc.ONSNomisCatExplorer(session)
+        loader = hc.ONSNomisLoader()
+        # data = explore.get_dataset_overview("NM_57_1")
+        # print(data)
+
+        url = explore.generate_full_dataset_download_url("NM_57_1", hc.ONSNomisGeographyTemplates.LA_COUNTY_UNITARY_APR_23)
+        print(url)
+
+        df = loader.polars_data_loader(url)
+        print(df)
+
+        loader.upload_data(url, "test-herding-cats", "test-herding-cats-nomis", "raw", "local")
+
+if __name__ =="__main__":
+    main()
+```
+
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a PR.
 
 For major changes, please open an issue first to discuss what you would like to change.
