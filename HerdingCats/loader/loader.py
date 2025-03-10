@@ -7,7 +7,7 @@ import pyarrow as pa
 import uuid
 
 from ..errors.errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
-from .loader_stores import S3Uploader, DataFrameLoader
+from .loader_stores import S3Uploader, DataFrameLoader, LocalUploader
 
 from typing import Union, Optional, Literal, List, Dict
 from pandas.core.frame import DataFrame as PandasDataFrame
@@ -24,7 +24,8 @@ class CkanLoader:
     """A class to load data resources into various formats and storage systems."""
 
     STORAGE_TYPES = {
-        "s3": S3Uploader
+        "s3": S3Uploader,
+        "local": LocalUploader
     }
 
     def __init__(self):
@@ -91,7 +92,7 @@ class CkanLoader:
             loader_type="pandas"
         )
 
-    @DataFrameLoader.validate_ckan_resource
+    @S3Uploader.validate_ckan_resource
     def upload_data(
         self,
         resource_data: List,
@@ -129,6 +130,11 @@ class OpenDataSoftLoader:
         "csv": ["csv"],
         "parquet": ["parquet"],
         "geopackage": ["gpkg", "geopackage"]
+    }
+
+    STORAGE_TYPES = {
+        "s3": S3Uploader,
+        "local": LocalUploader
     }
 
     def __init__(self) -> None:
@@ -250,6 +256,40 @@ class OpenDataSoftLoader:
         self._verify_data(df, api_key)
         return df
 
+    @S3Uploader.validate_opendata_resource
+    def upload_data(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        bucket_name: str,
+        custom_name: str,
+        format_type: str,
+        mode: Literal["raw", "parquet"],
+        storage_type: Literal["s3"] = "s3",
+        api_key: Optional[str] = None
+    ) -> str:
+        """Upload data using specified uploader"""
+        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
+            raise ValueError("Bucket name and custom name must be non-empty strings")
+
+        UploaderClass = self.STORAGE_TYPES[storage_type]
+        uploader = UploaderClass()
+
+        # Extract the URL using the existing method
+        url = self._extract_resource_data(resource_data, format_type)
+        
+        # Fetch the data with optional API key
+        binary_data = self._fetch_data(url, api_key)
+
+        # Generate a unique key and upload
+        key = f"{custom_name}-{uuid.uuid4()}"
+        return uploader.upload(
+            data=binary_data,
+            bucket=bucket_name,
+            key=key,
+            mode=mode,
+            file_format=format_type
+        )
+
 # START TO WRANGLE / ANALYSE
 # LOAD FRENCH GOUV DATA RESOURCES INTO STORAGE
 class FrenchGouvLoader:
@@ -261,6 +301,11 @@ class FrenchGouvLoader:
         "csv": ["csv"],
         "parquet": ["parquet"],
         "geopackage": ["gpkg", "geopackage"]
+    }
+
+    STORAGE_TYPES = {
+        "s3": S3Uploader,
+        "local": LocalUploader
     }
 
     def __init__(self) -> None:
@@ -385,6 +430,44 @@ class FrenchGouvLoader:
         )
         self._verify_data(df, api_key)
         return df
+    
+    @S3Uploader.validate_ckan_resource
+    def upload_data(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        bucket_name: str,
+        custom_name: str,
+        format_type: str,
+        mode: Literal["raw", "parquet"],
+        storage_type: Literal["s3"] = "s3",
+        api_key: Optional[str] = None
+    ) -> str:
+        """Upload data using specified uploader"""
+        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
+            raise ValueError("Bucket name and custom name must be non-empty strings")
+
+        # Define STORAGE_TYPES if not already defined
+        if not hasattr(self, "STORAGE_TYPES"):
+            self.STORAGE_TYPES = {"s3": S3Uploader}
+        
+        UploaderClass = self.STORAGE_TYPES[storage_type]
+        uploader = UploaderClass()
+
+        # Extract URL using the existing method
+        url, _ = self._extract_resource_data(resource_data, format_type)
+        
+        # Fetch the data
+        binary_data = self._fetch_data(url, api_key)
+
+        # Generate a unique key and upload
+        key = f"{custom_name}-{uuid.uuid4()}"
+        return uploader.upload(
+            data=binary_data,
+            bucket=bucket_name,
+            key=key,
+            mode=mode,
+            file_format=format_type
+        )
 
 # LOAD ONS NOMIS DATA RESOURCES INTO STORAGE
 # TODO: Add support for other formats
@@ -393,6 +476,11 @@ class ONSNomisLoader:
 
     SUPPORTED_FORMATS = {
         "xlsx": ["xlsx"],
+    }
+
+    STORAGE_TYPES = {
+        "s3": S3Uploader,
+        "local": LocalUploader
     }
 
     def __init__(self) -> None:
@@ -441,4 +529,40 @@ class ONSNomisLoader:
             "xlsx",
             "pandas",
             sheet_name = sheet_name
+        )
+
+    @S3Uploader.validate_ons_nomis_resource
+    def upload_data(
+        self,
+        url: str,
+        bucket_name: str,
+        custom_name: str,
+        mode: Literal["raw", "parquet"],
+        storage_type: Literal["s3"] = "s3"
+    ) -> str:
+        """Upload data using specified uploader"""
+        if not all(isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]):
+            raise ValueError("Bucket name and custom name must be non-empty strings")
+
+        # Define STORAGE_TYPES if not already defined
+        if not hasattr(self, "STORAGE_TYPES"):
+            self.STORAGE_TYPES = {"s3": S3Uploader}
+            
+        UploaderClass = self.STORAGE_TYPES[storage_type]
+        uploader = UploaderClass()
+
+        # Fetch the data
+        binary_data = self._fetch_data(url)
+
+        # For ONS Nomis, we know it's always XLSX format
+        format_type = "xlsx"
+
+        # Generate a unique key and upload
+        key = f"{custom_name}-{uuid.uuid4()}"
+        return uploader.upload(
+            data=binary_data,
+            bucket=bucket_name,
+            key=key,
+            mode=mode,
+            file_format=format_type
         )
