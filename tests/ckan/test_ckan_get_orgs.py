@@ -10,7 +10,7 @@ def test_package_list_dictionary():
     """
     Test the package list functionality for predefined data catalogues
     """
-    with CatSession(CkanDataCatalogues.SUBAK) as cat_session:
+    with CatSession(CkanDataCatalogues.UK_GOV) as cat_session:
         explorer = CkanCatExplorer(cat_session)
         try:
             results = explorer.get_organisation_list()

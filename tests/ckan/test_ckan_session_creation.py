@@ -8,7 +8,7 @@ def test_cat_session_creation():
     Check that a valid Ckan session can be created
     """
     try:
-        session = CatSession(CkanDataCatalogues.SSEN_DNO)
+        session = CatSession(CkanDataCatalogues.UK_GOV)
         assert isinstance(session, CatSession), (
             "CkanCatSession object should be created"
         )
@@ -19,7 +19,7 @@ def test_cat_session_creation():
 
 def test_cat_session_start():
     try:
-        with CatSession(CkanDataCatalogues.LONDON_DATA_STORE) as session:
+        with CatSession(CkanDataCatalogues.UK_GOV) as session:
             assert session.session is not None, "Session object should be created"
     except Exception as e:
         pytest.fail(f"Failed to start CkanCatSession: {str(e)}")
