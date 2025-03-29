@@ -18,14 +18,14 @@ def test_get_package_count():
             package_count = explorer.get_package_count()
 
             # Assert that we got a valid integer
-            assert isinstance(package_count, int), (
-                f"Expected integer package count, got {type(package_count)}"
-            )
+            assert isinstance(
+                package_count, int
+            ), f"Expected integer package count, got {type(package_count)}"
 
             # Assert that the count is positive
-            assert package_count > 0, (
-                f"Expected positive package count, got {package_count}"
-            )
+            assert (
+                package_count > 0
+            ), f"Expected positive package count, got {package_count}"
 
             logger.info(
                 f"Successfully retrieved package count for {cat_session.base_url}: {package_count} packages"

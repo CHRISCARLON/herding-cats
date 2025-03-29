@@ -18,9 +18,9 @@ def test_ckan_health_check():
             print(response)
 
             # Check status code
-            assert response.status_code == 200, (
-                f"Expected status code 200, but got {response.status_code}"
-            )
+            assert (
+                response.status_code == 200
+            ), f"Expected status code 200, but got {response.status_code}"
 
             # Check data is not empty
             data = response.json()
@@ -28,9 +28,9 @@ def test_ckan_health_check():
 
             # Additional check for 'success' key if your API returns it
             if "success" in data:
-                assert data["success"], (
-                    f"French Gouv returned success=False for {cat_session.base_url}"
-                )
+                assert data[
+                    "success"
+                ], f"French Gouv returned success=False for {cat_session.base_url}"
 
             logger.info(f"Health check passed for {cat_session.base_url}")
 

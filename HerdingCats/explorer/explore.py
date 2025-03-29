@@ -1587,12 +1587,12 @@ class ONSNomisCatExplorer:
     # ----------------------------
     # Explore the Nomis data catalogue
     # ----------------------------
-    def get_datasets(self) -> list[dict]:
+    def get_all_datasets(self) -> list[dict]:
         """
         Get all the datasets from the Nomis data catalogue
 
         Returns:
-            list: List of dictionaries containing dataset information
+            list: List of dictionaries containing dataset information (id and name)
         """
         url: str = self.cat_session.base_url + ONSNomisApiPaths.SHOW_DATASETS
         datasets = []
@@ -1629,6 +1629,12 @@ class ONSNomisCatExplorer:
     def get_dataset_info(self, dataset_id: str) -> dict:
         """
         Get the metadata for a specific dataset
+
+        Args:
+            dataset_id (str): The ID of the dataset to fetch
+
+        Returns:
+            dict: Dictionary containing dataset metadata
         """
         try:
             url: str = (
@@ -1641,10 +1647,20 @@ class ONSNomisCatExplorer:
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
-    def get_dataset_overview(self, dataset_id: str) -> dict:
+    def get_dataset_codelist(self, dataset_id: str) -> list:
         """
-        Get the metadata for a specific dataset
+        Get the codelist values for a specific dataset
+
+        Args:
+            dataset_id (str): The ID of the dataset to fetch
+
+        Returns:
+            list: List of codelist values
         """
+
+        # Final codelists values to return
+        codelist_values = []
+
         try:
             url: str = (
                 self.cat_session.base_url
@@ -1652,13 +1668,52 @@ class ONSNomisCatExplorer:
             )
             response = self.cat_session.session.get(url)
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+
+            structure = data.get("structure", {})
+            keyfamilies = structure.get("keyfamilies", {}).get("keyfamily", [])
+
+            if not isinstance(keyfamilies, list):
+                keyfamilies = [keyfamilies]
+
+            # Process each keyfamily
+            for keyfamily in keyfamilies:
+                components = keyfamily.get("components", {})
+
+                dimensions = components.get("dimension", [])
+                if not isinstance(dimensions, list):
+                    dimensions = [dimensions]
+
+                for dim in dimensions:
+                    if "codelist" in dim:
+                        codelist_values.append(dim.get("codelist"))
+
+                attributes = components.get("attribute", [])
+                if not isinstance(attributes, list):
+                    attributes = [attributes]
+
+                for attr in attributes:
+                    if "codelist" in attr:
+                        codelist_values.append(attr.get("codelist"))
+
+                time_dimension = components.get("timedimension", {})
+                if time_dimension and "codelist" in time_dimension:
+                    codelist_values.append(time_dimension.get("codelist"))
+
+            return codelist_values
+
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     def get_codelist_info(self, codelist_id: str) -> dict:
         """
         Get the metadata for a specific codelist
+
+        Args:
+            codelist_id (str): The ID of the codelist to fetch
+
+        Returns:
+            dict: Dictionary containing codelist metadata
         """
         try:
             url: str = (
@@ -1671,6 +1726,52 @@ class ONSNomisCatExplorer:
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
+    def get_geography_types_with_codes(self, data: Dict[str, Any]) -> Dict[str, List[int]]:
+        """
+        Extract all unique geography types and their corresponding value codes in one pass.
+        
+        Args:
+            data: A dictionary containing the structured data
+            
+        Returns:
+            A dictionary mapping geography types to their value codes
+        """
+        type_to_codes = {}
+        
+        try:
+            if 'structure' in data and 'codelists' in data['structure']:
+                codelists = data['structure']['codelists'].get('codelist', [])
+                
+                # Process each codelist
+                for codelist in codelists:
+                    # Get codes from the codelist
+                    codes = codelist.get('code', [])
+                    
+                    # Process each code
+                    for code in codes:
+                        if ('annotations' in code and 'annotation' in code['annotations'] and 'value' in code):
+                            annotations = code['annotations']['annotation']
+                            geography_type = None
+                            
+                            # Find the geography type in annotations
+                            for annotation in annotations:
+                                if annotation.get('annotationtitle') == 'TypeName':
+                                    geography_type = annotation.get('annotationtext')
+                                    break
+                            
+                            # If we found a geography type and have a value, add it to our mapping
+                            if geography_type and 'value' in code:
+                                if geography_type not in type_to_codes:
+                                    type_to_codes[geography_type] = []
+                                
+                                value_code = code['value']
+                                if value_code not in type_to_codes[geography_type]:
+                                    type_to_codes[geography_type].append(value_code)
+        except (KeyError, TypeError) as e:
+            print(f"Error processing data structure: {e}")
+        
+        return type_to_codes
+    
     # ----------------------------
     # Generate download URLs
     # ----------------------------
@@ -1699,7 +1800,7 @@ class ONSNomisCatExplorer:
         """
         base_url: str = (
             self.cat_session.base_url
-            + ONSNomisApiPaths.GENERATE_DATASET_DOWNLOAD_URL.format(dataset_id, "")
+            + ONSNomisApiPaths.GENERATE_LATEST_DATASET_DOWNLOAD_URL.format(dataset_id, "")
         )
 
         if geography_template:

@@ -2,19 +2,13 @@
 
 ## Breadcrumbs for next time
 
-<img width="995" alt="Screenshot 2025-03-06 at 16 38 25" src="https://github.com/user-attachments/assets/5a25b2a8-2177-49a9-a581-0103f5d3f82b" />
-
-Reduce code duplication in each of the catalogues data loaders...
-
-So...
-
-Implement a shared DataUploader trait/protocol for motherduck and aws s3 for all catalogues
-
-Implement a shared DataFrameLoader trait/protocol for all catalogues
+<img width="995" alt="Screenshot 2025-03-06 at 16 38 25" src="https://github.com/user-attachments/assets/5a25b2a8-2177-49a9-a581-0103f5d3f82b"/>
 
 ## Notes for implementing shared loaders behaviours
 
-Need to understand the structure of what we pass to the data loaders of each catalogues first
+Need to understand the data structure of what we pass to the data loaders from each catalogue first.
+
+We need a singular data type that is passed into the data loaders - not several!!
 
 ## CKAN Data
 
@@ -57,5 +51,3 @@ Need to understand the structure of what we pass to the data loaders of each cat
 ## Start to implement ONS Nomis API as a catalogue
 
 Started!
-
-## We need a singular data type that is passed into the data loaders
