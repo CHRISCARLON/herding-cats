@@ -41,10 +41,6 @@ from .config.sources import (
     FrenchGouvCatalogue,
     ONSNomisAPI,
 )
-from .config.codelists import (
-    ONSNomisGeographyTemplates,
-    ONSNomisCodelists,
-)
 
 # Error handling components
 from .errors.errors import (
@@ -72,8 +68,6 @@ __all__ = [
     "OpenDataSoftDataCatalogues",
     "FrenchGouvCatalogue",
     "ONSNomisAPI",
-    "ONSNomisGeographyTemplates",
-    "ONSNomisCodelists",
     # Errors
     "CatSessionError",
     "CatExplorerError",

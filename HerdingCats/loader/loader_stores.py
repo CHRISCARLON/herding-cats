@@ -386,6 +386,7 @@ class DataFrameLoaderTrait(Protocol):
         format_type: str,
         loader_type: Literal["pandas"],
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> PandasDataFrame: ...
 
     @overload
@@ -395,6 +396,7 @@ class DataFrameLoaderTrait(Protocol):
         format_type: str,
         loader_type: Literal["polars"],
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> PolarsDataFrame: ...
 
     def create_dataframe(
@@ -403,18 +405,19 @@ class DataFrameLoaderTrait(Protocol):
         format_type: str,
         loader_type: Literal["pandas", "polars"],
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> Union[PandasDataFrame, PolarsDataFrame]: ...
 
 
 class DataFrameLoader(DataFrameLoaderTrait):
     """DataFrame loading functionality with input validation."""
 
-    def get_sheet_names(self, data: bytes) -> list:
+    def get_sheet_names(self, data: BytesIO) -> list:
         """
         Get all sheet names from an Excel file.
 
         Args:
-            data (bytes): Excel file as bytes
+            data (BytesIO): Excel file as BytesIO
 
         Returns:
             list[str]: List of sheet names
@@ -423,8 +426,9 @@ class DataFrameLoader(DataFrameLoaderTrait):
             ValueError: If the file is not an Excel file
         """
         try:
-            with BytesIO(data) as buffer:
-                return pd.ExcelFile(buffer).sheet_names
+            # No need to create a new BytesIO object
+            data.seek(0)  # Ensure we're at the start of the stream
+            return pd.ExcelFile(data).sheet_names
         except Exception as e:
             logger.error(f"Failed to get sheet names: {str(e)}")
             raise ValueError("Could not read sheet names. Is this a valid Excel file?")
@@ -436,6 +440,7 @@ class DataFrameLoader(DataFrameLoaderTrait):
         format_type: str,
         loader_type: Literal["pandas"],
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> PandasDataFrame: ...
 
     @overload
@@ -445,6 +450,7 @@ class DataFrameLoader(DataFrameLoaderTrait):
         format_type: str,
         loader_type: Literal["polars"],
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> PolarsDataFrame: ...
 
     def create_dataframe(
@@ -453,6 +459,7 @@ class DataFrameLoader(DataFrameLoaderTrait):
         format_type: str,
         loader_type: Literal["pandas", "polars"],
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> Union[PandasDataFrame, PolarsDataFrame]:
         """Load data into specified DataFrame type."""
         try:
@@ -464,18 +471,40 @@ class DataFrameLoader(DataFrameLoaderTrait):
                     return pl.read_parquet(data)
 
                 case (("xls" | "xlsx" | "spreadsheet"), "pandas"):
-                    return (
-                        pd.read_excel(data, sheet_name=sheet_name)
-                        if sheet_name
-                        else pd.read_excel(data)
-                    )
+                    if skip_rows is not None:
+                        return (
+                            pd.read_excel(
+                                data, sheet_name=sheet_name, skiprows=skip_rows
+                            )
+                            if sheet_name
+                            else pd.read_excel(data, skiprows=skip_rows)
+                        )
+                    else:
+                        return (
+                            pd.read_excel(data, sheet_name=sheet_name)
+                            if sheet_name
+                            else pd.read_excel(data)
+                        )
 
                 case (("xls" | "xlsx" | "spreadsheet"), "polars"):
-                    return (
-                        pl.read_excel(data, sheet_name=sheet_name)
-                        if sheet_name
-                        else pl.read_excel(data)
-                    )
+                    if skip_rows is not None:
+                        return (
+                            pl.read_excel(
+                                data,
+                                sheet_name=sheet_name,
+                                read_options={"skip_rows": skip_rows},
+                            )
+                            if sheet_name
+                            else pl.read_excel(
+                                data, read_options={"skip_rows": skip_rows}
+                            )
+                        )
+                    else:
+                        return (
+                            pl.read_excel(data, sheet_name=sheet_name)
+                            if sheet_name
+                            else pl.read_excel(data)
+                        )
 
                 case ("json", "pandas"):
                     return pd.read_json(data)

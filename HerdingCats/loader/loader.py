@@ -55,7 +55,10 @@ class CkanLoader:
 
     @DataFrameLoader.validate_ckan_resource
     def polars_data_loader(
-        self, resource_data: List, sheet_name: Optional[str] = None
+        self,
+        resource_data: List,
+        sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> PolarsDataFrame:
         """
         Load a resource into a Polars DataFrame.
@@ -70,14 +73,15 @@ class CkanLoader:
             resource_data[0].lower(),
             sheet_name=sheet_name,
             loader_type="polars",
+            skip_rows=skip_rows,
         )
 
     @DataFrameLoader.validate_ckan_resource
     def pandas_data_loader(
         self,
         resource_data: List,
-        desired_format: Optional[str] = None,
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> PandasDataFrame:
         """Load a resource into a Pandas DataFrame."""
         binary_data = self._fetch_data(resource_data[1])
@@ -86,6 +90,7 @@ class CkanLoader:
             resource_data[0].lower(),
             sheet_name=sheet_name,
             loader_type="pandas",
+            skip_rows=skip_rows,
         )
 
     @S3Uploader.validate_ckan_resource
@@ -226,12 +231,13 @@ class OpenDataSoftLoader:
         format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
         api_key: Optional[str] = None,
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> pl.DataFrame:
         """Load data from a resource URL into a Polars DataFrame."""
         url = self._extract_resource_data(resource_data, format_type)
         binary_data = self._fetch_data(url, api_key)
         df = self.df_loader.create_dataframe(
-            binary_data, format_type, "polars", sheet_name
+            binary_data, format_type, "polars", sheet_name, skip_rows
         )
         self._verify_data(df, api_key)
         return df
@@ -243,12 +249,13 @@ class OpenDataSoftLoader:
         format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
         api_key: Optional[str] = None,
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> pd.DataFrame:
         """Load data from a resource URL into a Pandas DataFrame."""
         url = self._extract_resource_data(resource_data, format_type)
         binary_data = self._fetch_data(url, api_key)
         df = self.df_loader.create_dataframe(
-            binary_data, format_type, "pandas", sheet_name
+            binary_data, format_type, "pandas", sheet_name, skip_rows
         )
         self._verify_data(df, api_key)
         return df
@@ -403,12 +410,13 @@ class FrenchGouvLoader:
         format_type: Literal["csv", "parquet", "xls", "xlsx"],
         api_key: Optional[str] = None,
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> pl.DataFrame:
         """Load data from a resource URL into a Polars DataFrame."""
         url, title = self._extract_resource_data(resource_data, format_type)
         binary_data = self._fetch_data(url, api_key)
         df = self.df_loader.create_dataframe(
-            binary_data, format_type, "polars", sheet_name
+            binary_data, format_type, "polars", sheet_name, skip_rows
         )
         self._verify_data(df, api_key)
         return df
@@ -420,15 +428,13 @@ class FrenchGouvLoader:
         format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
         api_key: Optional[str] = None,
         sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> pd.DataFrame:
-        (
-            """Load data from a resource URL into a Pandas DataFrame."""
-            """Load data from a resource URL into a Polars DataFrame."""
-        )
+        """Load data from a resource URL into a Pandas DataFrame."""
         url, title = self._extract_resource_data(resource_data, format_type)
         binary_data = self._fetch_data(url, api_key)
         df = self.df_loader.create_dataframe(
-            binary_data, format_type, "pandas", sheet_name
+            binary_data, format_type, "pandas", sheet_name, skip_rows
         )
         self._verify_data(df, api_key)
         return df
@@ -513,19 +519,60 @@ class ONSNomisLoader:
             raise
 
     @DataFrameLoader.validate_ons_nomis_resource
-    def polars_data_loader(self, url: str) -> pl.DataFrame:
-        """Load data from a resource URL into a Polars DataFrame."""
+    def get_sheet_names(self, url: str) -> list[str]:
+        """Get all sheet names from an Excel file.
+
+        Args:
+            url: URL to the Excel file
+
+        Returns:
+            List of sheet names
+        """
         binary_data = self._fetch_data(url)
-        return self.df_loader.create_dataframe(binary_data, "xlsx", "polars")
+        return self.df_loader.get_sheet_names(binary_data)
+
+    @DataFrameLoader.validate_ons_nomis_resource
+    def polars_data_loader(
+        self,
+        url: str,
+        sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
+    ) -> pl.DataFrame:
+        """Load data from a resource URL into a Polars DataFrame.
+
+        Args:
+            url: URL to the Excel file
+            sheet_name: Name of the sheet to load
+            skip_rows: Number of rows to skip at the beginning of the sheet
+
+        Returns:
+            Polars DataFrame with the loaded data
+        """
+        binary_data = self._fetch_data(url)
+        return self.df_loader.create_dataframe(
+            binary_data, "xlsx", "polars", sheet_name=sheet_name, skip_rows=skip_rows
+        )
 
     @DataFrameLoader.validate_ons_nomis_resource
     def pandas_data_loader(
-        self, url: str, sheet_name: Optional[str] = None
+        self,
+        url: str,
+        sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
     ) -> pd.DataFrame:
-        """Load data from a resource URL into a Pandas DataFrame."""
+        """Load data from a resource URL into a Pandas DataFrame.
+
+        Args:
+            url: URL to the Excel file
+            sheet_name: Name of the sheet to load
+            skip_rows: Number of rows to skip at the beginning of the sheet
+
+        Returns:
+            Pandas DataFrame with the loaded data
+        """
         binary_data = self._fetch_data(url)
         return self.df_loader.create_dataframe(
-            binary_data, "xlsx", "pandas", sheet_name=sheet_name
+            binary_data, "xlsx", "pandas", sheet_name=sheet_name, skip_rows=skip_rows
         )
 
     @S3Uploader.validate_ons_nomis_resource

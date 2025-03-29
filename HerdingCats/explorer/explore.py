@@ -16,7 +16,6 @@ from ..config.source_endpoints import (
 )
 from ..errors.errors import CatExplorerError, WrongCatalogueError
 from ..session.session import CatSession, CatalogueType
-from ..config.codelists import ONSNomisGeographyTemplates
 
 # At the moment we have a lot of duplicate code between the explorers
 # TODO: Find a better way to do this
@@ -1647,6 +1646,9 @@ class ONSNomisCatExplorer:
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
+    # ----------------------------
+    # Get the codelists for a specific dataset and their values
+    # ----------------------------
     def get_dataset_codelist(self, dataset_id: str) -> list:
         """
         Get the codelist values for a specific dataset
@@ -1705,7 +1707,7 @@ class ONSNomisCatExplorer:
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
-    def get_codelist_info(self, codelist_id: str) -> dict:
+    def get_codelist_meta_info(self, codelist_id: str) -> dict:
         """
         Get the metadata for a specific codelist
 
@@ -1726,84 +1728,94 @@ class ONSNomisCatExplorer:
         except requests.RequestException as e:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
-    def get_geography_types_with_codes(self, data: Dict[str, Any]) -> Dict[str, List[int]]:
+    def get_codelist_values(self, data: Dict[str, Any]) -> Dict[str, List[int]]:
         """
         Extract all unique geography types and their corresponding value codes in one pass.
-        
+
         Args:
             data: A dictionary containing the structured data
-            
+
         Returns:
             A dictionary mapping geography types to their value codes
         """
         type_to_codes = {}
-        
+
         try:
-            if 'structure' in data and 'codelists' in data['structure']:
-                codelists = data['structure']['codelists'].get('codelist', [])
-                
+            if "structure" in data and "codelists" in data["structure"]:
+                codelists = data["structure"]["codelists"].get("codelist", [])
+
                 # Process each codelist
                 for codelist in codelists:
                     # Get codes from the codelist
-                    codes = codelist.get('code', [])
-                    
+                    codes = codelist.get("code", [])
+
                     # Process each code
                     for code in codes:
-                        if ('annotations' in code and 'annotation' in code['annotations'] and 'value' in code):
-                            annotations = code['annotations']['annotation']
+                        if (
+                            "annotations" in code
+                            and "annotation" in code["annotations"]
+                            and "value" in code
+                        ):
+                            annotations = code["annotations"]["annotation"]
                             geography_type = None
-                            
+
                             # Find the geography type in annotations
                             for annotation in annotations:
-                                if annotation.get('annotationtitle') == 'TypeName':
-                                    geography_type = annotation.get('annotationtext')
+                                if annotation.get("annotationtitle") == "TypeName":
+                                    geography_type = annotation.get("annotationtext")
                                     break
-                            
+
                             # If we found a geography type and have a value, add it to our mapping
-                            if geography_type and 'value' in code:
+                            if geography_type and "value" in code:
                                 if geography_type not in type_to_codes:
                                     type_to_codes[geography_type] = []
-                                
-                                value_code = code['value']
+
+                                value_code = code["value"]
                                 if value_code not in type_to_codes[geography_type]:
                                     type_to_codes[geography_type].append(value_code)
         except (KeyError, TypeError) as e:
             print(f"Error processing data structure: {e}")
-        
+
         return type_to_codes
-    
+
     # ----------------------------
     # Generate download URLs
     # ----------------------------
     def generate_full_dataset_download_url(
         self,
         dataset_id: str,
-        geography_template: ONSNomisGeographyTemplates | None = None,
+        geography_codes: List[int] | None = None,
     ) -> str:
         """
-        Generate a download URL for a specific dataset with optional geography template.
+        Generate a download URL for a specific dataset with optional geography codes or template.
 
         This will always download the latest data for the dataset.
 
         Args:
             dataset_id (str): The ID of the dataset to download
+            geography_codes (List[int], optional): List of geography codes to filter the data
             geography_template (ONSNomisGeographyTemplates, optional): Geography template to filter the data
+                                                                      (only used if geography_codes is None)
 
         Returns:
             str: The complete download URL
 
         Example:
+            >>> # Using geography codes list
             >>> explorer.generate_full_dataset_download_url(
             ...     "NM_2077_1",
-            ...     ONSNomisGeographyTemplates.LA_COUNTY_UNITARY_APR_23
+            ...     geography_codes=[2042626049, 2042626050, 2042626051]
             ... )
         """
         base_url: str = (
             self.cat_session.base_url
-            + ONSNomisApiPaths.GENERATE_LATEST_DATASET_DOWNLOAD_URL.format(dataset_id, "")
+            + ONSNomisApiPaths.GENERATE_LATEST_DATASET_DOWNLOAD_URL.format(
+                dataset_id, ""
+            )
         )
 
-        if geography_template:
-            base_url += ONSNomisQueryParams.GEOGRAPHY + geography_template.value
-
+        if geography_codes:
+            # Convert list of codes to comma-separated string and add to URL
+            geo_codes_str = ",".join(map(str, geography_codes))
+            base_url += ONSNomisQueryParams.GEOGRAPHY + geo_codes_str
         return base_url

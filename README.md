@@ -15,7 +15,7 @@ This will improve and speed up how users:
 - Find the data that they need
 - Get that data into a format and/or location for further analysis
 
-TBC...
+**PyPi package coming soon.**
 
 ```bash
 pip install HerdingCats
@@ -185,11 +185,12 @@ if __name__ == "__main__":
 
 ##### Methods Nomis
 
-1. `get_datasets()`: Returns a list of all available datasets
+1. `get_all_datasets()`: Returns a list of all available datasets
 2. `get_dataset_info(dataset_id: str)`: Returns metadata for a specific dataset
-3. `get_dataset_overview(dataset_id: str)`: Returns an overview of a specific dataset
-4. `get_codelist_info(codelist_id: str)`: Returns metadata for a specific codelist
-5. `generate_full_dataset_download_url(dataset_id: str, geography_template: ONSNomisGeographyTemplates | None = None)`: Generates a full dataset download URL
+3. `get_dataset_codelist(dataset_id: str)`: Returns a list of codelists for a specific dataset
+4. `get_codelist_meta_info(codelist_id: str)`: Returns metadata for a specific codelist
+5. `get_codelist_values(data: Dict[str, Any])`: Returns a dictionary of codelist values for a specific codelist
+6. `generate_full_dataset_download_url(dataset_id: str, geography_codes: List[int] | None = None)`: Generates a full dataset download URL with an optional list of geography codes to filter the data via query parameters
 
 ### Resource Loaders
 
@@ -292,21 +293,39 @@ if __name__ == "__main__":
 
 ```python
 import HerdingCats as hc
+from loguru import logger
 
 def main():
     with hc.CatSession(hc.ONSNomisAPI.ONS_NOMI) as session:
         explore = hc.ONSNomisCatExplorer(session)
         loader = hc.ONSNomisLoader()
-        data = explore.get_dataset_overview("NM_57_1")
-        print(data)
 
-        url = explore.generate_full_dataset_download_url("NM_57_1", hc.ONSNomisGeographyTemplates.LA_COUNTY_UNITARY_APR_23)
-        print(url)
+        # Get codelist for a dataset
+        codelist = explore.get_dataset_codelist("NM_2_1")
+        codelist = explore.get_codelist_meta_info(codelist[0])
+        geo_types_with_codes = explore.get_codelist_values(codelist)
 
-        df = loader.polars_data_loader(url)
-        print(df)
+        # Generate download URL with these codes
+        download_url = None
 
-        loader.upload_data(url, "test-herding-cats", "test-herding-cats-nomis", "raw", "local")
+        # Check if "unitary authority areas" is in the geo_types_with_codes dictionary
+        if "unitary authority areas" in geo_types_with_codes:
+            unitary_authority_codes = geo_types_with_codes["unitary authority areas"]
+
+            # Generate download URL with these codes
+            download_url = explore.generate_full_dataset_download_url(
+                "NM_2_1",
+                geography_codes=unitary_authority_codes
+            )
+            logger.info(f"Download URL: {download_url}")
+
+        # Download the data
+        data = loader.get_sheet_names(download_url)
+        logger.info(f"Data: {data}")
+
+        # Load the data
+        data = loader.polars_data_loader(download_url, sheet_name="Sheet 1", skip_rows=9)
+        logger.info(f"Data: {data}")
 
 if __name__ =="__main__":
     main()
