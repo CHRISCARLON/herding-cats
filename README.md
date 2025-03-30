@@ -1,5 +1,8 @@
-# HerdingCATs 🐈‍⬛
+# HerdingCATs
 
+<img width="642" alt="Screenshot 2025-03-30 at 00 02 11" src="https://github.com/user-attachments/assets/bf8d1a20-0b60-4bc5-88f8-f7bba77f626d" />
+
+---
 > [!NOTE]  
 > Version 0.1.0 PyPi coming soon.
 
@@ -30,7 +33,9 @@ poetry add HerdingCats
 ---
 
 > [!NOTE]
-> Herding-CATs is currently under active development. Features may change as the project evolves.
+> Herding-CATs is currently under active development.
+>
+> Features may change as the project evolves.
 >
 > Due to slight variations in how organisations set up and deploy their opendata catalogues, methods may not work 100% of the time for all catalogues.
 >
