@@ -1,6 +1,6 @@
 # HerdingCATs
 
-<img width="642" alt="Screenshot 2025-03-30 at 00 02 11" src="https://github.com/user-attachments/assets/bf8d1a20-0b60-4bc5-88f8-f7bba77f626d" />
+![ChatGPT Image Mar 30, 2025 at 04_45_56 PM](https://github.com/user-attachments/assets/e35c19ab-ec20-4caa-b05a-0a04ff1b44de)
 
 ---
 > [!NOTE]  
@@ -10,12 +10,14 @@
 
 ## Purpose
 
-**The aim of this project is simple: create a basic Python library to explore and interact with open data sources**.
+It can often feel like your herding cats when working with open data sources/catalogues.
 
-This will improve and speed up how users:
+**The aim of this project is simple...**
 
-- Navigate open data catalogues
-- Find the data that they need
+Speed up how data analysts explore and interact with open data sources.
+
+- Navigate the open data ecosystem
+- Find the data that you need
 - Get that data into a format and/or location for further analysis
 
 **PyPi package coming soon.**
