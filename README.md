@@ -10,8 +10,6 @@
 
 ## Purpose
 
-It can often feel like your herding cats when working with open data sources/catalogues.
-
 **The aim of this project is simple...**
 
 Speed up how data analysts explore and interact with open data sources.
