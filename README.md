@@ -37,7 +37,7 @@ poetry add HerdingCats
 >
 > Features may change as the project evolves.
 >
-> Due to slight variations in how organisations set up and deploy their opendata catalogues, methods may not work 100% of the time for all catalogues.
+> Due to slight variations in how organisations set up and deploy their open data catalogues, methods may not work 100% of the time for all catalogues.
 >
 > We will do our best to ensure that most methods work across all catalogues and that a good variety of data catalogues is present.
 
