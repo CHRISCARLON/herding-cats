@@ -1,4 +1,7 @@
 # HerdingCATs 🐈‍⬛
+[![codecov](https://codecov.io/gh/CHRISCARLON/Herding-CATs/graph/badge.svg?token=Y9Z0QA39S3)](https://codecov.io/gh/CHRISCARLON/Herding-CATs)
+
+Documentation📚 => [HERE](https://chriscarlon.github.io/herding-cats/)
 
 > [!NOTE]  
 > Version 0.1.0 PyPi coming soon.
@@ -11,9 +14,7 @@
 >
 > We will do our best to ensure that most methods work across all catalogues and that a good variety of data catalogues is present.
 
-[![codecov](https://codecov.io/gh/CHRISCARLON/Herding-CATs/graph/badge.svg?token=Y9Z0QA39S3)](https://codecov.io/gh/CHRISCARLON/Herding-CATs)
-
-## Purpose
+---
 
 **The aim of this project is simple...**
 
@@ -22,8 +23,6 @@ Speed up how data analysts explore and interact with open data sources.
 - Navigate the open data ecosystem
 - Find the data that you need
 - Get that data into a format and/or location for further analysis
-
-Documentation: [HERE](https://chriscarlon.github.io/herding-cats/)
 
 **PyPi package coming soon.**
 
