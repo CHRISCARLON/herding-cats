@@ -1,6 +1,6 @@
 # HerdingCATs
 
-![ChatGPT Image Mar 30, 2025 at 04_45_56 PM](https://github.com/user-attachments/assets/e35c19ab-ec20-4caa-b05a-0a04ff1b44de)
+![0a77a7f1-46ca-4c37-a417-d0aec7e1bb1a](https://github.com/user-attachments/assets/6e5ee430-eac7-475a-a707-a26cbec335c7)
 
 ---
 > [!NOTE]  
