@@ -1,0 +1,24 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" fill-rule="evenodd">
+    <circle fill="#3776AB" cx="100" cy="100" r="90"/>
+    <!-- Cat ears -->
+    <path d="M60 40 L100 90 L50 90 Z" fill="#3776AB"/>
+    <path d="M140 40 L100 90 L150 90 Z" fill="#3776AB"/>
+    <!-- Cat face -->
+    <circle fill="white" cx="100" cy="110" r="60"/>
+    <!-- Cat eyes -->
+    <circle fill="#000" cx="75" cy="100" r="10"/>
+    <circle fill="#000" cx="125" cy="100" r="10"/>
+    <!-- Cat nose -->
+    <circle fill="#FF9999" cx="100" cy="120" r="5"/>
+    <!-- Cat whiskers -->
+    <line x1="105" y1="120" x2="150" y2="110" stroke="#000" stroke-width="2"/>
+    <line x1="105" y1="120" x2="150" y2="120" stroke="#000" stroke-width="2"/>
+    <line x1="105" y1="120" x2="150" y2="130" stroke="#000" stroke-width="2"/>
+    <line x1="95" y1="120" x2="50" y2="110" stroke="#000" stroke-width="2"/>
+    <line x1="95" y1="120" x2="50" y2="120" stroke="#000" stroke-width="2"/>
+    <line x1="95" y1="120" x2="50" y2="130" stroke="#000" stroke-width="2"/>
+    <!-- Cat mouth -->
+    <path d="M90 130 Q100 140 110 130" stroke="#000" stroke-width="2" fill="none"/>
+  </g>
+</svg>

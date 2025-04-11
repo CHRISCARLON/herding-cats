@@ -1,0 +1,120 @@
+import { themes as prismThemes } from "prism-react-renderer";
+import type { Config } from "@docusaurus/types";
+import type * as Preset from "@docusaurus/preset-classic";
+
+// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+
+const config: Config = {
+  title: "Herding Cats",
+  tagline:
+    "A project to speed up how data analysts explore and interact with open data sources",
+  favicon: "img/cat-silhouette.png",
+
+  // Set the production url of your site here
+  url: "https://chriscarlon.github.io",
+  // Set the /<baseUrl>/ pathname under which your site is served
+  // For GitHub pages deployment, it is often '/<projectName>/'
+  baseUrl: "/herding-cats/",
+
+  // GitHub pages deployment config.
+  // If you aren't using GitHub pages, you don't need these.
+  organizationName: "chriscarlon", // Usually your GitHub org/user name.
+  projectName: "herding-cats", // Usually your repo name.
+
+  onBrokenLinks: "throw",
+  onBrokenMarkdownLinks: "warn",
+
+  // Even if you don't use internationalization, you can use this field to set
+  // useful metadata like html lang. For example, if your site is Chinese, you
+  // may want to replace "en" with "zh-Hans".
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en"],
+  },
+
+  presets: [
+    [
+      "classic",
+      {
+        docs: {
+          sidebarPath: "./sidebars.ts",
+        },
+        blog: false,
+        theme: {
+          customCss: "./src/css/custom.css",
+        },
+      } satisfies Preset.Options,
+    ],
+  ],
+
+  themeConfig: {
+    // Replace with your project's social card
+    image: "img/docusaurus-social-card.jpg",
+    // Force dark mode and disable switching
+    colorMode: {
+      defaultMode: "dark",
+      disableSwitch: true,
+      respectPrefersColorScheme: false,
+    },
+    navbar: {
+      title: "Herding Cats",
+      logo: {
+        alt: "Cat Silhouette",
+        src: "img/cat-silhouette.png",
+        width: 32,
+        height: 32,
+      },
+      items: [
+        {
+          type: "docSidebar",
+          sidebarId: "tutorialSidebar",
+          position: "left",
+          label: "Documentation 📚",
+        },
+        {
+          href: "https://github.com/chriscarlon/herding-cats",
+          label: "GitHub",
+          position: "right",
+        },
+      ],
+    },
+    footer: {
+      style: "dark",
+      links: [
+        {
+          title: "Docs 📚",
+          items: [
+            {
+              label: "Documentation",
+              to: "/docs/intro",
+            },
+          ],
+        },
+        {
+          title: "Community 💻",
+          items: [
+            {
+              label: "GitHub",
+              href: "https://github.com/chriscarlon/herding-cats",
+            },
+          ],
+        },
+        {
+          title: "More 🔍",
+          items: [
+            {
+              label: "GitHub",
+              href: "https://github.com/chriscarlon/herding-cats",
+            },
+          ],
+        },
+      ],
+    },
+    prism: {
+      theme: prismThemes.dracula,
+      darkTheme: prismThemes.dracula,
+    },
+  } satisfies Preset.ThemeConfig,
+};
+
+export default config;
