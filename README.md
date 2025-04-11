@@ -23,7 +23,7 @@ Speed up how data analysts explore and interact with open data sources.
 - Find the data that you need
 - Get that data into a format and/or location for further analysis
 
-Documentation: [HERE](https://chriscarlon.github.io/Herding-CATs/)
+Documentation: [HERE](https://chriscarlon.github.io/herding-cats/)
 
 **PyPi package coming soon.**
 
