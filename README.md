@@ -1,8 +1,5 @@
-# HerdingCATs
+# HerdingCATs 🐈‍⬛
 
-![0a77a7f1-46ca-4c37-a417-d0aec7e1bb1a](https://github.com/user-attachments/assets/6e5ee430-eac7-475a-a707-a26cbec335c7)
-
----
 > [!NOTE]  
 > Version 0.1.0 PyPi coming soon.
 
