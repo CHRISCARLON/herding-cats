@@ -156,5 +156,5 @@ Check out the following sections to learn more:
 - [CKAN Explorer Guide](./explorers/ckan) - Learn about CKAN data exploration
 - [OpenDataSoft Explorer Guide](./explorers/opendatasoft) - Learn about OpenDataSoft data exploration
 - [French Gouv Explorer Guide](./explorers/frenchgouv) - Learn about French Gouv data exploration
-- [ONS Nomis Explorer Guide](./explorers/onsnomis) - Learn about ONS Nomis data exploration
+- [ONS Nomis Explorer Guide](./explorers/nomis) - Learn about ONS Nomis data exploration
 - [Data Loaders](./loaders) - Learn about all data loading options

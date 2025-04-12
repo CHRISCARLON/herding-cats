@@ -90,81 +90,72 @@ function CodeExample() {
       {"\n\n"}
       <span style={{ color: "#ff79c6" }}>def</span>{" "}
       <span style={{ color: "#50fa7b" }}>main</span>():
-      {"\n"}
-      <span style={{ color: "#f8f8f2", marginLeft: "20px" }}>
-        <span style={{ color: "#6272a4" }}>
-          # Create a session with a predefined catalogue
-        </span>
-        {"\n"}
-        <span style={{ color: "#ff79c6" }}>with</span>{" "}
-        <span style={{ color: "#8be9fd" }}>hc</span>.
-        <span style={{ color: "#50fa7b" }}>CatSession</span>(
-        <span style={{ color: "#8be9fd" }}>hc</span>.
-        <span style={{ color: "#f1fa8c" }}>CkanDataCatalogues</span>.
-        <span style={{ color: "#bd93f9" }}>LONDON_DATA_STORE</span>)
-        <span style={{ color: "#ff79c6" }}>as</span>{" "}
-        <span style={{ color: "#f8f8f2" }}>session</span>:{"\n"}
-        <span style={{ marginLeft: "20px" }}>
-          <span style={{ color: "#6272a4" }}>
-            # Create an explorer for the catalogue
-          </span>
-          {"\n"}
-          <span style={{ color: "#f8f8f2" }}>explorer</span> ={" "}
-          <span style={{ color: "#8be9fd" }}>hc</span>.
-          <span style={{ color: "#50fa7b" }}>CkanCatExplorer</span>(
-          <span style={{ color: "#f8f8f2" }}>session</span>){"\n\n"}
-          <span style={{ color: "#6272a4" }}># Create a data loader</span>
-          {"\n"}
-          <span style={{ color: "#f8f8f2" }}>data_loader</span> ={" "}
-          <span style={{ color: "#8be9fd" }}>hc</span>.
-          <span style={{ color: "#50fa7b" }}>CkanLoader</span>()
-          {"\n\n"}
-          <span style={{ color: "#6272a4" }}># Check the catalogue health</span>
-          {"\n"}
-          <span style={{ color: "#f8f8f2" }}>package</span> ={" "}
-          <span style={{ color: "#f8f8f2" }}>explorer</span>.
-          <span style={{ color: "#50fa7b" }}>show_package_info</span>(
-          <span style={{ color: "#f1fa8c" }}>"use-of-force"</span>){"\n\n"}
-          <span style={{ color: "#6272a4" }}># Extract the resource URLs</span>
-          {"\n"}
-          <span style={{ color: "#f8f8f2" }}>extracted_data</span> ={" "}
-          <span style={{ color: "#f8f8f2" }}>explorer</span>.
-          <span style={{ color: "#50fa7b" }}>extract_resource_url</span>(
-          <span style={{ color: "#f8f8f2" }}>package</span>){"\n\n"}
-          <span style={{ color: "#6272a4" }}>
-            # Take the 8th resource from the list
-          </span>
-          {"\n"}
-          <span style={{ color: "#f8f8f2" }}>data_to_load</span> ={" "}
-          <span style={{ color: "#f8f8f2" }}>extracted_data</span>[
-          <span style={{ color: "#bd93f9" }}>7</span>]{"\n\n"}
-          <span style={{ color: "#6272a4" }}># Upload the data to AWS S3</span>
-          {"\n"}
-          <span style={{ color: "#6272a4" }}>
-            # This uses the "raw" but you can specify "parquet" as well
-          </span>
-          {"\n"}
-          <span style={{ color: "#f8f8f2" }}>data_loader</span>.
-          <span style={{ color: "#50fa7b" }}>upload_data</span>({"\n"}
-          <span style={{ marginLeft: "20px" }}>
-            <span style={{ color: "#f8f8f2" }}>data_to_load</span>,{"\n"}
-            <span style={{ color: "#f1fa8c" }}>"your-bucket-name"</span>,{"\n"}
-            <span style={{ color: "#f1fa8c" }}>"your-custom-name"</span>,{"\n"}
-            <span style={{ color: "#f1fa8c" }}>"raw"</span>
-            {"\n"}
-            <span style={{ color: "#f1fa8c" }}>"s3"</span>
-            {"\n"}
-          </span>
-          )
-        </span>
+      {"\n    "}
+      <span style={{ color: "#6272a4" }}>
+        # Create a session with a predefined catalogue
       </span>
-      {"\n\n"}
+      {"\n    "}
+      <span style={{ color: "#ff79c6" }}>with</span>{" "}
+      <span style={{ color: "#8be9fd" }}>hc</span>.
+      <span style={{ color: "#50fa7b" }}>CatSession</span>(
+      <span style={{ color: "#8be9fd" }}>hc</span>.
+      <span style={{ color: "#f1fa8c" }}>CkanDataCatalogues</span>.
+      <span style={{ color: "#bd93f9" }}>LONDON_DATA_STORE</span>)
+      <span style={{ color: "#ff79c6" }}>as</span>{" "}
+      <span style={{ color: "#f8f8f2" }}>session</span>:{"\n        "}
+      <span style={{ color: "#6272a4" }}>
+        # Create an explorer for the catalogue
+      </span>
+      {"\n        "}
+      <span style={{ color: "#f8f8f2" }}>explorer</span> ={" "}
+      <span style={{ color: "#8be9fd" }}>hc</span>.
+      <span style={{ color: "#50fa7b" }}>CkanCatExplorer</span>(
+      <span style={{ color: "#f8f8f2" }}>session</span>){"\n\n        "}
+      <span style={{ color: "#6272a4" }}># Create a data loader</span>
+      {"\n        "}
+      <span style={{ color: "#f8f8f2" }}>data_loader</span> ={" "}
+      <span style={{ color: "#8be9fd" }}>hc</span>.
+      <span style={{ color: "#50fa7b" }}>CkanLoader</span>()
+      {"\n\n        "}
+      <span style={{ color: "#6272a4" }}># Check the catalogue health</span>
+      {"\n        "}
+      <span style={{ color: "#f8f8f2" }}>package</span> ={" "}
+      <span style={{ color: "#f8f8f2" }}>explorer</span>.
+      <span style={{ color: "#50fa7b" }}>show_package_info</span>(
+      <span style={{ color: "#f1fa8c" }}>"use-of-force"</span>){"\n\n        "}
+      <span style={{ color: "#6272a4" }}># Extract the resource URLs</span>
+      {"\n        "}
+      <span style={{ color: "#f8f8f2" }}>extracted_data</span> ={" "}
+      <span style={{ color: "#f8f8f2" }}>explorer</span>.
+      <span style={{ color: "#50fa7b" }}>extract_resource_url</span>(
+      <span style={{ color: "#f8f8f2" }}>package</span>){"\n\n        "}
+      <span style={{ color: "#6272a4" }}>
+        # Take the 8th resource from the list
+      </span>
+      {"\n        "}
+      <span style={{ color: "#f8f8f2" }}>data_to_load</span> ={" "}
+      <span style={{ color: "#f8f8f2" }}>extracted_data</span>[
+      <span style={{ color: "#bd93f9" }}>7</span>]{"\n\n        "}
+      <span style={{ color: "#6272a4" }}># Upload the data to AWS S3</span>
+      {"\n        "}
+      <span style={{ color: "#6272a4" }}>
+        # This uses the "raw" but you can specify "parquet" as well
+      </span>
+      {"\n        "}
+      <span style={{ color: "#f8f8f2" }}>data_loader</span>.
+      <span style={{ color: "#50fa7b" }}>upload_data</span>({"\n            "}
+      <span style={{ color: "#f8f8f2" }}>data_to_load</span>,{"\n            "}
+      <span style={{ color: "#f1fa8c" }}>"your-bucket-name"</span>,
+      {"\n            "}
+      <span style={{ color: "#f1fa8c" }}>"your-custom-name"</span>,
+      {"\n            "}
+      <span style={{ color: "#f1fa8c" }}>"raw"</span>,{"\n            "}
+      <span style={{ color: "#f1fa8c" }}>"s3"</span>
+      {"\n        "}){"\n\n"}
       <span style={{ color: "#ff79c6" }}>if</span>{" "}
       <span style={{ color: "#f8f8f2" }}>__name__</span> =={" "}
-      <span style={{ color: "#f1fa8c" }}>"__main__"</span>:{"\n"}
-      <span style={{ marginLeft: "20px" }}>
-        <span style={{ color: "#50fa7b" }}>main</span>()
-      </span>
+      <span style={{ color: "#f1fa8c" }}>"__main__"</span>:{"\n    "}
+      <span style={{ color: "#50fa7b" }}>main</span>()
     </>
   );
 
