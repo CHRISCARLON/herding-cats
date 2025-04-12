@@ -97,6 +97,11 @@ HerdingCATs supports the following data sources by default:
 
 HerdingCATs is designed to be extensible. If you have a custom data catalogue you would like to connect to, you can:
 
-1. Create a custom session using the base URL
-2. Use the appropriate explorer for the catalogue type (CKAN, OpenDataSoft, etc.)
+1. Raise an issue on the [GitHub repository](https://github.com/chriscarlon/herding-cats/issues)
+2. Submit a pull request with your changes (you'll have to extend the `CatSession` class enum)
+
+The reason for this is sometimes I like to check that a catalogue is working well with the library before committing to using it in the project.
+
+However, the plan is to allow users to add their own catalogues with just a URL and a few other details in the future.
+
 </div>
