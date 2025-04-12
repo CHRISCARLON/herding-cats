@@ -27,8 +27,11 @@ import polars as pl
 from pandas.core.frame import DataFrame as PandasDataFrame
 from polars.dataframe.frame import DataFrame as PolarsDataFrame
 
+from enum import IntEnum
+
 # We can use protocols to define the methods that implementations must implement
 # This is useful for having a more reusable pattern for defining shared behaviours
+# TODO: Add enums for the other validation methods
 
 # Use this type for the generic type parameter of the Traits below
 T = TypeVar("T")
@@ -125,13 +128,29 @@ class S3Uploader(StorageTrait):
     @staticmethod
     def validate_ckan_resource(func: Callable[..., T]) -> Callable[..., T]:
         """
-        Decorator to validate CKAN resource data.
-        Handles both single resource lists and lists of resource lists.
-
-        Format expected:
-        - Single list: [name, date, format, url]
+        Decorator to validate CKAN resource data and transform it into a simplified format.
+        
+        This decorator:
+        1. Validates the structure of the resource data
+        2. Handles both single resources and lists of resources
+        3. Extracts and validates the format and URL using ResourceIndex enum
+        4. Transforms the input into a simplified [format, url] list
+        
+        Input formats expected:
+        - Single list: [name, date, format, url] indexed by ResourceIndex
         - List of lists: [[name, date, format, url], [...], ...]
+        
+        Output:
+        - Simplified list: [format, url] that's passed to the decorated function
+        
+        This ensures all loader functions receive resource data in a consistent format.
         """
+
+        class ResourceIndex(IntEnum):
+            NAME = 0
+            DATE = 1
+            FORMAT = 2
+            URL = 3
 
         @wraps(func)
         def wrapper(
@@ -152,14 +171,14 @@ class S3Uploader(StorageTrait):
                     # Find the resource with matching format
                     target_resource = next(
                         (
-                            res
-                            for res in resource_data
-                            if res[2].lower() == desired_format.lower()
+                            resource
+                            for resource in resource_data
+                            if resource[ResourceIndex.FORMAT].lower() == desired_format.lower()
                         ),
                         None,
                     )
                     if not target_resource:
-                        available_formats = [res[2] for res in resource_data]
+                        available_formats = [resource[ResourceIndex.FORMAT] for resource in resource_data]
                         logger.error(f"No resource found with format: {desired_format}")
                         raise ValueError(
                             f"No resource with format '{desired_format}' found. "
@@ -173,22 +192,22 @@ class S3Uploader(StorageTrait):
                 target_resource = resource_data
 
             # Validate the resource has all required elements
-            if len(target_resource) < 4:
+            if len(target_resource) <= ResourceIndex.URL:
                 logger.error(
-                    "Invalid resource format: resource must have at least 4 elements"
+                    f"Invalid resource format: resource must have at least {ResourceIndex.URL + 1} elements"
                 )
-                raise ValueError("Resource must contain at least 4 elements")
+                raise ValueError(f"Resource must contain at least {ResourceIndex.URL + 1} elements")
 
-            # Extract format and URL from their positions
-            format_type = target_resource[2].lower()
-            url = target_resource[3]
+            # Extract format and URL using the enum
+            format_type = target_resource[ResourceIndex.FORMAT].lower()
+            url = target_resource[ResourceIndex.URL]
 
             # Validate URL format
             if not url.startswith(("http://", "https://")):
                 logger.error(f"Invalid URL format: {url}")
                 raise ValueError("Invalid URL format")
 
-            # Create the modified resource in the expected format
+            # Create the modified resource in the expected format (still simplified)
             modified_resource = [format_type, url]
             logger.info(
                 f"You're currently working with this resource {modified_resource}"
@@ -529,13 +548,29 @@ class DataFrameLoader(DataFrameLoaderTrait):
     @staticmethod
     def validate_ckan_resource(func: Callable[..., T]) -> Callable[..., T]:
         """
-        Decorator to validate CKAN resource data.
-        Handles both single resource lists and lists of resource lists.
-
-        Format expected:
-        - Single list: [name, date, format, url]
+        Decorator to validate CKAN resource data and transform it into a simplified format.
+        
+        This decorator:
+        1. Validates the structure of the resource data
+        2. Handles both single resources and lists of resources
+        3. Extracts and validates the format and URL using ResourceIndex enum
+        4. Transforms the input into a simplified [format, url] list
+        
+        Input formats expected:
+        - Single list: [name, date, format, url] indexed by ResourceIndex
         - List of lists: [[name, date, format, url], [...], ...]
+        
+        Output:
+        - Simplified list: [format, url] that's passed to the decorated function
+        
+        This ensures all loader functions receive resource data in a consistent format.
         """
+
+        class ResourceIndex(IntEnum):
+            NAME = 0
+            DATE = 1
+            FORMAT = 2
+            URL = 3
 
         @wraps(func)
         def wrapper(
@@ -556,14 +591,14 @@ class DataFrameLoader(DataFrameLoaderTrait):
                     # Find the resource with matching format
                     target_resource = next(
                         (
-                            res
-                            for res in resource_data
-                            if res[2].lower() == desired_format.lower()
+                            resource
+                            for resource in resource_data
+                            if resource[ResourceIndex.FORMAT].lower() == desired_format.lower()
                         ),
                         None,
                     )
                     if not target_resource:
-                        available_formats = [res[2] for res in resource_data]
+                        available_formats = [resource[ResourceIndex.FORMAT] for resource in resource_data]
                         logger.error(f"No resource found with format: {desired_format}")
                         raise ValueError(
                             f"No resource with format '{desired_format}' found. "
@@ -577,22 +612,22 @@ class DataFrameLoader(DataFrameLoaderTrait):
                 target_resource = resource_data
 
             # Validate the resource has all required elements
-            if len(target_resource) < 4:
+            if len(target_resource) <= ResourceIndex.URL:
                 logger.error(
-                    "Invalid resource format: resource must have at least 4 elements"
+                    f"Invalid resource format: resource must have at least {ResourceIndex.URL + 1} elements"
                 )
-                raise ValueError("Resource must contain at least 4 elements")
+                raise ValueError(f"Resource must contain at least {ResourceIndex.URL + 1} elements")
 
-            # Extract format and URL from their positions
-            format_type = target_resource[2].lower()
-            url = target_resource[3]
+            # Extract format and URL using the enum
+            format_type = target_resource[ResourceIndex.FORMAT].lower()
+            url = target_resource[ResourceIndex.URL]
 
             # Validate URL format
             if not url.startswith(("http://", "https://")):
                 logger.error(f"Invalid URL format: {url}")
                 raise ValueError("Invalid URL format")
 
-            # Create the modified resource in the expected format
+            # Create the modified resource in the expected format (still simplified)
             modified_resource = [format_type, url]
             logger.info(
                 f"You're currently working with this resource {modified_resource}"

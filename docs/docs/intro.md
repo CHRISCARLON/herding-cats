@@ -12,20 +12,24 @@ The aim of this project is simple:
 
 - **Navigate** the open data ecosystem
 - **Find** the data that you need
-- **Get** that data into a format and/or location for further analysis
+- **Load** that data into a format and/or location for further analysis
 
 ## Installation
 
-**PyPi package coming soon.** Once available, you can install with:
+**PyPi package coming soon.**
+
+Once available, you can install with:
 
 ```bash
 pip install HerdingCats
 ```
 
-or if you're using Poetry:
-
 ```bash
 poetry add HerdingCats
+```
+
+```bash
+uv add HerdingCats
 ```
 
 ## Important Notes
@@ -38,16 +42,20 @@ Features will change as the project evolves.
 
 HerdingCATs follows a **Session → Explorer → Loader** pattern:
 
-1. Create a session to connect to a data catalogue
-2. Use an explorer to browse and find datasets
-3. Use a loader to convert data to your preferred format
+1. Create a session to connect to an open data source.
+2. Use an explorer to browse and find the data you need.
+3. Use a loader to load the data into your preferred format and/or location.
 
-## Supported Data Catalogues
+## Supported Data Sources
 
-HerdingCATs supports multiple data catalogue types:
+HerdingCATs supports multiple open data sources:
 
-- **CKAN** - The most widely used open data platform
-- **OpenDataSoft** - Popular in Europe, especially for energy data
-- **Bespoke APIs** - Including French Government Data and ONS Nomis
+- **CKAN** - Widely used for open data catalogues
+- **OpenDataSoft** - Popular in Europe, especially for energy related data catalogues
+- **Bespoke APIs** - Including French Government open data and ONS Nomis
 
 See the [Supported Catalogues](./catalogues) page for a complete list.
+
+More sources are being added all the time.
+
+If you need a data source that is not listed, please [raise an issue](https://github.com/chriscarlon/herding-cats/issues).

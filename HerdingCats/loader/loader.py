@@ -18,7 +18,6 @@ from loguru import logger
 # TODO: Start building proper data loader stores for different formats and locations
 # TODO: further harmonise how the loader deal with the input data
 
-
 # START TO WRANGLE / ANALYSE
 # LOAD CKAN DATA RESOURCES INTO STORAGE
 class CkanLoader:
@@ -54,6 +53,22 @@ class CkanLoader:
             raise
 
     @DataFrameLoader.validate_ckan_resource
+    def get_sheet_names(self, resource_data: List) -> list[str]:
+        """
+        Get all sheet names from an Excel file.
+        
+        Args:
+            resource_data: List of resources or single resource
+
+        Returns:
+            List of sheet names
+        """
+        if resource_data[0] != "spreadsheet":
+            raise ValueError("Resource is not an Excel file")
+        binary_data = self._fetch_data(resource_data[1])
+        return self.df_loader.get_sheet_names(binary_data)
+
+    @DataFrameLoader.validate_ckan_resource
     def polars_data_loader(
         self,
         resource_data: List,
@@ -66,6 +81,10 @@ class CkanLoader:
         Args:
             resource_data: List of resources or single resource
             sheet_name: Optional sheet name for Excel files
+            skip_rows: Optional number of rows to skip at the beginning of the sheet
+
+        Returns:
+            Polars DataFrame with the loaded data
         """
         binary_data = self._fetch_data(resource_data[1])
         return self.df_loader.create_dataframe(
@@ -83,7 +102,14 @@ class CkanLoader:
         sheet_name: Optional[str] = None,
         skip_rows: Optional[int] = None,
     ) -> PandasDataFrame:
-        """Load a resource into a Pandas DataFrame."""
+        """
+        Load a resource into a Pandas DataFrame.
+
+        Args:
+            resource_data: List of resources or single resource
+            sheet_name: Optional sheet name for Excel files
+            skip_rows: Optional number of rows to skip at the beginning of the sheet
+        """
         binary_data = self._fetch_data(resource_data[1])
         return self.df_loader.create_dataframe(
             binary_data,
@@ -102,7 +128,14 @@ class CkanLoader:
         mode: Literal["raw", "parquet"],
         storage_type: Literal["s3"],
     ) -> str:
-        """Upload data using specified uploader"""
+        """
+        Upload data using specified uploader
+
+        Args:
+            resource_data: List of resources or single resource
+            bucket_name: Name of the bucket to upload the data to
+            custom_name: Custom name for the uploaded data
+        """
         if not all(
             isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]
         ):

@@ -29,11 +29,11 @@ from ..session.session import CatSession, CatalogueType
 class CkanCatExplorer:
     def __init__(self, cat_session: CatSession):
         """
-        Takes in a CatSession
+        Takes in a CatSession.
 
-        Allows user to start exploring data catalogue programatically
+        Allows user to start exploring data catalogue programatically.
 
-        Make sure you pass a valid CkanCatSession in - it will check if the type is right.
+        Make sure you pass a valid CkanCatSession in - it will check if the catalogue type is right.
 
         Args:
             CkanCatSession
@@ -73,7 +73,7 @@ class CkanCatExplorer:
     # ----------------------------
     def check_site_health(self) -> None:
         """
-        Make sure the Ckan endpoints are healthy and reachable
+        Make sure the Ckan endpoints are healthy and reachable.
 
         This calls the Ckan package_list endpoint to check if the site is still reacheable.
 
@@ -82,10 +82,15 @@ class CkanCatExplorer:
             Error message if the site is not healthy
 
         # Example usage...
-        if __name__ == "__main__":
+        import HerdingCats as hc
+
+        def main():
             with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 health_check = explore.check_site_health()
+
+        if __name__ == "__main__":
+            main()
         """
 
         url: str = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
@@ -114,19 +119,24 @@ class CkanCatExplorer:
     # ----------------------------
     def get_package_count(self) -> int:
         """
-        A quick way to see how 'big' a data catalogue is
+        A quick way to see how 'big' a data catalogue is.
 
-        E.g how many datasets (packages) there are
+        E.g how many datasets (packages) there are.
 
         Returns:
             package_count: int
 
         # Example usage...
-        if __name__ == "__main__":
+        import HerdingCats as hc
+
+        def main():
             with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 package_count = explore.get_package_count()
                 print(package_count)
+
+        if __name__ == "__main__":
+            main()
         """
 
         url: str = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
@@ -163,11 +173,16 @@ class CkanCatExplorer:
             }
 
         # Example usage...
-        if __name__ == "__main__":
+        import HerdingCats as hc
+
+        def main():
             with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 all_packages = explore.get_package_list()
                 print(all_packages)
+
+        if __name__ == "__main__":
+            main()
         """
 
         url: str = self.cat_session.base_url + CkanApiPaths.PACKAGE_LIST
@@ -216,12 +231,16 @@ class CkanCatExplorer:
             └─────────────────────
 
         # Example usage...
-        if __name__ == "__main__":
+        import HerdingCats as hc
+
+        def main():
             with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 results = explore.get_package_list_dataframe('polars')
                 print(results)
 
+        if __name__ == "__main__":
+            main()
         """
         if df_type.lower() not in ["pandas", "polars"]:
             raise ValueError(
@@ -259,26 +278,36 @@ class CkanCatExplorer:
 
     def get_organisation_list(self) -> Tuple[int, list]:
         """
-        Returns total number of orgs or maintainers if the org endpoint does not work - as well as list of the org or mantainers themselves.
+        Returns the total number of organisations.
+
+        Will return a list of maintainers if the org endpoint does not work.
 
         Returns:
             Tuple[int, list]
 
         # Example usage...
-        if __name__ == "__main__":
+        import HerdingCats as hc
+
+        def main():
             with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 orgs_list = explore.get_organisation_list()
                 print(orgs_list)
+
+        if __name__ == "__main__":
+            main()
         """
         url: str = self.cat_session.base_url + CkanApiPaths.ORGANIZATION_LIST
 
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
+            
             data = response.json()
+
             organisations: list = data["result"]
             length: int = len(organisations)
+
             return length, organisations
         except (requests.RequestException, Exception) as e:
             logger.warning(
@@ -327,13 +356,18 @@ class CkanCatExplorer:
             List[Dict]
 
         # Example usage...
-        if __name__ == "__main__":
+        import HerdingCats as hc
+
+        def main():
             with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 all_packages = explore.package_list_dictionary()
                 package = all_packages.get(insert_package_name)
                 package_info = explore.show_package_info(package)
                 print(package_info)
+
+        if __name__ == "__main__":
+            main()
         """
 
         if package_name is None:
@@ -380,13 +414,18 @@ class CkanCatExplorer:
             pd.DataFrame or pl.DataFrame
 
         # Example usage...
-        if __name__ == "__main__":
-            with CkanCatSession("data.london.gov.uk") as session:
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
                 explore = CkanCatExplorer(session)
                 all_packages = explore.package_list_dictionary()
                 package = all_packages.get("package_name")
                 package_info = explore.show_package_info_dataframe(package, "pandas")
                 print(package_info)
+
+        if __name__ == "__main__":
+            main()
         """
 
         if package_name is None:
@@ -424,9 +463,9 @@ class CkanCatExplorer:
     # ----------------------------
     def package_search(self, search_query: str, num_rows: int):
         """
-        Returns all available data for a particular search query
+        Returns all available data for a particular search query.
 
-        Specify the number of rows if the 'count' is large
+        Specify the number of rows if the 'count' is large.
 
         Args:
             search_query: str
@@ -489,13 +528,12 @@ class CkanCatExplorer:
 
         # Example usage...
         import HerdingCats as hc
-        from pprint import pprint
 
         def main():
             with hc.CatSession(hc.CkanDataCatalogues.UK_GOV) as session:
                 explore = hc.CkanCatExplorer(session)
                 packages_search = explore.package_search_condense("police", 50)
-                pprint(packages_search)
+                print(packages_search)
 
         if __name__ =="__main__":
             main()
@@ -585,12 +623,16 @@ class CkanCatExplorer:
         └─────────────────────────────────┴────────────────┴───────────
 
         # Example usage...
-        if __name__ == "__main__":
+        import HerdingCats as hc
+
+        def main():
             with hc.CatSession(hc.CkanDataCatalogues.UK_GOV) as session:
                 explorer = CkanCatExplorer(session)
                 results = explorer.package_search_condense_dataframe('police', 500, "polars")
                 print(results)
 
+        if __name__ == "__main__":
+            main()
         """
         if df_type.lower() not in ["pandas", "polars"]:
             raise ValueError(
@@ -698,12 +740,16 @@ class CkanCatExplorer:
         └─────────────────────────────┴────────────────┴─────────────────────────────┴─────────────────
 
         # Example usage...
-        if __name__ == "__main__":
-            with CkanCatSession("uk gov") as session:
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.CkanDataCatalogues.UK_GOV) as session:
                 explorer = CkanCatExplorer(session)
                 results = explorer.package_search_condense_dataframe_unpacked('police', 500, "polars")
                 print(results)
 
+        if __name__ == "__main__":
+            main()
         """
         if df_type.lower() not in ["pandas", "polars"]:
             raise ValueError(
@@ -750,8 +796,8 @@ class CkanCatExplorer:
             raise CatExplorerError(f"Failed to search datasets: {str(e)}")
 
     # ----------------------------
-    # Extract information in pre for Data Loader Class
-    # TODO: Maybe we should move this to the data loader class???
+    # Extract information in preperation for Data Loader Class
+    # TODO: Maybe we should move this to the data loader class itself???
     # ----------------------------
     def extract_resource_url(self, package_info: List[Dict]) -> List[str]:
         """
@@ -852,7 +898,9 @@ class CkanCatExplorer:
 
     @staticmethod
     def _create_pandas_dataframe(data: List[Dict[str, Any]]) -> pd.DataFrame:
-        """TBC"""
+        """
+        Creates a pandas dataframe from the data.
+        """
         df = pd.json_normalize(
             data,
             record_path="resources",
@@ -863,7 +911,9 @@ class CkanCatExplorer:
 
     @staticmethod
     def _create_polars_dataframe(data: List[Dict[str, Any]]) -> pl.DataFrame:
-        """TBC"""
+        """
+        Creates a polars dataframe from the data.
+        """
         df = pl.DataFrame(data)
         return (
             df.explode("resources")
