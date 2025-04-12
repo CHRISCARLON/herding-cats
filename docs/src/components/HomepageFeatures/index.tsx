@@ -117,7 +117,9 @@ function CodeExample() {
       <span style={{ color: "#8be9fd" }}>hc</span>.
       <span style={{ color: "#50fa7b" }}>CkanLoader</span>()
       {"\n\n        "}
-      <span style={{ color: "#6272a4" }}># Check the catalogue health</span>
+      <span style={{ color: "#6272a4" }}>
+        # Show package info to get more details
+      </span>
       {"\n        "}
       <span style={{ color: "#f8f8f2" }}>package</span> ={" "}
       <span style={{ color: "#f8f8f2" }}>explorer</span>.
