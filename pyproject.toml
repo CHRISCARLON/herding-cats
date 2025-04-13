@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "Herding-Cats"
+name = "HerdCats"
 version = "0.1.0"
 description = "A tool for exploring open data catalogues"
 authors = [
