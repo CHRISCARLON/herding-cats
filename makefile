@@ -17,7 +17,7 @@ endef
 export COMMIT_TYPES
 
 # Local development commands
-.PHONY: dev ruff-watch dev-kill
+.PHONY: dev ruff-watch dev-kill update git-add git-commit git-push docs-deploy
 
 dev:
 	@if [ -z "$$TMUX" ]; then \
@@ -76,3 +76,8 @@ git-commit:
 
 git-push:
 	git push
+
+docs-deploy:
+	@echo "Deploying documentation..."
+	@cd docs && GIT_USER=chriscarlon USE_SSH=true npm run deploy
+	@echo "Documentation deployment complete"
