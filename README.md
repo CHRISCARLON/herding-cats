@@ -7,7 +7,7 @@ Documentation📚 => [HERE](https://chriscarlon.github.io/herding-cats/)
 > [!NOTE]  
 > Version 0.1.0 PyPi coming soon.
 >
-> Herding-CATs is currently under active development.
+> HerdingCATs is currently under active development.
 >
 > Features may change as the project evolves.
 >
@@ -28,13 +28,13 @@ Speed up how data analysts explore and interact with open data sources.
 **PyPi package coming soon.**
 
 ```bash
-pip install HerdingCats
+pip install HerdCats
 ```
 
 or
 
 ```bash
-poetry add HerdingCats
+poetry add HerdCats
 ```
 
 ---

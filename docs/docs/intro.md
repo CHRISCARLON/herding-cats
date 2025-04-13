@@ -21,15 +21,15 @@ The aim of this project is simple:
 Once available, you can install with:
 
 ```bash
-pip install HerdingCats
+pip install HerdCats
 ```
 
 ```bash
-poetry add HerdingCats
+poetry add HerdCats
 ```
 
 ```bash
-uv add HerdingCats
+uv add HerdCats
 ```
 
 ## Important Notes

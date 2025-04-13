@@ -7,7 +7,7 @@ import type * as Preset from "@docusaurus/preset-classic";
 const config: Config = {
   title: "HerdingCATs",
   tagline:
-    "A project to speed up how data analysts explore and interact with open data sources",
+    "A project to speed up how data analysts explore and interact with open data sources.",
   favicon: "img/cat-silhouette.png",
 
   // Set the production url of your site here
