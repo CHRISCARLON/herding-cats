@@ -20,7 +20,7 @@ from ..session.session import CatSession, CatalogueType
 # At the moment we have a lot of duplicate code between the explorers
 # TODO: Find a better way to do this
 # OR keep as is because each catalogue has a different API and different data structures.
-# Could be a good idea to maintain a very strong separation between the explorers
+# Could be a good idea to maintain a very strong separation between the explorers?
 
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES

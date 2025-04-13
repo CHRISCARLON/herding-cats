@@ -43,7 +43,15 @@ class CkanLoader:
             raise ImportError(f"Missing required dependencies: {', '.join(missing)}")
 
     def _fetch_data(self, url: str) -> BytesIO:
-        """Fetch data from URL and return as BytesIO object."""
+        """
+        Fetch data from URL and return as BytesIO object.
+
+        Args:
+            url: URL to fetch data from
+
+        Returns:
+            BytesIO object containing the data
+        """
         try:
             response = requests.get(url)
             response.raise_for_status()

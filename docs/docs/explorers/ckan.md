@@ -4,30 +4,38 @@ sidebar_position: 1
 
 # CKAN Explorer
 
-The `CkanCatExplorer` class provides methods for exploring CKAN-based data catalogues.
+The `CkanCatExplorer` class provides methods for exploring CKAN-based data catalogues. CKAN (Comprehensive Knowledge Archive Network) is an open-source data management system used by many government and research organisations to publish and share data.
 
 ## Creating a CKAN Explorer
 
 ```python
 import HerdingCats as hc
 
+# Use a predefined catalogue from the library
 with hc.CatSession(hc.CkanDataCatalogues.LONDON_DATA_STORE) as session:
     explorer = hc.CkanCatExplorer(session)
 ```
 
 ## Available Methods
 
-### Basic Catalogue Information
+### Health Check
 
 ```python
 # Check the health of the CKAN site
-health = explorer.check_site_health()
+explorer.check_site_health()
+```
 
-# Get the total number of packages
+The health check will log success, warning, or error messages depending on the status of the CKAN site.
+
+### Basic Catalogue Information
+
+```python
+# Get the total number of packages (datasets)
 count = explorer.get_package_count()
 
 # Get a list of all organizations
-orgs = explorer.get_organisation_list()
+org_count, orgs = explorer.get_organisation_list()
+print(f"Found {org_count} organizations")
 ```
 
 ### Listing Packages
@@ -38,12 +46,6 @@ packages = explorer.get_package_list()
 
 # Get a dataframe of all available packages
 df = explorer.get_package_list_dataframe(df_type="pandas")  # or "polars"
-
-# Get a list with extra package information
-packages_extra = explorer.get_package_list_extra()
-
-# Get a dataframe with extra package information
-df_extra = explorer.get_package_list_dataframe_extra(df_type="polars")
 ```
 
 ### Package Details and Search
@@ -55,54 +57,101 @@ package_info = explorer.show_package_info("package_name")
 # Get package information as a dataframe
 df_info = explorer.show_package_info_dataframe("package_name", df_type="pandas")
 
-# Search for packages
+# Search for packages with a keyword (limited to 10 results)
 results = explorer.package_search("climate change", num_rows=10)
 
 # Get a condensed view of search results
 condensed = explorer.package_search_condense("air quality", num_rows=5)
-
-# Get search results as a dataframe with packed resources
-df_search = explorer.package_search_condense_dataframe("population", num_rows=5, df_type="polars")
-
-# Get search results as a dataframe with unpacked resources
-df_search_unpacked = explorer.package_search_condense_dataframe_unpack("transport", num_rows=5, df_type="pandas")
 ```
 
-### Working with Resources
+### Working with DataFrames
+
+```python
+# Get search results as a dataframe with nested resources
+df_search = explorer.package_search_condense_dataframe(
+    "population", num_rows=5, df_type="polars"
+)
+
+# Get search results as a dataframe with unpacked resources
+# This creates a flatter structure with one row per resource
+df_search_unpacked = explorer.package_search_condense_dataframe_unpack(
+    "transport", num_rows=5, df_type="pandas"
+)
+```
+
+The unpacked dataframe has the following structure:
+
+- Each dataset resource becomes a separate row
+- Column prefixes like `resource_name`, `resource_created`, etc. are added
+- This results in a larger dataframe but with easier access to individual resources
+
+### Extracting Resource URLs
 
 ```python
 # Extract resource URLs from package info for use with loaders
 resources = explorer.extract_resource_url(package_info)
+
+# Each resource contains [name, created_date, format, download_url]
+for resource in resources:
+    print(f"Resource: {resource[0]}, Format: {resource[2]}, URL: {resource[3]}")
 ```
 
-## Example Workflow
+## Complete Example Workflow
 
 ```python
 import HerdingCats as hc
 
 def main():
+    # Create a session with a specific CKAN catalogue
     with hc.CatSession(hc.CkanDataCatalogues.UK_GOV_DATA) as session:
         explorer = hc.CkanCatExplorer(session)
+
+        # Check the health of the site
+        explorer.check_site_health()
+
+        # Get catalogue statistics
+        package_count = explorer.get_package_count()
+        org_count, _ = explorer.get_organisation_list()
+        print(f"Catalogue contains {package_count} packages from {org_count} organizations")
 
         # Search for datasets about "covid"
         results = explorer.package_search_condense("covid", num_rows=5)
 
+        # Display search results
         for i, result in enumerate(results):
-            print(f"{i+1}. {result.get('title', 'N/A')}")
+            print(f"{i+1}. {result.get('name', 'N/A')}")
 
         # Let user select a dataset
         selection = int(input("Select a dataset (number): ")) - 1
         if 0 <= selection < len(results):
             # Get detailed information
-            package_info = explorer.show_package_info(results[selection])
+            package_info = explorer.show_package_info(results[selection].get('name'))
 
             # Extract resources
             resources = explorer.extract_resource_url(package_info)
 
             # Print available resources
             for i, resource in enumerate(resources):
-                print(f"{i+1}. {resource.get('name', 'N/A')} ({resource.get('format', 'N/A')})")
+                name, created, format, url = resource
+                print(f"{i+1}. {name} ({format}) - {url[:50]}...")
 
 if __name__ == "__main__":
     main()
 ```
+
+## Data Structure Considerations
+
+When working with CKAN data, you'll encounter several important data structures:
+
+1. **Packages** - These are datasets containing one or more resources (data files)
+2. **Resources** - The actual data files within packages (CSV, JSON, Excel, etc.)
+3. **Organizations** - Groups that publish and maintain datasets
+
+The explorer offers different methods to access these structures in formats that are convenient for further processing, including:
+
+- Raw dictionaries for direct access to all properties
+- Condensed views focusing on the most important metadata
+- Pandas or Polars dataframes for data analysis workflows
+- Nested or flattened (unpacked) resource structures
+
+Choose the appropriate method based on your specific needs and analysis workflow.

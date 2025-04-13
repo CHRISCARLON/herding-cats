@@ -2,13 +2,13 @@
 sidebar_position: 3
 ---
 
-# Supported Catalogues
+# Supported Open Data Sources
 
 HerdingCATs supports the following data sources by default:
 
 <div className="catalogueSection" style={{backgroundColor: '#282828', padding: '16px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 4px 8px rgba(0,0,0,0.3)', borderLeft: '4px solid #5e9dd5'}}>
 
-## CKAN-based Catalogues
+## CKAN
 
 ### London Datastore
 
@@ -33,7 +33,7 @@ HerdingCATs supports the following data sources by default:
 
 <div className="catalogueSection" style={{backgroundColor: '#282828', padding: '16px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 4px 8px rgba(0,0,0,0.3)', borderLeft: '4px solid #6abf69'}}>
 
-## OpenDataSoft-based Catalogues
+## OpenDataSoft
 
 ### UK Power Networks
 
@@ -78,7 +78,7 @@ HerdingCATs supports the following data sources by default:
 
 <div className="catalogueSection" style={{backgroundColor: '#282828', padding: '16px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 4px 8px rgba(0,0,0,0.3)', borderLeft: '4px solid #d4a05e'}}>
 
-## Bespoke API Catalogues
+## Bespoke APIs
 
 ### French Gov Open Data
 
