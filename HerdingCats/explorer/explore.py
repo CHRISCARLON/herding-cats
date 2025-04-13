@@ -302,7 +302,7 @@ class CkanCatExplorer:
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
-            
+
             data = response.json()
 
             organisations: list = data["result"]

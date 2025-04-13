@@ -44,40 +44,5 @@ export_options = explorer.show_dataset_export_options("dataset_id")
 ## Example Workflow
 
 ```python
-import HerdingCats as hc
-
-def main():
-    with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS) as session:
-        explorer = hc.OpenDataSoftCatExplorer(session)
-
-        # Get all datasets
-        all_datasets = explorer.fetch_all_datasets()
-
-        # Print dataset names and IDs
-        for dataset in all_datasets:
-            print(f"Name: {dataset.get('dataset_id', 'N/A')}")
-
-        # Get export options for a specific dataset
-        dataset_id = all_datasets[0].get('dataset_id') if all_datasets else None
-        if dataset_id:
-            export_options = explorer.show_dataset_export_options(dataset_id)
-
-            # Print available export formats
-            print("\nAvailable export formats:")
-            for format_type, url in export_options.items():
-                print(f"- {format_type}")
-
-            # Create a loader and load data
-            loader = hc.OpenDataSoftLoader()
-
-            # Choose a format (e.g., "csv")
-            chosen_format = "csv"
-
-            # Load data into a Polars DataFrame
-            if chosen_format in export_options:
-                df = loader.polars_data_loader(export_options, format_type=chosen_format)
-                print(f"\nLoaded {len(df)} rows of data")
-
-if __name__ == "__main__":
-    main()
+TBC
 ```

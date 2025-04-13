@@ -92,51 +92,14 @@ The unpacked dataframe has the following structure:
 resources = explorer.extract_resource_url(package_info)
 
 # Each resource contains [name, created_date, format, download_url]
-for resource in resources:
-    print(f"Resource: {resource[0]}, Format: {resource[2]}, URL: {resource[3]}")
+for resource in enumerate(resources):
+    print(resource)
 ```
 
 ## Complete Example Workflow
 
 ```python
-import HerdingCats as hc
-
-def main():
-    # Create a session with a specific CKAN catalogue
-    with hc.CatSession(hc.CkanDataCatalogues.UK_GOV_DATA) as session:
-        explorer = hc.CkanCatExplorer(session)
-
-        # Check the health of the site
-        explorer.check_site_health()
-
-        # Get catalogue statistics
-        package_count = explorer.get_package_count()
-        org_count, _ = explorer.get_organisation_list()
-        print(f"Catalogue contains {package_count} packages from {org_count} organizations")
-
-        # Search for datasets about "covid"
-        results = explorer.package_search_condense("covid", num_rows=5)
-
-        # Display search results
-        for i, result in enumerate(results):
-            print(f"{i+1}. {result.get('name', 'N/A')}")
-
-        # Let user select a dataset
-        selection = int(input("Select a dataset (number): ")) - 1
-        if 0 <= selection < len(results):
-            # Get detailed information
-            package_info = explorer.show_package_info(results[selection].get('name'))
-
-            # Extract resources
-            resources = explorer.extract_resource_url(package_info)
-
-            # Print available resources
-            for i, resource in enumerate(resources):
-                name, created, format, url = resource
-                print(f"{i+1}. {name} ({format}) - {url[:50]}...")
-
-if __name__ == "__main__":
-    main()
+TBC
 ```
 
 ## Data Structure Considerations

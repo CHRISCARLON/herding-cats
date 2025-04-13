@@ -20,18 +20,9 @@ The loaders follow a consistent pattern:
 
 ## From Explorer to Loader
 
-A key feature of the loader system is how data flows from explorer methods through validation decorators to loader methods. Each explorer produces a specific data structure that gets transformed by validation decorators into formats that loaders can efficiently process.
+A key feature of the loader system is how data flows from explorer methods through validation decorators to loader methods.
 
-:::info Data Structure Transformation Flow
-| Explorer Type | Explorer Method | Original Structure | Validation Decorator | Final Structure for Loader |
-| ----------------- | -------------------------------------- | ----------------------------------------------------- | ------------------------------- | -------------------------- |
-| CKAN | `extract_resource_url()` | `[name, date, format, url]` | `validate_ckan_resource` | `[format, url]` |
-| OpenDataSoft | `show_dataset_export_options()` | `[{"format": "csv", "download_url": "..."}]` | `validate_opendata_resource` | Same structure |
-| French Government | `get_dataset_resource_meta()` | `[{"resource_format": "csv", "resource_url": "..."}]` | `validate_french_gouv_resource` | Same structure |
-| ONS Nomis | `generate_full_dataset_download_url()` | `"https://example.com/data.xlsx"` | `validate_ons_nomis_resource` | Same structure |
-:::
-
-### Explorer Methods
+Each explorer produces a specific data structure that gets transformed by validation decorators into formats that loaders can efficiently process.
 
 Each explorer type includes specialised methods that create the data structures required by their corresponding loader:
 
@@ -66,6 +57,39 @@ resources = explorer.get_dataset_resource_meta(metadata)
 # Output: Direct URL string to the Excel file
 url = explorer.generate_full_dataset_download_url("NM_2_1")
 ```
+
+#### Data Structure Transformation Flow
+
+:::info Data Structure Transformation Flow
+
+**CKAN Explorer**
+
+- Explorer Method: `extract_resource_url()`
+- Original Structure: `[name, date, format, url]`
+- Validation Decorator: `validate_ckan_resource`
+- Final Structure for Loader: `[format, url]`
+
+**OpenDataSoft Explorer**
+
+- Explorer Method: `show_dataset_export_options()`
+- Original Structure: `[{"format": "csv", "download_url": "..."}]`
+- Validation Decorator: `validate_opendata_resource`
+- Final Structure for Loader: Same as original
+
+**French Government Explorer**
+
+- Explorer Method: `get_dataset_resource_meta()`
+- Original Structure: `[{"resource_format": "csv", "resource_url": "..."}]`
+- Validation Decorator: `validate_french_gouv_resource`
+- Final Structure for Loader: Same as original
+
+**ONS Nomis Explorer**
+
+- Explorer Method: `generate_full_dataset_download_url()`
+- Original Structure: `"https://example.com/data.xlsx"`
+- Validation Decorator: `validate_ons_nomis_resource`
+- Final Structure for Loader: Same as original
+  :::
 
 ### Validation Decorator Transformations
 
@@ -199,6 +223,123 @@ df = loader.polars_data_loader(
 )
 ```
 
+### DuckDB Integration
+
+OpenDataSoft now supports direct loading and querying with DuckDB, providing powerful SQL-based analysis capabilities.
+
+The plan is to extend this to all loaders in the future.
+
+```python
+import HerdingCats as hc
+
+with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS_DNO) as session:
+    explorer = hc.OpenDataSoftCatExplorer(session)
+    loader = hc.OpenDataSoftLoader()
+
+    # Get dataset export options
+    export_options = explorer.show_dataset_export_options("ukpn-flood-warning-areas")
+    print(export_options)
+
+    # Get results as pandas DataFrame
+    df_pandas = loader.query_to_pandas(
+        resource_data=export_options,
+        table_name="flood_areas",
+        format_type="parquet",
+        query="SELECT * FROM flood_warnings LIMIT 15",
+        api_key="your_api_key_if_needed"
+    )
+
+    print(df_pandas)
+```
+
+Example Output...
+
+```bash
+# Session initialisation
+2025-04-13 12:29:49.364 | SUCCESS | Session started successfully with ukpowernetworks.opendatasoft.com
+
+# Available export formats (truncated for readability)
+[
+  {'format': 'csv', 'download_url': 'https://ukpowernetworks.opendatasoft.com/api/v2/catalog/datasets/ukpn-flood-warning-areas/exports/csv'},
+  {'format': 'json', 'download_url': 'https://ukpowernetworks.opendatasoft.com/api/v2/catalog/datasets/ukpn-flood-warning-areas/exports/json'},
+  {'format': 'parquet', 'download_url': 'https://ukpowernetworks.opendatasoft.com/api/v2/catalog/datasets/ukpn-flood-warning-areas/exports/parquet'},
+  # Additional formats available...
+]
+
+# DuckDB initialisation and data loading
+2025-04-13 12:29:49.686 | INFO | Connected to DuckDB in-memory database
+2025-04-13 12:29:49.742 | INFO | DuckDB extensions loaded: httpfs, spatial
+2025-04-13 12:29:49.743 | INFO | Loading parquet data from URL into table 'flood_areas'
+
+# Query results (SELECT * FROM flood_areas LIMIT 15)
+| index | river_sea                    |
+|-------|------------------------------|
+| 0     | River Ray                    |
+| 1     | River Thames                 |
+| 2     | Cuckmere River, Bull River   |
+| 3     | West Brook                   |
+| 4     | Sussex River Ouse            |
+| 5     | North Stream, South Streams  |
+| 6     | River Leam                   |
+| 7     | River Darent                 |
+| 8     | River Leen                   |
+| 9     | Beck                         |
+| 10    | River Test                   |
+| 11    | River Deben, North Sea       |
+| 12    | River Thames                 |
+| 13    | River Arun                   |
+| 14    | River Sence                  |
+
+Some of the columns have been truncated for readability.
+
+# Session completion
+2025-04-13 12:30:53.086 | SUCCESS | Session Closed: https://ukpowernetworks.opendatasoft.com
+```
+
+#### Benefits of DuckDB Integration
+
+- **Efficient Memory Usage**: Process large datasets without loading everything into memory
+- **SQL Power**: Leverage SQL for filtering, joining, and aggregating data
+- **Performance**: DuckDB is optimized for analytical queries on columnar data
+- **Seamless Integration**: Results can be easily converted to familiar pandas or polars DataFrames
+
+#### Available DuckDB Methods
+
+All loader classes implement these DuckDB-related methods:
+
+| Method                 | Description                                        |
+| ---------------------- | -------------------------------------------------- |
+| `duckdb_data_loader()` | Load data directly into a DuckDB table             |
+| `execute_query()`      | Run a SQL query on loaded data                     |
+| `query_to_pandas()`    | Load data and return pandas DataFrame from a query |
+| `query_to_polars()`    | Load data and return polars DataFrame from a query |
+
+#### Example: Filtering and Aggregating Large Datasets
+
+When working with large datasets, you can use SQL to filter and aggregate data before loading it into memory:
+
+```python
+# Instead of loading entire dataset and filtering in Python:
+df = loader.query_to_polars(
+    resource_data=export_options,
+    table_name="energy_consumption",
+    format_type="csv",
+    query="""
+        SELECT
+            region,
+            AVG(consumption) as avg_consumption,
+            SUM(consumption) as total_consumption,
+            COUNT(*) as count
+        FROM energy_consumption
+        WHERE year >= 2020
+        GROUP BY region
+        ORDER BY total_consumption DESC
+    """
+)
+```
+
+This approach is particularly useful for OpenDataSoft datasets that can be quite large and may benefit from pre-filtering or aggregation before analysis.
+
 ## Detailed Usage Examples
 
 ### CKAN Loader Example
@@ -211,17 +352,16 @@ with hc.CatSession(hc.CkanDataCatalogues.HUMANITARIAN_DATA_STORE) as session:
     loader = hc.CkanLoader()
 
     # Find data about refugees
-    results = explorer.package_search_condense("refugees", num_rows=1)
+    results = explorer.package_search_condense("refugees", num_rows=10)
 
     if results:
-        # Get package information
-        package_info = explorer.show_package_info(results[0])
+        # Find a specific dataset in the results list
+        syria_dataset = next((item for item in results if "syria" in item.get("name", "").lower()), results[0])
+        package_info = explorer.show_package_info(syria_dataset["name"])
 
         # Extract resource URLs - transforms into the format loader expects
         resources = explorer.extract_resource_url(package_info)
-
-        print(f"Resource format: {resources[0][0]}")
-        print(f"Resource URL: {resources[0][1]}")
+        print(resources)
 
         # Load into a Polars DataFrame (fast for large data)
         df = loader.polars_data_loader(resources)
@@ -292,10 +432,6 @@ with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
 
     # Resources will be a list of dicts with resource_format and resource_url keys
     if resources:
-        print(f"Format: {resources[0]['resource_format']}")
-        print(f"URL: {resources[0]['resource_url']}")
-        print(f"Title: {resources[0]['resource_title']}")
-
         # Load CSV resource into DataFrame
         df = loader.polars_data_loader(resources, "csv")
 
@@ -316,7 +452,7 @@ import HerdingCats as hc
 
 with hc.CatSession(hc.NomisDataCatalogues.ONS_NOMIS) as session:
     explorer = hc.NomisCatExplorer(session)
-    loader = hc.ONSNomisLoader()  # Note the name is ONSNomisLoader
+    loader = hc.ONSNomisLoader()
 
     # Generate a download URL - this is directly passed to the loader
     download_url = explorer.generate_full_dataset_download_url("NM_2_1")
@@ -361,7 +497,7 @@ Both implement the `StorageTrait` protocol, allowing for consistent usage patter
 
 Upcoming loader capabilities include:
 
-- **DuckDB Integration**: Direct loading into DuckDB for fast local analytics
-- **MotherDuck Cloud Database**: Integration with the cloud version of DuckDB
-- **More Format Support**: Adding support for additional data formats like GeoJSON, Shapefile, etc.
-- **Incremental Loading**: Support for larger datasets by loading data in chunks
+- **DuckDB Integration**: Direct loading into DuckDB for fast local analytics for all loader types. Currently only supported for OpenDataSoft.
+- **MotherDuck Cloud Database**: Integration with the cloud version of DuckDB. Not yet implemented.
+- **More Format Support**: Adding support for additional data formats like GeoJSON, Shapefile, etc. Not yet implemented.
+- **Incremental Loading**: Support for larger datasets by loading data in chunks. Not yet implemented.

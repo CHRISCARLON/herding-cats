@@ -7,9 +7,9 @@ import pyarrow as pa
 import uuid
 
 from ..errors.errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
-from .loader_stores import S3Uploader, DataFrameLoader, LocalUploader
+from .loader_stores import S3Uploader, DataFrameLoader, LocalUploader, DuckDBLoader
 
-from typing import Union, Optional, Literal, List, Dict
+from typing import Union, Optional, Literal, List, Dict, Any
 from pandas.core.frame import DataFrame as PandasDataFrame
 from polars.dataframe.frame import DataFrame as PolarsDataFrame
 from io import BytesIO
@@ -17,6 +17,7 @@ from loguru import logger
 
 # TODO: Start building proper data loader stores for different formats and locations
 # TODO: further harmonise how the loader deal with the input data
+
 
 # START TO WRANGLE / ANALYSE
 # LOAD CKAN DATA RESOURCES INTO STORAGE
@@ -64,7 +65,7 @@ class CkanLoader:
     def get_sheet_names(self, resource_data: List) -> list[str]:
         """
         Get all sheet names from an Excel file.
-        
+
         Args:
             resource_data: List of resources or single resource
 
@@ -336,6 +337,112 @@ class OpenDataSoftLoader:
             mode=mode,
             file_format=format_type,
         )
+
+    @DataFrameLoader.validate_opendata_resource
+    def duckdb_data_loader(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """Load data from a resource URL directly into DuckDB.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            True if data was loaded successfully
+        """
+        self.duckdb_loader = DuckDBLoader()
+        url = self._extract_resource_data(resource_data, format_type)
+        return self.duckdb_loader.load_remote_data(
+            url=url,
+            table_name=table_name,
+            file_format=format_type,
+            api_key=api_key,
+            options=options,
+        )
+
+    def execute_query(self, query: str) -> Any:
+        """Execute a SQL query against the DuckDB instance.
+
+        Args:
+            query: SQL query to execute
+
+        Returns:
+            DuckDB result object
+        """
+        return self.duckdb_loader.execute_query(query)
+
+    @DataFrameLoader.validate_opendata_resource
+    def query_to_pandas(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PandasDataFrame:
+        """Load data into DuckDB and return query results as pandas DataFrame.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            pandas DataFrame with query results
+        """
+        self.duckdb_data_loader(
+            resource_data=resource_data,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+        )
+        return self.duckdb_loader.to_pandas(query)
+
+    @DataFrameLoader.validate_opendata_resource
+    def query_to_polars(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PolarsDataFrame:
+        """Load data into DuckDB and return query results as polars DataFrame.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            polars DataFrame with query results
+        """
+        self.duckdb_data_loader(
+            resource_data=resource_data,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+        )
+        return self.duckdb_loader.to_polars(query)
 
 
 # START TO WRANGLE / ANALYSE
