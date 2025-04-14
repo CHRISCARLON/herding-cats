@@ -49,7 +49,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: "img/docusaurus-social-card.jpg",
+    image: "img/cat-silhouette.png",
     // Force dark mode and disable switching
     colorMode: {
       defaultMode: "dark",
