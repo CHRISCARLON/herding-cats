@@ -106,6 +106,10 @@ const config: Config = {
               label: "GitHub",
               href: "https://github.com/chriscarlon/herding-cats",
             },
+            {
+              label: "PyPi",
+              href: "https://pypi.org/project/HerdCats/",
+            },
           ],
         },
       ],
