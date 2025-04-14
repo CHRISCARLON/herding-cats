@@ -5,12 +5,12 @@
 [Documentation](https://herdingcats.dev)📚
 
 > [!NOTE]  
-> Version 0.1.0 PyPi is now available .
+> Version 0.1.1 PyPi is now available .
 >
 > HerdingCATs is currently under active development.
 >
 > Features may change as the project evolves.
->
+
 ---
 
 **The aim of this project is simple...**
@@ -33,7 +33,7 @@ or
 poetry add HerdCats
 ```
 
-or 
+or
 
 ```bash
 uv add HerdCats
