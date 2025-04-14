@@ -38,6 +38,208 @@ from enum import IntEnum
 T = TypeVar("T")
 
 
+class ResourceValidators:
+    """
+    Centralised validators that can be used across different traits.
+    
+    This ensures that the resource data is in the correct format before it is passed to the loader.
+    """
+    
+    @staticmethod
+    def validate_ckan_resource(func: Callable[..., T]) -> Callable[..., T]:
+        """
+        Decorator to validate CKAN resource data and transform it into a simplified format.
+        
+        This decorator:
+        1. Validates the structure of the resource data
+        2. Handles both single resources and lists of resources
+        3. Extracts and validates the format and URL using ResourceIndex enum
+        4. Transforms the input into a simplified [format, url] list
+        
+        Input formats expected:
+        - Single list: [name, date, format, url] indexed by ResourceIndex
+        - List of lists: [[name, date, format, url], [...], ...]
+        
+        Output:
+        - Simplified list: [format, url] that's passed to the decorated function
+        """
+        
+        class ResourceIndex(IntEnum):
+            NAME = 0
+            DATE = 1
+            FORMAT = 2
+            URL = 3
+            
+        @wraps(func)
+        def wrapper(
+            self,
+            resource_data: Optional[List],
+            desired_format: Optional[str] = None,
+            *args,
+            **kwargs,
+        ):
+            # First validate we have a list
+            if not isinstance(resource_data, list) or not resource_data:
+                logger.error("Invalid resource data: must be a non-empty list")
+                raise ValueError("Resource data must be a non-empty list")
+                
+            # If we have multiple resources (list of lists)
+            if isinstance(resource_data[0], list):
+                if desired_format:
+                    # Find the resource with matching format
+                    target_resource = next(
+                        (
+                            resource
+                            for resource in resource_data
+                            if resource[ResourceIndex.FORMAT].lower() == desired_format.lower()
+                        ),
+                        None,
+                    )
+                    if not target_resource:
+                        available_formats = [
+                            resource[ResourceIndex.FORMAT] for resource in resource_data
+                        ]
+                        logger.error(f"No resource found with format: {desired_format}")
+                        raise ValueError(
+                            f"No resource with format '{desired_format}' found. "
+                            f"Available formats: {', '.join(available_formats)}"
+                        )
+                else:
+                    # If no format specified, use first resource
+                    target_resource = resource_data[0]
+            else:
+                # Single resource case
+                target_resource = resource_data
+                
+            # Validate the resource has all required elements
+            if len(target_resource) <= ResourceIndex.URL:
+                logger.error(
+                    f"Invalid resource format: resource must have at least {ResourceIndex.URL + 1} elements"
+                )
+                raise ValueError(
+                    f"Resource must contain at least {ResourceIndex.URL + 1} elements"
+                )
+                
+            # Extract format and URL using the enum
+            format_type = target_resource[ResourceIndex.FORMAT].lower()
+            url = target_resource[ResourceIndex.URL]
+            
+            # Validate URL format
+            if not url.startswith(("http://", "https://")):
+                logger.error(f"Invalid URL format: {url}")
+                raise ValueError("Invalid URL format")
+                
+            # Create the modified resource in the expected format
+            modified_resource = [format_type, url]
+            logger.info("Resource data validated")
+            
+            return func(self, modified_resource, *args, **kwargs)
+            
+        return wrapper
+        
+    @staticmethod
+    def validate_opendata_resource(func: Callable[..., T]) -> Callable[..., T]:
+        """
+        Decorator to validate OpenDataSoft resource data.
+
+        Input format:
+        - List of dictionaries with 'format' and 'download_url' keys
+        
+        Output format:
+        - List of dictionaries with 'format' and 'download_url' keys
+        """
+        
+        @wraps(func)
+        def wrapper(self, resource_data: List[Dict[str, Any]], *args, **kwargs):
+            # Check if _skip_validation is True
+            if kwargs.get('_skip_validation', False):
+                # Skip validation and just call the function
+                return func(self, resource_data, *args, **kwargs)
+            
+            # Regular validation logic
+            if not resource_data or not isinstance(resource_data, list):
+                logger.error("Resource data must be a list")
+                raise ValueError("Resource data must be a list of dictionaries")
+                
+            has_valid_item = any(
+                isinstance(item, dict) and "format" in item and "download_url" in item
+                for item in resource_data
+            )
+            
+            if not has_valid_item:
+                logger.error(
+                    "Resource data must contain dictionaries with 'format' and 'download_url' keys"
+                )
+                raise ValueError("Invalid resource data format for OpenDataSoft")
+
+            logger.info("Resource data validated")
+                
+            return func(self, resource_data, *args, **kwargs)
+            
+        return wrapper
+        
+    @staticmethod
+    def validate_french_gouv_resource(func: Callable[..., T]) -> Callable[..., T]:
+        """
+        Decorator to validate French Government resource data.
+
+        Input format:
+        - List of dictionaries with 'resource_format' and 'resource_url' keys
+
+        Output format:
+        - List of dictionaries with 'resource_format' and 'resource_url' keys
+        """
+        
+        @wraps(func)
+        def wrapper(self, resource_data: List[Dict[str, Any]], *args, **kwargs):
+            # Check if resource data exists and is non-empty
+            if not resource_data or not isinstance(resource_data, list):
+                logger.error("Resource data must be a list")
+                raise ValueError("Resource data must be a list of dictionaries")
+                
+            # Check if at least one item has the expected resource_format and resource_url keys
+            has_valid_item = any(
+                isinstance(item, dict)
+                and "resource_format" in item
+                and "resource_url" in item
+                for item in resource_data
+            )
+            
+            if not has_valid_item:
+                logger.error(
+                    "Resource data must contain dictionaries with 'resource_format' and 'resource_url' keys"
+                )
+                raise ValueError("Invalid resource data format for French Government data")
+
+            logger.info("Resource data validated")
+                
+            return func(self, resource_data, *args, **kwargs)
+            
+        return wrapper
+        
+    @staticmethod
+    def validate_ons_nomis_resource(func: Callable[..., T]) -> Callable[..., T]:
+        """
+        Decorator to validate ONS Nomis resource data.
+
+        Input format:
+        - String of the url
+
+        Output format:
+        - String of the url
+        """
+        
+        @wraps(func)
+        def wrapper(self, resource_data: str, *args, **kwargs):
+            if not resource_data or not isinstance(resource_data, str):
+                logger.error("Resource data must be a string")
+                raise ValueError("Resource data must be a string")
+            logger.info("Resource data validated")
+            return func(self, resource_data, *args, **kwargs)
+            
+        return wrapper
+
+
 class StorageTrait(Protocol):
     """Protocol defining the interface for remote storage uploaders."""
 
@@ -49,33 +251,6 @@ class StorageTrait(Protocol):
         mode: Literal["raw", "parquet"] = "parquet",
         file_format: Optional[str] = None,
     ) -> str: ...
-
-
-class DuckDBTrait(Protocol):
-    """Protocol defining the interface for DuckDB operations."""
-
-    def execute_query(self, query: str) -> Any: ...
-
-    def load_data(
-        self,
-        data: Union[BytesIO, str],
-        table_name: str,
-        file_format: str,
-        options: Optional[Dict[str, Any]] = None,
-    ) -> bool: ...
-
-    def load_remote_data(
-        self,
-        url: str,
-        table_name: str,
-        file_format: str,
-        api_key: Optional[str] = None,
-        options: Optional[Dict[str, Any]] = None,
-    ) -> bool: ...
-
-    def to_pandas(self, query: str) -> PandasDataFrame: ...
-
-    def to_polars(self, query: str) -> PolarsDataFrame: ...
 
 
 class S3Uploader(StorageTrait):
@@ -150,191 +325,6 @@ class S3Uploader(StorageTrait):
             logger.error(f"AWS S3 upload error: {e}")
             raise
 
-    # ----- Input Validation Methods -----
-
-    @staticmethod
-    def validate_ckan_resource(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        Decorator to validate CKAN resource data and transform it into a simplified format.
-
-        This decorator:
-        1. Validates the structure of the resource data
-        2. Handles both single resources and lists of resources
-        3. Extracts and validates the format and URL using ResourceIndex enum
-        4. Transforms the input into a simplified [format, url] list
-
-        Input formats expected:
-        - Single list: [name, date, format, url] indexed by ResourceIndex
-        - List of lists: [[name, date, format, url], [...], ...]
-
-        Output:
-        - Simplified list: [format, url] that's passed to the decorated function
-
-        This ensures all loader functions receive resource data in a consistent format.
-        """
-
-        class ResourceIndex(IntEnum):
-            NAME = 0
-            DATE = 1
-            FORMAT = 2
-            URL = 3
-
-        @wraps(func)
-        def wrapper(
-            self,
-            resource_data: Optional[List],
-            desired_format: Optional[str] = None,
-            *args,
-            **kwargs,
-        ):
-            # First validate we have a list
-            if not isinstance(resource_data, list) or not resource_data:
-                logger.error("Invalid resource data: must be a non-empty list")
-                raise ValueError("Resource data must be a non-empty list")
-
-            # If we have multiple resources (list of lists)
-            if isinstance(resource_data[0], list):
-                if desired_format:
-                    # Find the resource with matching format
-                    target_resource = next(
-                        (
-                            resource
-                            for resource in resource_data
-                            if resource[ResourceIndex.FORMAT].lower()
-                            == desired_format.lower()
-                        ),
-                        None,
-                    )
-                    if not target_resource:
-                        available_formats = [
-                            resource[ResourceIndex.FORMAT] for resource in resource_data
-                        ]
-                        logger.error(f"No resource found with format: {desired_format}")
-                        raise ValueError(
-                            f"No resource with format '{desired_format}' found. "
-                            f"Available formats: {', '.join(available_formats)}"
-                        )
-                else:
-                    # If no format specified, use first resource
-                    target_resource = resource_data[0]
-            else:
-                # Single resource case
-                target_resource = resource_data
-
-            # Validate the resource has all required elements
-            if len(target_resource) <= ResourceIndex.URL:
-                logger.error(
-                    f"Invalid resource format: resource must have at least {ResourceIndex.URL + 1} elements"
-                )
-                raise ValueError(
-                    f"Resource must contain at least {ResourceIndex.URL + 1} elements"
-                )
-
-            # Extract format and URL using the enum
-            format_type = target_resource[ResourceIndex.FORMAT].lower()
-            url = target_resource[ResourceIndex.URL]
-
-            # Validate URL format
-            if not url.startswith(("http://", "https://")):
-                logger.error(f"Invalid URL format: {url}")
-                raise ValueError("Invalid URL format")
-
-            # Create the modified resource in the expected format (still simplified)
-            modified_resource = [format_type, url]
-            logger.info(
-                f"You're currently working with this resource {modified_resource}"
-            )
-
-            return func(self, modified_resource, *args, **kwargs)
-
-        return wrapper
-
-    @staticmethod
-    def validate_opendata_resource(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        Decorator to validate OpenDataSoft resource data.
-
-        Expected format:
-        - List of dictionaries with 'format' and 'download_url' keys
-        """
-
-        @wraps(func)
-        def wrapper(self, resource_data: List[Dict[str, Any]], *args, **kwargs):
-            # Check if resource data exists and is non-empty
-            if not resource_data or not isinstance(resource_data, list):
-                logger.error("Resource data must be a list")
-                raise ValueError("Resource data must be a list of dictionaries")
-
-            # Check if at least one item has the expected format and download_url keys
-            has_valid_item = any(
-                isinstance(item, dict) and "format" in item and "download_url" in item
-                for item in resource_data
-            )
-
-            if not has_valid_item:
-                logger.error(
-                    "Resource data must contain dictionaries with 'format' and 'download_url' keys"
-                )
-                raise ValueError("Invalid resource data format for OpenDataSoft")
-
-            return func(self, resource_data, *args, **kwargs)
-
-        return wrapper
-
-    @staticmethod
-    def validate_french_gouv_resource(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        Decorator to validate French Government resource data.
-
-        Expected format:
-        - List of dictionaries with 'resource_format' and 'resource_url' keys
-        """
-
-        @wraps(func)
-        def wrapper(self, resource_data: List[Dict[str, Any]], *args, **kwargs):
-            # Check if resource data exists and is non-empty
-            if not resource_data or not isinstance(resource_data, list):
-                logger.error("Resource data must be a list")
-                raise ValueError("Resource data must be a list of dictionaries")
-
-            # Check if at least one item has the expected resource_format and resource_url keys
-            has_valid_item = any(
-                isinstance(item, dict)
-                and "resource_format" in item
-                and "resource_url" in item
-                for item in resource_data
-            )
-
-            if not has_valid_item:
-                logger.error(
-                    "Resource data must contain dictionaries with 'resource_format' and 'resource_url' keys"
-                )
-                raise ValueError(
-                    "Invalid resource data format for French Government data"
-                )
-
-            return func(self, resource_data, *args, **kwargs)
-
-        return wrapper
-
-    @staticmethod
-    def validate_ons_nomis_resource(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        Decorator to validate ONS Nomis resource data.
-
-        Expected format: string of the url
-        """
-
-        @wraps(func)
-        def wrapper(self, resource_data: str, *args, **kwargs):
-            if not resource_data or not isinstance(resource_data, str):
-                logger.error("Resource data must be a string")
-                raise ValueError("Resource data must be a string")
-            logger.info("Resource data validated")
-            return func(self, resource_data, *args, **kwargs)
-
-        return wrapper
-
 
 class LocalUploader(StorageTrait):
     """Local filesystem uploader implementation."""
@@ -347,9 +337,6 @@ class LocalUploader(StorageTrait):
             base_directory: Base directory where files will be stored
         """
         self.base_directory = base_directory
-        # Create the base directory if it doesn't exist
-        import os
-
         os.makedirs(self.base_directory, exist_ok=True)
 
     def _get_full_path(self, bucket: str, filename: str) -> str:
@@ -425,6 +412,33 @@ class LocalUploader(StorageTrait):
         except Exception as e:
             logger.error(f"Local file save error: {e}")
             raise
+
+
+class DuckDBTrait(Protocol):
+    """Protocol defining the interface for DuckDB operations."""
+
+    def execute_query(self, query: str) -> Any: ...
+
+    def load_data(
+        self,
+        data: Union[BytesIO, str],
+        table_name: str,
+        file_format: str,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> bool: ...
+
+    def load_remote_data(
+        self,
+        url: str,
+        table_name: str,
+        file_format: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> bool: ...
+
+    def to_pandas(self, query: str) -> PandasDataFrame: ...
+
+    def to_polars(self, query: str) -> PolarsDataFrame: ...
 
 
 class DuckDBLoader(DuckDBTrait):
@@ -820,188 +834,3 @@ class DataFrameLoader(DataFrameLoaderTrait):
         except Exception as e:
             logger.error(f"Failed to load {loader_type} DataFrame: {str(e)}")
             raise
-
-    # ----- Input Validation Methods -----
-
-    @staticmethod
-    def validate_ckan_resource(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        Decorator to validate CKAN resource data and transform it into a simplified format.
-
-        This decorator:
-        1. Validates the structure of the resource data
-        2. Handles both single resources and lists of resources
-        3. Extracts and validates the format and URL using ResourceIndex enum
-        4. Transforms the input into a simplified [format, url] list
-
-        Input formats expected:
-        - Single list: [name, date, format, url] indexed by ResourceIndex
-        - List of lists: [[name, date, format, url], [...], ...]
-
-        Output:
-        - Simplified list: [format, url] that's passed to the decorated function
-
-        This ensures all loader functions receive resource data in a consistent format.
-        """
-
-        class ResourceIndex(IntEnum):
-            NAME = 0
-            DATE = 1
-            FORMAT = 2
-            URL = 3
-
-        @wraps(func)
-        def wrapper(
-            self,
-            resource_data: Optional[List],
-            desired_format: Optional[str] = None,
-            *args,
-            **kwargs,
-        ):
-            # First validate we have a list
-            if not isinstance(resource_data, list) or not resource_data:
-                logger.error("Invalid resource data: must be a non-empty list")
-                raise ValueError("Resource data must be a non-empty list")
-
-            # If we have multiple resources (list of lists)
-            if isinstance(resource_data[0], list):
-                if desired_format:
-                    # Find the resource with matching format
-                    target_resource = next(
-                        (
-                            resource
-                            for resource in resource_data
-                            if resource[ResourceIndex.FORMAT].lower()
-                            == desired_format.lower()
-                        ),
-                        None,
-                    )
-                    if not target_resource:
-                        available_formats = [
-                            resource[ResourceIndex.FORMAT] for resource in resource_data
-                        ]
-                        logger.error(f"No resource found with format: {desired_format}")
-                        raise ValueError(
-                            f"No resource with format '{desired_format}' found. "
-                            f"Available formats: {', '.join(available_formats)}"
-                        )
-                else:
-                    # If no format specified, use first resource
-                    target_resource = resource_data[0]
-            else:
-                # Single resource case
-                target_resource = resource_data
-
-            # Validate the resource has all required elements
-            if len(target_resource) <= ResourceIndex.URL:
-                logger.error(
-                    f"Invalid resource format: resource must have at least {ResourceIndex.URL + 1} elements"
-                )
-                raise ValueError(
-                    f"Resource must contain at least {ResourceIndex.URL + 1} elements"
-                )
-
-            # Extract format and URL using the enum
-            format_type = target_resource[ResourceIndex.FORMAT].lower()
-            url = target_resource[ResourceIndex.URL]
-
-            # Validate URL format
-            if not url.startswith(("http://", "https://")):
-                logger.error(f"Invalid URL format: {url}")
-                raise ValueError("Invalid URL format")
-
-            # Create the modified resource in the expected format (still simplified)
-            modified_resource = [format_type, url]
-            logger.info(
-                f"You're currently working with this resource {modified_resource}"
-            )
-
-            return func(self, modified_resource, *args, **kwargs)
-
-        return wrapper
-
-    @staticmethod
-    def validate_opendata_resource(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        Decorator to validate OpenDataSoft resource data.
-
-        Expected format:
-        - List of dictionaries with 'format' and 'download_url' keys
-        """
-
-        @wraps(func)
-        def wrapper(self, resource_data: List[Dict[str, Any]], *args, **kwargs):
-            # Check if resource data exists and is non-empty
-            if not resource_data or not isinstance(resource_data, list):
-                logger.error("Resource data must be a list")
-                raise ValueError("Resource data must be a list of dictionaries")
-
-            # Check if at least one item has the expected format and download_url keys
-            has_valid_item = any(
-                isinstance(item, dict) and "format" in item and "download_url" in item
-                for item in resource_data
-            )
-
-            if not has_valid_item:
-                logger.error(
-                    "Resource data must contain dictionaries with 'format' and 'download_url' keys"
-                )
-                raise ValueError("Invalid resource data format for OpenDataSoft")
-
-            return func(self, resource_data, *args, **kwargs)
-
-        return wrapper
-
-    @staticmethod
-    def validate_french_gouv_resource(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        Decorator to validate French Government resource data.
-
-        Expected format:
-        - List of dictionaries with 'resource_format' and 'resource_url' keys
-        """
-
-        @wraps(func)
-        def wrapper(self, resource_data: List[Dict[str, Any]], *args, **kwargs):
-            # Check if resource data exists and is non-empty
-            if not resource_data or not isinstance(resource_data, list):
-                logger.error("Resource data must be a list")
-                raise ValueError("Resource data must be a list of dictionaries")
-
-            # Check if at least one item has the expected resource_format and resource_url keys
-            has_valid_item = any(
-                isinstance(item, dict)
-                and "resource_format" in item
-                and "resource_url" in item
-                for item in resource_data
-            )
-
-            if not has_valid_item:
-                logger.error(
-                    "Resource data must contain dictionaries with 'resource_format' and 'resource_url' keys"
-                )
-                raise ValueError(
-                    "Invalid resource data format for French Government data"
-                )
-
-            return func(self, resource_data, *args, **kwargs)
-
-        return wrapper
-
-    @staticmethod
-    def validate_ons_nomis_resource(func: Callable[..., T]) -> Callable[..., T]:
-        """
-        Decorator to validate ONS Nomis resource data.
-
-        Expected format: string of the url
-        """
-
-        @wraps(func)
-        def wrapper(self, resource_data: str, *args, **kwargs):
-            if not resource_data or not isinstance(resource_data, str):
-                logger.error("Resource data must be a string")
-                raise ValueError("Resource data must be a string")
-            logger.info("Resource data validated")
-            return func(self, resource_data, *args, **kwargs)
-
-        return wrapper

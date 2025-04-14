@@ -7,7 +7,7 @@ import pyarrow as pa
 import uuid
 
 from ..errors.errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
-from .loader_stores import S3Uploader, DataFrameLoader, LocalUploader, DuckDBLoader
+from .loader_stores import S3Uploader, DataFrameLoader, LocalUploader, DuckDBLoader, ResourceValidators
 
 from typing import Union, Optional, Literal, List, Dict, Any
 from pandas.core.frame import DataFrame as PandasDataFrame
@@ -61,7 +61,7 @@ class CkanLoader:
             logger.error(f"Error fetching data from URL: {e}")
             raise
 
-    @DataFrameLoader.validate_ckan_resource
+    @ResourceValidators.validate_ckan_resource
     def get_sheet_names(self, resource_data: List) -> list[str]:
         """
         Get all sheet names from an Excel file.
@@ -77,7 +77,7 @@ class CkanLoader:
         binary_data = self._fetch_data(resource_data[1])
         return self.df_loader.get_sheet_names(binary_data)
 
-    @DataFrameLoader.validate_ckan_resource
+    @ResourceValidators.validate_ckan_resource
     def polars_data_loader(
         self,
         resource_data: List,
@@ -104,7 +104,7 @@ class CkanLoader:
             skip_rows=skip_rows,
         )
 
-    @DataFrameLoader.validate_ckan_resource
+    @ResourceValidators.validate_ckan_resource
     def pandas_data_loader(
         self,
         resource_data: List,
@@ -128,7 +128,7 @@ class CkanLoader:
             skip_rows=skip_rows,
         )
 
-    @S3Uploader.validate_ckan_resource
+    @ResourceValidators.validate_ckan_resource
     def upload_data(
         self,
         resource_data: List,
@@ -266,7 +266,7 @@ class OpenDataSoftLoader:
                 "Please provide an API key and try again."
             )
 
-    @DataFrameLoader.validate_opendata_resource
+    @ResourceValidators.validate_opendata_resource
     def polars_data_loader(
         self,
         resource_data: Optional[List[Dict[str, str]]],
@@ -284,7 +284,7 @@ class OpenDataSoftLoader:
         self._verify_data(df, api_key)
         return df
 
-    @DataFrameLoader.validate_opendata_resource
+    @ResourceValidators.validate_opendata_resource
     def pandas_data_loader(
         self,
         resource_data: Optional[List[Dict[str, str]]],
@@ -302,7 +302,7 @@ class OpenDataSoftLoader:
         self._verify_data(df, api_key)
         return df
 
-    @S3Uploader.validate_opendata_resource
+    @ResourceValidators.validate_opendata_resource
     def upload_data(
         self,
         resource_data: Optional[List[Dict[str, str]]],
@@ -338,7 +338,7 @@ class OpenDataSoftLoader:
             file_format=format_type,
         )
 
-    @DataFrameLoader.validate_opendata_resource
+    @ResourceValidators.validate_opendata_resource
     def duckdb_data_loader(
         self,
         resource_data: Optional[List[Dict[str, str]]],
@@ -346,8 +346,10 @@ class OpenDataSoftLoader:
         format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
         api_key: Optional[str] = None,
         options: Optional[Dict[str, Any]] = None,
+        _skip_validation: bool = False,
     ) -> bool:
-        """Load data from a resource URL directly into DuckDB.
+        """
+        Load data from a resource URL directly into DuckDB.
 
         Args:
             resource_data: Resource data from OpenDataSoft catalog
@@ -355,12 +357,17 @@ class OpenDataSoftLoader:
             format_type: Format of the data
             api_key: Optional API key for the data source
             options: Optional loading parameters
+            _skip_validation: Optional boolean to skip validation logic
 
         Returns:
             True if data was loaded successfully
         """
+        # Initialise DuckDB loader
         self.duckdb_loader = DuckDBLoader()
+        
+        # Extract URL and load data (same for both code paths)
         url = self._extract_resource_data(resource_data, format_type)
+
         return self.duckdb_loader.load_remote_data(
             url=url,
             table_name=table_name,
@@ -370,7 +377,8 @@ class OpenDataSoftLoader:
         )
 
     def execute_query(self, query: str) -> Any:
-        """Execute a SQL query against the DuckDB instance.
+        """
+        Execute a SQL query against the DuckDB instance.
 
         Args:
             query: SQL query to execute
@@ -380,7 +388,7 @@ class OpenDataSoftLoader:
         """
         return self.duckdb_loader.execute_query(query)
 
-    @DataFrameLoader.validate_opendata_resource
+    @ResourceValidators.validate_opendata_resource
     def query_to_pandas(
         self,
         resource_data: Optional[List[Dict[str, str]]],
@@ -390,7 +398,8 @@ class OpenDataSoftLoader:
         api_key: Optional[str] = None,
         options: Optional[Dict[str, Any]] = None,
     ) -> PandasDataFrame:
-        """Load data into DuckDB and return query results as pandas DataFrame.
+        """
+        Load data into DuckDB and return query results as pandas DataFrame.
 
         Args:
             resource_data: Resource data from OpenDataSoft catalog
@@ -409,10 +418,11 @@ class OpenDataSoftLoader:
             format_type=format_type,
             api_key=api_key,
             options=options,
+            _skip_validation=True,
         )
         return self.duckdb_loader.to_pandas(query)
 
-    @DataFrameLoader.validate_opendata_resource
+    @ResourceValidators.validate_opendata_resource
     def query_to_polars(
         self,
         resource_data: Optional[List[Dict[str, str]]],
@@ -422,7 +432,8 @@ class OpenDataSoftLoader:
         api_key: Optional[str] = None,
         options: Optional[Dict[str, Any]] = None,
     ) -> PolarsDataFrame:
-        """Load data into DuckDB and return query results as polars DataFrame.
+        """
+        Load data into DuckDB and return query results as polars DataFrame.
 
         Args:
             resource_data: Resource data from OpenDataSoft catalog
@@ -441,6 +452,7 @@ class OpenDataSoftLoader:
             format_type=format_type,
             api_key=api_key,
             options=options,
+            _skip_validation=True,
         )
         return self.duckdb_loader.to_polars(query)
 
@@ -551,7 +563,7 @@ class FrenchGouvLoader:
                 "Please provide an API key and try again."
             )
 
-    @DataFrameLoader.validate_french_gouv_resource
+    @ResourceValidators.validate_french_gouv_resource
     def polars_data_loader(
         self,
         resource_data: Optional[List[Dict[str, str]]],
@@ -569,7 +581,7 @@ class FrenchGouvLoader:
         self._verify_data(df, api_key)
         return df
 
-    @DataFrameLoader.validate_french_gouv_resource
+    @ResourceValidators.validate_french_gouv_resource
     def pandas_data_loader(
         self,
         resource_data: Optional[List[Dict[str, str]]],
@@ -587,7 +599,7 @@ class FrenchGouvLoader:
         self._verify_data(df, api_key)
         return df
 
-    @S3Uploader.validate_ckan_resource
+    @ResourceValidators.validate_french_gouv_resource
     def upload_data(
         self,
         resource_data: Optional[List[Dict[str, str]]],
@@ -666,7 +678,7 @@ class ONSNomisLoader:
             logger.error(f"Error fetching data from URL: {e}")
             raise
 
-    @DataFrameLoader.validate_ons_nomis_resource
+    @ResourceValidators.validate_ons_nomis_resource
     def get_sheet_names(self, url: str) -> list[str]:
         """Get all sheet names from an Excel file.
 
@@ -679,7 +691,7 @@ class ONSNomisLoader:
         binary_data = self._fetch_data(url)
         return self.df_loader.get_sheet_names(binary_data)
 
-    @DataFrameLoader.validate_ons_nomis_resource
+    @ResourceValidators.validate_ons_nomis_resource
     def polars_data_loader(
         self,
         url: str,
@@ -701,7 +713,7 @@ class ONSNomisLoader:
             binary_data, "xlsx", "polars", sheet_name=sheet_name, skip_rows=skip_rows
         )
 
-    @DataFrameLoader.validate_ons_nomis_resource
+    @ResourceValidators.validate_ons_nomis_resource
     def pandas_data_loader(
         self,
         url: str,
@@ -723,7 +735,7 @@ class ONSNomisLoader:
             binary_data, "xlsx", "pandas", sheet_name=sheet_name, skip_rows=skip_rows
         )
 
-    @S3Uploader.validate_ons_nomis_resource
+    @ResourceValidators.validate_ons_nomis_resource
     def upload_data(
         self,
         url: str,
