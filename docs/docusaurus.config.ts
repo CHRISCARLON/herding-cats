@@ -82,16 +82,16 @@ const config: Config = {
       style: "dark",
       links: [
         {
-          title: "Docs 📚",
+          title: "Documentation",
           items: [
             {
-              label: "Documentation",
+              label: "Getting Started",
               to: "/docs/intro",
             },
           ],
         },
         {
-          title: "Community 💻",
+          title: "Source Code",
           items: [
             {
               label: "GitHub",
@@ -100,12 +100,8 @@ const config: Config = {
           ],
         },
         {
-          title: "More 🔍",
+          title: "Install",
           items: [
-            {
-              label: "GitHub",
-              href: "https://github.com/chriscarlon/herding-cats",
-            },
             {
               label: "PyPi",
               href: "https://pypi.org/project/HerdCats/",
