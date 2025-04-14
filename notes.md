@@ -6,9 +6,9 @@
 
 ## Notes for implementing shared loaders behaviours
 
-Need to understand the data structure of what we pass to the data loaders from each catalogue first.
+The data loaders all accept different data structures based on the corresponding explorer type.
 
-We need a singular data type that is passed into the data loaders - not several!!
+This might need to change in the future?
 
 ## CKAN Data
 

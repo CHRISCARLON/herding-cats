@@ -14,7 +14,7 @@ All interactions with HerdingCATs follow this pattern:
 2. Use an explorer to find and inspect data.
 3. Use a loader to retrieve and transform data.
 
-## Example: Finding Data in with a CKAN Catalogue
+## Example: Exploring Data with CKAN Catalogues
 
 ```python
 import HerdingCats as hc
@@ -135,7 +135,8 @@ def main():
         data_to_load = extracted_data[7]
 
         # Upload the data to AWS S3
-        # This uses the "raw" but you can specify "parquet" as well
+        # This uploads as "raw" data
+        # But you can specify upload as "parquet" as well
         data_loader.upload_data(
             data_to_load,
             "your-bucket-name",
@@ -143,6 +144,38 @@ def main():
             "raw"
             "s3"
         )
+
+if __name__ == "__main__":
+    main()
+```
+
+# Example: Loading OpenDataSoft Data into DuckDB
+
+```python
+import HerdingCats as hc
+
+def main():
+
+    with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS_DNO) as session:
+        explorer = hc.OpenDataSoftCatExplorer(session)
+        loader = hc.OpenDataSoftLoader()
+        api_key = ""
+
+        # Get dataset export options
+        export_options = explorer.show_dataset_export_options("ukpn-flood-warning-areas")
+        print(export_options)
+
+        # Use DuckDB for query
+        # But get results as pandas DataFrame
+        df_pandas = loader.query_to_pandas(
+            resource_data=export_options,
+            table_name="flood_areas",
+            format_type="parquet",
+            query="SELECT * FROM flood_areas LIMIT 15",
+            api_key=api_key
+        )
+        print(df_pandas)
+
 
 if __name__ == "__main__":
     main()
