@@ -5,8 +5,10 @@ import duckdb
 import boto3
 import pyarrow as pa
 import uuid
-
+import urllib.parse
 from ..errors.errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
+from ..explorer.explore import CatSession
+from ..config.source_endpoints import CkanApiPaths
 from .loader_stores import (
     S3Uploader,
     DataFrameLoader,
@@ -66,6 +68,47 @@ class CkanLoader:
         except requests.RequestException as e:
             logger.error(f"Error fetching data from URL: {e}")
             raise
+
+    def ckan_sql_to_polars(
+        self,
+        session: CatSession,
+        resource_name: str,
+        filters: Optional[dict] = None,
+        api_key: Optional[str] = None,
+    ) -> pl.DataFrame:
+        """
+        This function is designed to work with CKAN datasets that use the "datastore"
+        extension to store their data. It allows you to query the data using SQL syntax
+        and return the results as a Polars DataFrame.
+
+        Args:
+            session: CatSession object
+            resource_name: str, name of the resource to query
+            filters: Optional dict of filters to build WHERE clause
+            api_key: Optional API key for private datasets
+
+        Returns:
+            Polars DataFrame with the query results
+        """
+        # Build SQL query using backticks for the table name
+        sql_query = f"SELECT * FROM `{resource_name}`"
+
+        if filters:
+            where = " AND ".join(f"{k} = '{v}'" for k, v in filters.items())
+            sql_query += f" WHERE {where}"
+
+        api_call = (
+            f"{session.base_url}{CkanApiPaths.DATASTORE_SQL_QUERY}"
+            f"resource_id={resource_name}&"
+            f"sql={urllib.parse.quote(sql_query)}"
+        )
+        headers = {"Authorization": api_key} if api_key else {}
+
+        response = requests.get(api_call, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        records = data["result"]["result"]["records"]
+        return pl.DataFrame(records) if records else pl.DataFrame([])
 
     @ResourceValidators.validate_ckan_resource
     def get_sheet_names(self, resource_data: List) -> list[str]:
@@ -170,6 +213,124 @@ class CkanLoader:
             mode=mode,
             file_format=file_format,
         )
+
+    @ResourceValidators.validate_ckan_resource
+    def duckdb_data_loader(
+        self,
+        resource_data: list,
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+        _skip_validation: bool = False,
+    ) -> bool:
+        """
+        Load data from a resource URL directly into DuckDB.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+            _skip_validation: Optional boolean to skip validation logic
+
+        Returns:
+            True if data was loaded successfully
+        """
+        # Initialise DuckDB loader
+        self.duckdb_loader = DuckDBLoader()
+
+        # Extract URL and load data (same for both code paths)
+        file_format, url = resource_data
+
+        return self.duckdb_loader.load_remote_data(
+            url=url,
+            table_name=table_name,
+            file_format=format_type,
+            api_key=api_key,
+            options=options,
+        )
+
+    def execute_query(self, query: str) -> Any:
+        """
+        Execute a SQL query against the DuckDB instance.
+
+        Args:
+            query: SQL query to execute
+
+        Returns:
+            DuckDB result object
+        """
+        return self.duckdb_loader.execute_query(query)
+
+    @ResourceValidators.validate_ckan_resource
+    def query_to_pandas(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PandasDataFrame:
+        """
+        Load data into DuckDB and return query results as pandas DataFrame.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            pandas DataFrame with query results
+        """
+        self.duckdb_data_loader(
+            resource_data=resource_data,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+            _skip_validation=True,
+        )
+        return self.duckdb_loader.to_pandas(query)
+
+    @ResourceValidators.validate_ckan_resource
+    def query_to_polars(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PolarsDataFrame:
+        """
+        Load data into DuckDB and return query results as polars DataFrame.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            polars DataFrame with query results
+        """
+        self.duckdb_data_loader(
+            resource_data=resource_data,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+            _skip_validation=True,
+        )
+        return self.duckdb_loader.to_polars(query)
 
 
 # START TO WRANGLE / ANALYSE
@@ -650,7 +811,7 @@ class FrenchGouvLoader:
         self,
         resource_data: Optional[List[Dict[str, str]]],
         table_name: str,
-        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        format_type: Literal["csv", "parquet", "xls", "xlsx"],
         api_key: Optional[str] = None,
         options: Optional[Dict[str, Any]] = None,
         _skip_validation: bool = False,

@@ -29,6 +29,26 @@ HerdingCATs supports the following data sources by default:
 
 - **Website:** [data.humdata.org](https://data.humdata.org)
 - **Description:** Humanitarian/crisis data
+
+### NHSBSA Open Data
+
+- **Website:** [opendata.nhsbsa.net](https://opendata.nhsbsa.net)
+- **Description:** NHS Business Services Authority open data
+
+### Open Africa
+
+- **Website:** [open.africa](https://open.africa)
+- **Description:** African open data portal
+
+### National Grid DNO
+
+- **Website:** [connecteddata.nationalgrid.co.uk](https://connecteddata.nationalgrid.co.uk)
+- **Description:** UK National Grid Distribution Network Operator data
+
+### SSEN DNO
+
+- **Website:** [ckan-prod.sse.datopian.com](https://ckan-prod.sse.datopian.com)
+- **Description:** Scottish and Southern Electricity Networks DNO data
 </div>
 
 <div className="catalogueSection" style={{backgroundColor: '#282828', padding: '16px', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 4px 8px rgba(0,0,0,0.3)', borderLeft: '4px solid #6abf69'}}>

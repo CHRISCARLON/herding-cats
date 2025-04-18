@@ -225,9 +225,21 @@ df = loader.polars_data_loader(
 
 ### DuckDB Integration
 
-OpenDataSoft now supports direct loading and querying with DuckDB, providing powerful SQL-based analysis capabilities.
+Most loaders now support direct loading and querying with DuckDB, providing powerful SQL-based analysis capabilities.
 
 The plan is to extend this to all loaders in the future.
+
+:::info Available DuckDB Methods
+
+All loader classes implement these DuckDB-related methods:
+
+- `duckdb_data_loader()`: Load data directly into a DuckDB table
+- `execute_query()`: Run a SQL query on loaded data
+- `query_to_pandas()`: Load data and return pandas DataFrame from a query
+- `query_to_polars()`: Load data and return polars DataFrame from a query
+  :::
+
+**Example:**
 
 ```python
 import HerdingCats as hc
@@ -252,7 +264,7 @@ with hc.CatSession(hc.OpenDataSoftDataCatalogues.UK_POWER_NETWORKS_DNO) as sessi
     print(df_pandas)
 ```
 
-Example Output...
+**Example Output:**
 
 ```bash
 # Session initialisation
@@ -302,17 +314,6 @@ Some of the columns have been truncated for readability.
 - **SQL Power**: Leverage SQL for filtering, joining, and aggregating data
 - **Performance**: DuckDB is optimized for analytical queries on columnar data
 - **Seamless Integration**: Results can be easily converted to familiar pandas or polars DataFrames
-
-#### Available DuckDB Methods
-
-All loader classes implement these DuckDB-related methods:
-
-| Method                 | Description                                        |
-| ---------------------- | -------------------------------------------------- |
-| `duckdb_data_loader()` | Load data directly into a DuckDB table             |
-| `execute_query()`      | Run a SQL query on loaded data                     |
-| `query_to_pandas()`    | Load data and return pandas DataFrame from a query |
-| `query_to_polars()`    | Load data and return polars DataFrame from a query |
 
 #### Example: Filtering and Aggregating Large Datasets
 
@@ -377,6 +378,92 @@ with hc.CatSession(hc.CkanDataCatalogues.HUMANITARIAN_DATA_STORE) as session:
             mode="raw",
             storage_type="s3"
         )
+```
+
+### Querying CKAN Datastore with SQL
+
+CKAN supports a "datastore" extension that allows you to run SQL queries directly against tabular resources. The `ckan_sql_to_polars` method is available **only on the CKAN loader** and lets you fetch filtered data as a Polars DataFrame using SQL syntax.
+
+**Parameters:**
+
+- `session`: Your active CatSession object - it automatically uses the base url of the session and the datastore_search_sql endpoint
+- `resource_name`: The resource ID or name.
+- `filters`: (Optional) A dictionary of column-value pairs to filter the results (translated to a SQL WHERE clause).
+- `api_key`: (Optional) If the dataset is private, provide your CKAN API key.
+
+**Returns:**  
+A Polars DataFrame containing the query results.
+
+**When to use:**  
+Use this method when you want to filter or query large CKAN tabular datasets server-side before loading them into memory, leveraging the power of SQL and the efficiency of Polars.
+
+> **Note:** This method is only available for CKAN loaders and only works with CKAN catalogues that support the "datastore" extension.
+
+**Example:**
+
+```python
+import HerdingCats as hc
+
+def main():
+
+    with hc.CatSession(hc.CkanDataCatalogues.NHSBSA_OPEN_DATA) as session:
+        loader = hc.CkanLoader()
+
+        df = loader.ckan_sql_to_polars(
+            session,
+            resource_name="EPD_202001",
+            filters={"pco_code": "13T00", "bnf_chemical_substance": "0407010H0"}
+        )
+        print(df.head(25))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+**Output:**
+
+```bash
+
+shape: (25, 26)
+┌─────────────────┬────────────────┬──────────┬────────────┬───┬─────────────────┬─────────────────┬────────────────┬────────────────┐
+│ BNF_CODE        ┆ TOTAL_QUANTITY ┆ POSTCODE ┆ YEAR_MONTH ┆ … ┆ PCO_NAME        ┆ AREA_TEAM_NAME  ┆ BNF_DESCRIPTIO ┆ ADDRESS_1      │
+│ ---             ┆ ---            ┆ ---      ┆ ---        ┆   ┆ ---             ┆ ---             ┆ N              ┆ ---            │
+│ str             ┆ f64            ┆ str      ┆ i64        ┆   ┆ str             ┆ str             ┆ ---            ┆ str            │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆                 ┆ str            ┆                │
+╞═════════════════╪════════════════╪══════════╪════════════╪═══╪═════════════════╪═════════════════╪════════════════╪════════════════╡
+│ 0407010H0AAAMAM ┆ 3136.0         ┆ NE8 4QR  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ 108 RAWLING    │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 500mg tablets  ┆ ROAD           │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆                ┆                │
+│ 0407010H0AABGBG ┆ 280.0          ┆ NE9 6SX  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ QUEEN          │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 250mg/5ml oral ┆ ELIZABETH      │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆ sus…           ┆ HOSPITAL       │
+│ 0407010H0AAAWAW ┆ 400.0          ┆ NE9 6SX  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ EMERGENCY CARE │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 120mg/5ml oral ┆ CENTRE         │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆ sus…           ┆                │
+│ 0407010H0AAA7A7 ┆ 100.0          ┆ NE6 1SG  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ MOLINEUX       │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 120mg/5ml oral ┆ WALK-IN CENTRE │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆ sol…           ┆                │
+│ 0407010H0AAACAC ┆ 200.0          ┆ NE5 3AE  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ PONTELAND RD   │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 250mg/5ml oral ┆ WIC            │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆ sus…           ┆                │
+│ …               ┆ …              ┆ …        ┆ …          ┆ … ┆ …               ┆ …               ┆ …              ┆ …              │
+│ 0407010H0AAACAC ┆ 200.0          ┆ NE6 1SG  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ MOLINEUX       │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 250mg/5ml oral ┆ WALK-IN CENTRE │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆ sus…           ┆                │
+│ 0407010H0AAAMAM ┆ 56.0           ┆ NE6 1SG  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ MOLINEUX       │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 500mg tablets  ┆ WALK-IN CENTRE │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆                ┆                │
+│ 0407010H0AAAQAQ ┆ 100.0          ┆ NE4 6SS  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ MARIE CURIE    │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 500mg soluble  ┆ HOSPICE        │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆ tabl…          ┆                │
+│ 0407010H0AAAMAM ┆ 32.0           ┆ NE1 4LP  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ ACCIDENT &     │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 500mg tablets  ┆ EMERGENCY DPT  │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆                ┆                │
+│ 0407010H0AAAWAW ┆ 100.0          ┆ NE9 6SX  ┆ 202001     ┆ … ┆ NEWCASTLE       ┆ CUMBRIA,NORTHUM ┆ Paracetamol    ┆ EMERGENCY CARE │
+│                 ┆                ┆          ┆            ┆   ┆ GATESHEAD CCG   ┆ B,TYNE & WEAR   ┆ 120mg/5ml oral ┆ CENTRE         │
+│                 ┆                ┆          ┆            ┆   ┆                 ┆ A…              ┆ sus…           ┆                │
+└─────────────────┴────────────────┴──────────┴────────────┴───┴─────────────────┴─────────────────┴────────────────┴────────────────┘
 ```
 
 ### OpenDataSoft Loader Example

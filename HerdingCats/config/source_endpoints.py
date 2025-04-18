@@ -8,6 +8,7 @@ class CkanApiPaths:
         "current_package_list_with_resources"
     )
     ORGANIZATION_LIST = BASE_PATH.format("organization_list")
+    DATASTORE_SQL_QUERY = BASE_PATH.format("datastore_search_sql?")
     # Add more paths as needed...
 
 

@@ -87,6 +87,11 @@ class ResourceValidators:
             *args,
             **kwargs,
         ):
+            # Check if _skip_validation is True
+            if kwargs.get("_skip_validation", False):
+                # Skip validation and just call the function
+                return func(self, resource_data, *args, **kwargs)
+
             # First validate we have a list
             if not isinstance(resource_data, list) or not resource_data:
                 logger.error("Invalid resource data: must be a non-empty list")
@@ -204,7 +209,7 @@ class ResourceValidators:
         def wrapper(self, resource_data: List[Dict[str, Any]], *args, **kwargs):
             if kwargs.get("_skip_validation", False):
                 return func(self, resource_data, *args, **kwargs)
-            
+
             # Check if resource data exists and is non-empty
             if not resource_data or not isinstance(resource_data, list):
                 logger.error("Resource data must be a list")
@@ -657,7 +662,7 @@ class DuckDBLoader(DuckDBTrait):
 
             # Execute the query
             logger.info(
-                f"Loading {file_format} data from URL into table '{table_name}'"
+                f"Loading {file_format} data from URL ('{url}') into table '{table_name}'"
             )
             self.conn.execute(query)
 
