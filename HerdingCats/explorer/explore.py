@@ -1255,10 +1255,91 @@ class FrenchGouvCatExplorer:
     # ----------------------------
     def get_all_datasets(self) -> dict:
         """
-        Uses DuckDB to read a Parquet file of whole French Gouv data catalogue instead and create a dictionary of slugs and IDs.
+        Uses DuckDB to read a Parquet file of whole French Gouv data catalogue and create a dictionary of slugs and IDs.
 
         Returns:
             dict: Dictionary with slugs as keys and dataset IDs as values
+
+        Example usage:
+
+            import HerdingCats as hc
+
+            from pprint import pprint
+
+            def main():
+                with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
+                    explore = hc.FrenchGouvCatExplorer(session)
+                    dataset = explore.get_all_datasets()
+                    pprint(dataset)
+
+            if __name__ =="__main__":
+                main()
+        """
+
+        try:
+            catalogue = FrenchGouvApiPaths.CATALOGUE
+            catalogue_data = self.get_dataset_meta(catalogue)
+            catalogue_resource = self.get_dataset_resource_meta(catalogue_data)
+
+            if not catalogue_resource:
+                logger.error("No resources found in the catalogue.")
+                raise CatExplorerError("No resources found in the catalogue.")
+
+            # Filter for Parquet resources so we get the most recent one
+            # This has the most recent catalogue data
+            parquet_resources = [
+                resource
+                for resource in catalogue_resource
+                if resource.get("resource_extras", {}).get(
+                    "analysis:parsing:parquet_url"
+                )
+            ]
+
+            if not parquet_resources:
+                logger.error("No Parquet resources found in the catalogue.")
+                raise CatExplorerError("No Parquet resources found in the catalogue.")
+
+            parquet_resources.sort(key=lambda x: x.get("resource_last_modified", ""))
+
+            download_url = parquet_resources[0]["resource_extras"][
+                "analysis:parsing:parquet_url"
+            ]
+
+            with duckdb.connect(":memory:") as con:
+                # Install and load httpfs extension
+                con.execute("INSTALL httpfs;")
+                con.execute("LOAD httpfs;")
+
+                # Query to select only id and slug, converting to dict format
+                query = """
+                SELECT DISTINCT slug, id
+                FROM read_parquet(?)
+                WHERE slug IS NOT NULL AND id IS NOT NULL
+                """
+
+                # Execute query and fetch results
+                result = con.execute(query, parameters=[download_url]).fetchall()
+
+                # Convert results to dictionary
+                datasets = {slug: id for slug, id in result}
+            return datasets
+
+        except Exception as e:
+            logger.error(f"Error processing parquet file: {str(e)}")
+            raise CatExplorerError(f"Error processing parquet file: {str(e)}")
+
+    def search_datasets(self, query: str) -> list[dict]:
+        """
+        Fetches a list of datasets using a search query.
+
+        Args:
+            query (str): Search query to fetch
+
+        Returns:
+            list[dict]: List of dataset details
+
+        Example query:
+            "population"
 
         # Example usage...
         import HerdingCats as hc
@@ -1267,35 +1348,44 @@ class FrenchGouvCatExplorer:
         def main():
             with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
                 explore = hc.FrenchGouvCatExplorer(session)
-                dataset = explore.get_all_datasets()
-                pprint(dataset)
+                datasets = explore.search_datasets("population")
+                pprint(datasets)
 
         if __name__ =="__main__":
             main()
         """
-
         try:
-            catalogue = FrenchGouvApiPaths.CATALOGUE
+            # Construct URL for specific dataset
+            url = (
+                self.cat_session.base_url
+                + FrenchGouvApiPaths.SEARCH_DATASETS
+                + f"?q={query}"
+            )
 
-            with duckdb.connect(":memory:") as con:
-                # Install and load httpfs extension
-                con.execute("INSTALL httpfs;")
-                con.execute("LOAD httpfs;")
-                # Query to select only id and slug, converting to dict format
-                query = """
-                SELECT DISTINCT slug, id
-                FROM read_parquet(?)
-                WHERE slug IS NOT NULL AND id IS NOT NULL
-                """
-                # Execute query and fetch results
-                result = con.execute(query, parameters=[catalogue]).fetchall()
-                # Convert results to dictionary
-                datasets = {slug: id for slug, id in result}
-                return datasets
+            # Make request
+            response = self.cat_session.session.get(url)
+
+            # Handle response
+            if response.status_code == 200:
+                data = response.json()
+                # Adjust the key as per actual API response structure
+                results = data.get(
+                    "data", data.get("results", data.get("datasets", []))
+                )
+                logger.success(f"Found {len(results)} datasets for query '{query}'")
+                return results
+            else:
+                logger.error(
+                    f"Failed to search datasets with status code {response.status_code}"
+                )
+                return []
         except Exception as e:
-            logger.error(f"Error processing parquet file: {str(e)}")
-            return {}
+            logger.error(f"Error searching datasets with query '{query}': {str(e)}")
+            return []
 
+    # ----------------------------
+    # Get metadata for a specific datasets
+    # ----------------------------
     def get_dataset_meta(self, identifier: str) -> dict:
         """
         Fetches a metadata for a specific dataset using either its ID or slug.
@@ -1450,7 +1540,7 @@ class FrenchGouvCatExplorer:
         return results
 
     # ----------------------------
-    # Show available resources for a particular dataset
+    # Show available resource data for a particular dataset
     # ----------------------------
     def get_dataset_resource_meta(self, data: dict) -> List[Dict[str, Any]] | None:
         """
@@ -1506,6 +1596,85 @@ class FrenchGouvCatExplorer:
             return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
 
     # ----------------------------
+    # Show all organisation available
+    # ----------------------------
+    def get_all_organisations(self) -> dict:
+        """
+        Uses DuckDB to read a Parquet file of whole French Gouv data catalogue and create a dictionary of organisation names and IDs.
+
+        Returns:
+            dict: Dictionary with organisation names as keys and organisation IDs as values
+
+        Example usage:
+
+            import HerdingCats as hc
+
+            from pprint import pprint
+
+            def main():
+                with hc.CatSession(hc.FrenchGouvCatalogue.GOUV_FR) as session:
+                    explore = hc.FrenchGouvCatExplorer(session)
+                    dataset = explore.get_all_datasets()
+                    pprint(dataset)
+
+            if __name__ =="__main__":
+                main()
+        """
+
+        try:
+            catalogue = FrenchGouvApiPaths.CATALOGUE
+            catalogue_data = self.get_dataset_meta(catalogue)
+            catalogue_resource = self.get_dataset_resource_meta(catalogue_data)
+
+            if not catalogue_resource:
+                logger.error("No resources found in the catalogue.")
+                raise CatExplorerError("No resources found in the catalogue.")
+
+            # Filter for Parquet resources so we get the most recent one
+            # This has the most recent catalogue data
+            parquet_resources = [
+                resource
+                for resource in catalogue_resource
+                if resource.get("resource_extras", {}).get(
+                    "analysis:parsing:parquet_url"
+                )
+            ]
+
+            if not parquet_resources:
+                logger.error("No Parquet resources found in the catalogue.")
+                raise CatExplorerError("No Parquet resources found in the catalogue.")
+
+            parquet_resources.sort(key=lambda x: x.get("resource_last_modified", ""))
+
+            download_url = parquet_resources[0]["resource_extras"][
+                "analysis:parsing:parquet_url"
+            ]
+
+            with duckdb.connect(":memory:") as con:
+                # Install and load httpfs extension
+                con.execute("INSTALL httpfs;")
+                con.execute("LOAD httpfs;")
+
+                query = """
+                SELECT DISTINCT organization, organization_id
+                FROM read_parquet(?)
+                WHERE organization IS NOT NULL AND organization_id IS NOT NULL
+                """
+                # Execute query and fetch results
+                result = con.execute(query, parameters=[download_url]).fetchall()
+                # Convert results to dictionary
+                organisations = {
+                    organization: organization_id
+                    for organization, organization_id in result
+                }
+
+            return organisations
+
+        except Exception as e:
+            logger.error(f"Error processing parquet file: {str(e)}")
+            raise CatExplorerError(f"Error processing parquet file: {str(e)}")
+
+    # ----------------------------
     # Helper function to flatten meta data
     # ----------------------------
     @staticmethod
@@ -1548,40 +1717,6 @@ class FrenchGouvCatExplorer:
             return result
         except Exception as e:
             raise e
-
-    # ----------------------------
-    # Show all organisation available
-    # ----------------------------
-    def get_all_orgs(self) -> dict:
-        """
-        Uses DuckDB to read a Parquet file of whole French Gouv data catalogue instead and create a dictionary of orgs and org ids.
-
-        Returns:
-            dict: Dictionary with orgs as keys and org IDs as values
-        """
-        try:
-            catalogue = FrenchGouvApiPaths.CATALOGUE
-            with duckdb.connect(":memory:") as con:
-                # Install and load httpfs extension
-                con.execute("INSTALL httpfs;")
-                con.execute("LOAD httpfs;")
-                # Query to select only id and slug, converting to dict format
-                query = """
-                SELECT DISTINCT organization, organization_id
-                FROM read_parquet(?)
-                WHERE organization IS NOT NULL AND organization_id IS NOT NULL
-                """
-                # Execute query and fetch results
-                result = con.execute(query, parameters=[catalogue]).fetchall()
-                # Convert results to dictionary
-                organisations = {
-                    organization: organization_id
-                    for organization, organization_id in result
-                }
-                return organisations
-        except Exception as e:
-            logger.error(f"Error processing parquet file: {str(e)}")
-            return {}
 
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES

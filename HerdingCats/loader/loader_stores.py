@@ -41,35 +41,44 @@ T = TypeVar("T")
 class ResourceValidators:
     """
     Centralised validators that can be used across different traits.
-    
+
     This ensures that the resource data is in the correct format before it is passed to the loader.
+
+    The `_skip_validation` flag can be used to skip validation if the resource data is already validated.
+    This is especially useful for methods (such as DuckDB loaders) that may call themselves internally,
+    to avoid running the validation logic multiple times on the same data.
+
+    Usage:
+        - When calling a decorated method directly, validation will run by default.
+        - When calling the same method internally (e.g., from within itself), pass `_skip_validation=True`
+          as a keyword argument to skip redundant validation.
     """
-    
+
     @staticmethod
     def validate_ckan_resource(func: Callable[..., T]) -> Callable[..., T]:
         """
         Decorator to validate CKAN resource data and transform it into a simplified format.
-        
+
         This decorator:
         1. Validates the structure of the resource data
         2. Handles both single resources and lists of resources
         3. Extracts and validates the format and URL using ResourceIndex enum
         4. Transforms the input into a simplified [format, url] list
-        
+
         Input formats expected:
         - Single list: [name, date, format, url] indexed by ResourceIndex
         - List of lists: [[name, date, format, url], [...], ...]
-        
+
         Output:
         - Simplified list: [format, url] that's passed to the decorated function
         """
-        
+
         class ResourceIndex(IntEnum):
             NAME = 0
             DATE = 1
             FORMAT = 2
             URL = 3
-            
+
         @wraps(func)
         def wrapper(
             self,
@@ -82,7 +91,7 @@ class ResourceValidators:
             if not isinstance(resource_data, list) or not resource_data:
                 logger.error("Invalid resource data: must be a non-empty list")
                 raise ValueError("Resource data must be a non-empty list")
-                
+
             # If we have multiple resources (list of lists)
             if isinstance(resource_data[0], list):
                 if desired_format:
@@ -91,7 +100,8 @@ class ResourceValidators:
                         (
                             resource
                             for resource in resource_data
-                            if resource[ResourceIndex.FORMAT].lower() == desired_format.lower()
+                            if resource[ResourceIndex.FORMAT].lower()
+                            == desired_format.lower()
                         ),
                         None,
                     )
@@ -110,7 +120,7 @@ class ResourceValidators:
             else:
                 # Single resource case
                 target_resource = resource_data
-                
+
             # Validate the resource has all required elements
             if len(target_resource) <= ResourceIndex.URL:
                 logger.error(
@@ -119,24 +129,24 @@ class ResourceValidators:
                 raise ValueError(
                     f"Resource must contain at least {ResourceIndex.URL + 1} elements"
                 )
-                
+
             # Extract format and URL using the enum
             format_type = target_resource[ResourceIndex.FORMAT].lower()
             url = target_resource[ResourceIndex.URL]
-            
+
             # Validate URL format
             if not url.startswith(("http://", "https://")):
                 logger.error(f"Invalid URL format: {url}")
                 raise ValueError("Invalid URL format")
-                
+
             # Create the modified resource in the expected format
             modified_resource = [format_type, url]
             logger.info("Resource data validated")
-            
+
             return func(self, modified_resource, *args, **kwargs)
-            
+
         return wrapper
-        
+
     @staticmethod
     def validate_opendata_resource(func: Callable[..., T]) -> Callable[..., T]:
         """
@@ -144,28 +154,28 @@ class ResourceValidators:
 
         Input format:
         - List of dictionaries with 'format' and 'download_url' keys
-        
+
         Output format:
         - List of dictionaries with 'format' and 'download_url' keys
         """
-        
+
         @wraps(func)
         def wrapper(self, resource_data: List[Dict[str, Any]], *args, **kwargs):
             # Check if _skip_validation is True
-            if kwargs.get('_skip_validation', False):
+            if kwargs.get("_skip_validation", False):
                 # Skip validation and just call the function
                 return func(self, resource_data, *args, **kwargs)
-            
+
             # Regular validation logic
             if not resource_data or not isinstance(resource_data, list):
                 logger.error("Resource data must be a list")
                 raise ValueError("Resource data must be a list of dictionaries")
-                
+
             has_valid_item = any(
                 isinstance(item, dict) and "format" in item and "download_url" in item
                 for item in resource_data
             )
-            
+
             if not has_valid_item:
                 logger.error(
                     "Resource data must contain dictionaries with 'format' and 'download_url' keys"
@@ -173,11 +183,11 @@ class ResourceValidators:
                 raise ValueError("Invalid resource data format for OpenDataSoft")
 
             logger.info("Resource data validated")
-                
+
             return func(self, resource_data, *args, **kwargs)
-            
+
         return wrapper
-        
+
     @staticmethod
     def validate_french_gouv_resource(func: Callable[..., T]) -> Callable[..., T]:
         """
@@ -189,14 +199,17 @@ class ResourceValidators:
         Output format:
         - List of dictionaries with 'resource_format' and 'resource_url' keys
         """
-        
+
         @wraps(func)
         def wrapper(self, resource_data: List[Dict[str, Any]], *args, **kwargs):
+            if kwargs.get("_skip_validation", False):
+                return func(self, resource_data, *args, **kwargs)
+            
             # Check if resource data exists and is non-empty
             if not resource_data or not isinstance(resource_data, list):
                 logger.error("Resource data must be a list")
                 raise ValueError("Resource data must be a list of dictionaries")
-                
+
             # Check if at least one item has the expected resource_format and resource_url keys
             has_valid_item = any(
                 isinstance(item, dict)
@@ -204,19 +217,21 @@ class ResourceValidators:
                 and "resource_url" in item
                 for item in resource_data
             )
-            
+
             if not has_valid_item:
                 logger.error(
                     "Resource data must contain dictionaries with 'resource_format' and 'resource_url' keys"
                 )
-                raise ValueError("Invalid resource data format for French Government data")
+                raise ValueError(
+                    "Invalid resource data format for French Government data"
+                )
 
             logger.info("Resource data validated")
-                
+
             return func(self, resource_data, *args, **kwargs)
-            
+
         return wrapper
-        
+
     @staticmethod
     def validate_ons_nomis_resource(func: Callable[..., T]) -> Callable[..., T]:
         """
@@ -228,7 +243,7 @@ class ResourceValidators:
         Output format:
         - String of the url
         """
-        
+
         @wraps(func)
         def wrapper(self, resource_data: str, *args, **kwargs):
             if not resource_data or not isinstance(resource_data, str):
@@ -236,7 +251,7 @@ class ResourceValidators:
                 raise ValueError("Resource data must be a string")
             logger.info("Resource data validated")
             return func(self, resource_data, *args, **kwargs)
-            
+
         return wrapper
 
 

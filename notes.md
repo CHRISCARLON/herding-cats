@@ -48,6 +48,6 @@ This might need to change in the future?
 | resource_url           | String URL                             |
 | slug                   | String                                 |
 
-## Start to implement ONS Nomis API as a catalogue
+## ONS Nomis Data
 
-Started!
+**Return Type:** `List[Dict]`

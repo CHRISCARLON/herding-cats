@@ -7,7 +7,13 @@ import pyarrow as pa
 import uuid
 
 from ..errors.errors import OpenDataSoftExplorerError, FrenchCatDataLoaderError
-from .loader_stores import S3Uploader, DataFrameLoader, LocalUploader, DuckDBLoader, ResourceValidators
+from .loader_stores import (
+    S3Uploader,
+    DataFrameLoader,
+    LocalUploader,
+    DuckDBLoader,
+    ResourceValidators,
+)
 
 from typing import Union, Optional, Literal, List, Dict, Any
 from pandas.core.frame import DataFrame as PandasDataFrame
@@ -364,7 +370,7 @@ class OpenDataSoftLoader:
         """
         # Initialise DuckDB loader
         self.duckdb_loader = DuckDBLoader()
-        
+
         # Extract URL and load data (same for both code paths)
         url = self._extract_resource_data(resource_data, format_type)
 
@@ -518,9 +524,9 @@ class FrenchGouvLoader:
         # Find matching resource and its title
         matching_resource = next(
             (
-                r
-                for r in resource_data
-                if r.get("resource_format", "").lower() in valid_formats
+                resource
+                for resource in resource_data
+                if resource.get("resource_format", "").lower() in valid_formats
             ),
             None,
         )
@@ -638,6 +644,124 @@ class FrenchGouvLoader:
             mode=mode,
             file_format=format_type,
         )
+
+    @ResourceValidators.validate_french_gouv_resource
+    def duckdb_data_loader(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+        _skip_validation: bool = False,
+    ) -> bool:
+        """
+        Load data from a resource URL directly into DuckDB.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+            _skip_validation: Optional boolean to skip validation logic
+
+        Returns:
+            True if data was loaded successfully
+        """
+        # Initialise DuckDB loader
+        self.duckdb_loader = DuckDBLoader()
+
+        # Extract URL and load data (same for both code paths)
+        url, _ = self._extract_resource_data(resource_data, format_type)
+
+        return self.duckdb_loader.load_remote_data(
+            url=url,
+            table_name=table_name,
+            file_format=format_type,
+            api_key=api_key,
+            options=options,
+        )
+
+    def execute_query(self, query: str) -> Any:
+        """
+        Execute a SQL query against the DuckDB instance.
+
+        Args:
+            query: SQL query to execute
+
+        Returns:
+            DuckDB result object
+        """
+        return self.duckdb_loader.execute_query(query)
+
+    @ResourceValidators.validate_french_gouv_resource
+    def query_to_pandas(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PandasDataFrame:
+        """
+        Load data into DuckDB and return query results as pandas DataFrame.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            pandas DataFrame with query results
+        """
+        self.duckdb_data_loader(
+            resource_data=resource_data,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+            _skip_validation=True,
+        )
+        return self.duckdb_loader.to_pandas(query)
+
+    @ResourceValidators.validate_french_gouv_resource
+    def query_to_polars(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PolarsDataFrame:
+        """
+        Load data into DuckDB and return query results as polars DataFrame.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            polars DataFrame with query results
+        """
+        self.duckdb_data_loader(
+            resource_data=resource_data,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+            _skip_validation=True,
+        )
+        return self.duckdb_loader.to_polars(query)
 
 
 # LOAD ONS NOMIS DATA RESOURCES INTO STORAGE

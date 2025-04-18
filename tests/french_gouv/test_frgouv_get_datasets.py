@@ -16,6 +16,8 @@ def test_ckan_health_check():
         explore = FrenchGouvCatExplorer(cat_session)
         try:
             data = explore.get_all_datasets()
+            if data is None:
+                pytest.fail("No data found in the catalogue.")
             data_length = len(data)
             print(data_length)
             assert data_length > 10000, (

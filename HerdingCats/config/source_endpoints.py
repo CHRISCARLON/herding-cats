@@ -33,8 +33,9 @@ class FrenchGouvApiPaths:
     BASE_PATH = "/api/1/{}"
     SHOW_DATASETS = BASE_PATH.format("datasets")
     SHOW_DATASETS_BY_ID = BASE_PATH.format("datasets/{}")
+    SEARCH_DATASETS = BASE_PATH.format("datasets/")
     SHOW_DATASET_RESOURCE_BY_ID = BASE_PATH.format("datasets/{}/resources/")
-    CATALOGUE = "https://object.files.data.gouv.fr/hydra-parquet/hydra-parquet/b06842f8ee27a0302ebbaaa344d35e4c.parquet"
+    CATALOGUE = "5d13a8b6634f41070a43dff3"
 
 
 # ONS NOMI
