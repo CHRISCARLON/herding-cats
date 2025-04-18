@@ -13,7 +13,7 @@ from importlib.metadata import version
 try:
     __version__ = version("HerdingCats")
 except Exception:
-    __version__ = "0.1.1"
+    __version__ = "0.1.2"
 
 # Core components
 from .session.session import CatSession
