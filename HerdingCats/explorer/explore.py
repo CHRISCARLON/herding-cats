@@ -1034,7 +1034,9 @@ class DataPressCatExplorer:
             main()
         """
 
-        url: str = self.cat_session.base_url + DataPressApiPaths.PACKAGE_INFO.format("20jl1")
+        url: str = self.cat_session.base_url + DataPressApiPaths.PACKAGE_INFO.format(
+            "20jl1"
+        )
 
         try:
             response = self.cat_session.session.get(url)
@@ -1042,7 +1044,9 @@ class DataPressCatExplorer:
             if response.status_code == 200:
                 data = response.json()
                 if data:
-                    logger.success("Health Check Passed: DataPress is running and available")
+                    logger.success(
+                        "Health Check Passed: DataPress is running and available"
+                    )
                 else:
                     logger.warning(
                         "Health Check Warning: DataPress responded with an empty dataset"
@@ -1053,7 +1057,9 @@ class DataPressCatExplorer:
                 )
 
         except requests.RequestException as e:
-            logger.error(f"Health Check Failed: Unable to connect to DataPress - {str(e)}")
+            logger.error(
+                f"Health Check Failed: Unable to connect to DataPress - {str(e)}"
+            )
 
     # ----------------------------
     # Get datasets available
@@ -1067,14 +1073,18 @@ class DataPressCatExplorer:
         """
         try:
             endpoint = self.cat_session.base_url + DataPressApiPaths.SHOW_ALL_CATALOGUES
-            
+
             response = self.cat_session.session.get(endpoint)
             response.raise_for_status()
 
             datasets = response.json()
 
             # Build the dictionary: title -> id
-            return {dataset["title"]: dataset["id"] for dataset in datasets if "title" in dataset and "id" in dataset}
+            return {
+                dataset["title"]: dataset["id"]
+                for dataset in datasets
+                if "title" in dataset and "id" in dataset
+            }
 
         except Exception as e:
             logger.error(f"Error fetching datasets from DataPress: {str(e)}")

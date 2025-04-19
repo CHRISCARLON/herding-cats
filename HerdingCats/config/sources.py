@@ -12,9 +12,11 @@ class CkanDataCatalogues(Enum):
     NHSBSA_OPEN_DATA = "https://opendata.nhsbsa.net"
     # Add more catalogues as needed...
 
+
 class DataPressCatalogues(Enum):
-    NORTHERN_DATA_MILL = "https://datamillnorth.org" 
+    NORTHERN_DATA_MILL = "https://datamillnorth.org"
     LONDON_DATA_STORE = "https://data.london.gov.uk"
+
 
 # OPEN DATASOFT
 class OpenDataSoftDataCatalogues(Enum):
