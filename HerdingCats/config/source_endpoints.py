@@ -11,6 +11,13 @@ class CkanApiPaths:
     DATASTORE_SQL_QUERY = BASE_PATH.format("datastore_search_sql?")
     # Add more paths as needed...
 
+# DataPress
+class DataPressApiPaths:
+    BASE_PATH = "/api/{}"
+    SHOW_ALL_CATALOGUES = BASE_PATH.format("datasets/export.json")
+    PACKAGE_INFO = BASE_PATH.format("dataset/{}")
+    # Add more paths as needed...
+
 
 # OPEN DATASOFT
 class OpenDataSoftApiPaths:

@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 from enum import Enum
 from ..config.sources import (
     CkanDataCatalogues,
+    DataPressCatalogues,
     OpenDataSoftDataCatalogues,
     FrenchGouvCatalogue,
     ONSNomisAPI,
@@ -17,6 +18,7 @@ from ..errors.errors import CatSessionError
 # Current Supported Catalogue Types
 class CatalogueType(Enum):
     CKAN = "ckan"
+    DATA_PRESS = "data_press"
     OPENDATA_SOFT = "opendatasoft"
     GOUV_FR = "french_gov"
     ONS_NOMIS = "ons_nomis"
@@ -28,6 +30,7 @@ class CatSession:
         self,
         catalogue: Union[
             CkanDataCatalogues,
+            DataPressCatalogues,
             OpenDataSoftDataCatalogues,
             FrenchGouvCatalogue,
             ONSNomisAPI,
@@ -38,7 +41,7 @@ class CatSession:
 
         Args:
             catalogue: A predefined catalogue from one of the supported enum types
-            (CkanDataCatalogues, OpenDataSoftDataCatalogues, or FrenchGouvCatalogue)
+            (CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, DataPressCatalogues, or ONSNomisAPI)
 
         Returns:
             A CatSession Object
@@ -56,6 +59,7 @@ class CatSession:
     def _process_catalogue(
         catalogue: Union[
             CkanDataCatalogues,
+            DataPressCatalogues,
             OpenDataSoftDataCatalogues,
             FrenchGouvCatalogue,
             ONSNomisAPI,
@@ -79,9 +83,11 @@ class CatSession:
                 catalog_type = CatalogueType.OPENDATA_SOFT
             case ONSNomisAPI():
                 catalog_type = CatalogueType.ONS_NOMIS
+            case DataPressCatalogues():
+                catalog_type = CatalogueType.DATA_PRESS
             case _:
                 raise ValueError(
-                    "Catalogue must be one of: CkanDataCatalogues, OpenDataSoftDataCatalogues, or FrenchGouvCatalogue"
+                    "Catalogue must be one of: CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, DataPressCatalogues, or ONSNomisAPI"
                 )
 
         parsed_url = urlparse(catalogue.value)
@@ -131,5 +137,5 @@ class CatSession:
 
     @property
     def catalogue_type(self) -> CatalogueType:
-        """Return the catalog type (CKAN, OpenDataSoft, or French Government)"""
+        """Return the catalog type (CKAN, OpenDataSoft, French Government, DataPress, or ONSNomis)"""
         return self._catalogue_type

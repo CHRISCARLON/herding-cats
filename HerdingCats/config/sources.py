@@ -10,10 +10,11 @@ class CkanDataCatalogues(Enum):
     NATIONAL_GRID_DNO = "https://connecteddata.nationalgrid.co.uk"
     SSEN_DNO = "https://ckan-prod.sse.datopian.com"
     NHSBSA_OPEN_DATA = "https://opendata.nhsbsa.net"
-    # CANADA_GOV = "https://search.open.canada.ca/opendata" NEED TO LOOK INTO THIS ONE MORE
-    # NORTHERN_DATA_MILL = "https://datamillnorth.org" NEED TO LOOK INTO THIS ONE MORE
     # Add more catalogues as needed...
 
+class DataPressCatalogues(Enum):
+    NORTHERN_DATA_MILL = "https://datamillnorth.org" 
+    LONDON_DATA_STORE = "https://data.london.gov.uk"
 
 # OPEN DATASOFT
 class OpenDataSoftDataCatalogues(Enum):

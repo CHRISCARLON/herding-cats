@@ -21,6 +21,7 @@ from .session.session import CatSession
 # Explorer components
 from .explorer.explore import (
     CkanCatExplorer,
+    DataPressCatExplorer,
     OpenDataSoftCatExplorer,
     FrenchGouvCatExplorer,
     ONSNomisCatExplorer,
@@ -37,6 +38,7 @@ from .loader.loader import (
 # Configuration components
 from .config.sources import (
     CkanDataCatalogues,
+    DataPressCatalogues,
     OpenDataSoftDataCatalogues,
     FrenchGouvCatalogue,
     ONSNomisAPI,
@@ -55,6 +57,7 @@ __all__ = [
     "CatSession",
     # Explorers
     "CkanCatExplorer",
+    "DataPressCatExplorer",
     "OpenDataSoftCatExplorer",
     "FrenchGouvCatExplorer",
     "ONSNomisCatExplorer",
@@ -65,6 +68,7 @@ __all__ = [
     "ONSNomisLoader",
     # Configuration
     "CkanDataCatalogues",
+    "DataPressCatalogues",
     "OpenDataSoftDataCatalogues",
     "FrenchGouvCatalogue",
     "ONSNomisAPI",

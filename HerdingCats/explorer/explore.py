@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 
 from ..config.source_endpoints import (
     CkanApiPaths,
+    DataPressApiPaths,
     OpenDataSoftApiPaths,
     FrenchGouvApiPaths,
     ONSNomisApiPaths,
@@ -25,7 +26,6 @@ from ..session.session import CatSession, CatalogueType
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
 # For Ckan Catalogues Only
-# TODO add in property class for base_url
 class CkanCatExplorer:
     def __init__(self, cat_session: CatSession):
         """
@@ -963,6 +963,122 @@ class CkanCatExplorer:
             result.append(resource_data)
 
         return result
+
+
+# FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
+# For DataPress Catalogues Only
+class DataPressCatExplorer:
+    def __init__(self, cat_session: CatSession):
+        """
+        Takes in a CatSession.
+
+        Allows user to start exploring data catalogue programatically.
+
+        Make sure you pass a valid DataPressCatSession in - it will check if the catalogue type is right.
+
+        Args:
+            DataPressCatSession
+
+        Returns:
+            DataPressCatExplorer
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.DataPressCatalogues.NORTHERN_DATA_MILL) as session:
+                explore = hc.DataPressCatExplorer(session)
+
+        if __name__ == "__main__":
+            main()
+        """
+
+        if not hasattr(cat_session, "catalogue_type"):
+            raise WrongCatalogueError(
+                "CatSession missing catalogue_type attribute",
+                expected_catalogue=str(CatalogueType.DATA_PRESS),
+                received_catalogue="Unknown",
+            )
+
+        if cat_session.catalogue_type != CatalogueType.DATA_PRESS:
+            raise WrongCatalogueError(
+                "Invalid catalogue type. DataPressCatExplorer requires a DataPress catalogue session.",
+                expected_catalogue=str(CatalogueType.DATA_PRESS),
+                received_catalogue=str(cat_session.catalogue_type),
+            )
+
+        self.cat_session = cat_session
+
+    # ----------------------------
+    # Check DataPress site health
+    # ----------------------------
+    def check_site_health(self) -> None:
+        """
+        Make sure the DataPress endpoints are healthy and reachable.
+
+        This calls the DataPress package_list endpoint to check if the site is still reacheable.
+
+        Returns:
+            Success message if the site is healthy
+            Error message if the site is not healthy
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.DataPressCatalogues.NORTHERN_DATA_MILL) as session:
+                explore = hc.DataPressCatExplorer(session)
+                health_check = explore.check_site_health()
+
+        if __name__ == "__main__":
+            main()
+        """
+
+        url: str = self.cat_session.base_url + DataPressApiPaths.PACKAGE_INFO.format("20jl1")
+
+        try:
+            response = self.cat_session.session.get(url)
+
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    logger.success("Health Check Passed: DataPress is running and available")
+                else:
+                    logger.warning(
+                        "Health Check Warning: DataPress responded with an empty dataset"
+                    )
+            else:
+                logger.error(
+                    f"Health Check Failed: DataPress responded with status code {response.status_code}"
+                )
+
+        except requests.RequestException as e:
+            logger.error(f"Health Check Failed: Unable to connect to DataPress - {str(e)}")
+
+    # ----------------------------
+    # Get datasets available
+    # ----------------------------
+    def get_all_datasets(self) -> dict:
+        """
+        Fetch all datasets from a DataPress catalogue and return a dictionary of title:id.
+
+        Returns:
+            dict: Dictionary with dataset titles as keys and dataset IDs as values
+        """
+        try:
+            endpoint = self.cat_session.base_url + DataPressApiPaths.SHOW_ALL_CATALOGUES
+            
+            response = self.cat_session.session.get(endpoint)
+            response.raise_for_status()
+
+            datasets = response.json()
+
+            # Build the dictionary: title -> id
+            return {dataset["title"]: dataset["id"] for dataset in datasets if "title" in dataset and "id" in dataset}
+
+        except Exception as e:
+            logger.error(f"Error fetching datasets from DataPress: {str(e)}")
+            raise CatExplorerError(f"Error fetching datasets from DataPress: {str(e)}")
 
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES

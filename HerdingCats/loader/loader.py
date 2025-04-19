@@ -925,6 +925,7 @@ class FrenchGouvLoader:
         return self.duckdb_loader.to_polars(query)
 
 
+# START TO WRANGLE / ANALYSE
 # LOAD ONS NOMIS DATA RESOURCES INTO STORAGE
 # TODO: Add support for other formats
 class ONSNomisLoader:
