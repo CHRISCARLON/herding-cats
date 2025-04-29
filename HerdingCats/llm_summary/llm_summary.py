@@ -75,9 +75,8 @@ Focus on providing information that would help a data analyst or data scientist 
         )
 
         # Create a parser for structured output
-        # ignore type error for now
         self.parser = adal.DataClassParser(
-            data_class=CkanPackageSummary, return_data_class=True, format_type="json"
+            data_class=CkanPackageSummary, return_data_class=True, format_type="json"  # type: ignore
         )
 
         # Define the template with output format
