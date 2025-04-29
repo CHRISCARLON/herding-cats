@@ -2,9 +2,7 @@
 name = "HerdCats"
 version = "0.1.2"
 description = "A tool for exploring open data sources."
-authors = [
-    "christophercarlon <chris@enmeshed.dev>"
-]
+authors = ["christophercarlon <chris@enmeshed.dev>"]
 readme = "README.md"
 packages = [{ include = "HerdingCats" }]
 license = "MIT"
@@ -20,7 +18,7 @@ keywords = [
 include = ["LICENSE"]
 
 [tool.poetry.dependencies]
-python = ">=3.11"
+python = ">=3.11,<4.0"
 loguru = "^0.7.2"
 requests = "^2.32.3"
 pandas = "^2.2.2"
@@ -32,6 +30,8 @@ boto3 = "^1.35.23"
 pyarrow = "^17.0.0"
 xlrd = "^2.0.1"
 tqdm = "^4.67.1"
+adalflow = "^1.0.4"
+openai = "^1.76.2"
 
 [tool.poetry.group.dev.dependencies]
 python-dotenv = "^1.0.0"
