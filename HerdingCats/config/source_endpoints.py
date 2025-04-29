@@ -15,8 +15,8 @@ class CkanApiPaths:
 # DataPress
 class DataPressApiPaths:
     BASE_PATH = "/api/{}"
-    SHOW_ALL_CATALOGUES = BASE_PATH.format("datasets/export.json")
     PACKAGE_INFO = BASE_PATH.format("dataset/{}")
+    SHOW_ALL_CATALOGUES = BASE_PATH.format("datasets/export.json")
     # Add more paths as needed...
 
 

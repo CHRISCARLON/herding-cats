@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Union, Literal, List, Tuple
 from loguru import logger
 from urllib.parse import urlencode
 
+
 from ..config.source_endpoints import (
     CkanApiPaths,
     DataPressApiPaths,
@@ -1089,6 +1090,79 @@ class DataPressCatExplorer:
         except Exception as e:
             logger.error(f"Error fetching datasets from DataPress: {str(e)}")
             raise CatExplorerError(f"Error fetching datasets from DataPress: {str(e)}")
+
+    def get_dataset_by_id(self, dataset_id: str) -> dict:
+        """
+        Fetch the metadata for the given dataset_id.
+
+        Args:
+            dataset_id: The dataset id to look up.
+
+        Returns:
+            dict: dataset object for that id
+
+        Raises:
+            CatExplorerError: if no dataset with that id is found.
+        """
+
+        url: str = self.cat_session.base_url + DataPressApiPaths.PACKAGE_INFO.format(
+            dataset_id
+        )
+
+        try:
+            response = requests.get(url)
+            data = response.json()
+            return data
+        except Exception as e:
+            logger.error(
+                f"Error fetching dataset {dataset_id} from DataPress: {str(e)}"
+            )
+            raise CatExplorerError(
+                f"Error fetching dataset {dataset_id} from DataPress: {str(e)}"
+            )
+
+    # ----------------------------
+    # Get resources available
+    # ----------------------------
+    def get_resource_by_dataset_id(self, dataset_id: str):
+        url: str = self.cat_session.base_url + DataPressApiPaths.PACKAGE_INFO.format(
+            dataset_id
+        )
+
+        try:
+            response = requests.get(url)
+            data = response.json()
+            resources = data["resources"]
+            return resources
+        except Exception as e:
+            logger.error(
+                f"Error fetching dataset {dataset_id} from DataPress: {str(e)}"
+            )
+            raise CatExplorerError(
+                f"Error fetching dataset {dataset_id} from DataPress: {str(e)}"
+            )
+
+    # ----------------------------
+    # Export resource links for a dataset
+    # ----------------------------
+    def get_resource_export_links(self, resource_info: dict) -> list[list[str]] | None:
+        """
+        Returns a list of resource export links for a dataset.
+
+        Args:
+            resource_info (dict): A dictionary containing resource information.
+
+        Returns:
+            list: A list of resource export links.
+        """
+        try:
+            resources = resource_info
+            export_links = [
+                [resource["format"], resource["url"]] for resource in resources.values()
+            ]
+            return export_links
+        except Exception as e:
+            logger.error(f"Error fetching resource links: {str(e)}")
 
 
 # FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES

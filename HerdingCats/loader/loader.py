@@ -28,7 +28,7 @@ from loguru import logger
 
 
 # START TO WRANGLE / ANALYSE
-# LOAD CKAN DATA RESOURCES INTO STORAGE
+# LOAD CKAN DATA RESOURCES INTO STORAGE / FORMATS
 class CkanLoader:
     """A class to load data resources into various formats and storage systems."""
 
@@ -334,7 +334,7 @@ class CkanLoader:
 
 
 # START TO WRANGLE / ANALYSE
-# LOAD OPEN DATA SOFT DATA RESOURCES INTO STORAGE
+# LOAD OPEN DATA SOFT DATA RESOURCES INTO STORAGE / FORMATS
 class OpenDataSoftLoader:
     """A class to load OpenDataSoft resources into various formats and storage systems."""
 
@@ -625,7 +625,7 @@ class OpenDataSoftLoader:
 
 
 # START TO WRANGLE / ANALYSE
-# LOAD FRENCH GOUV DATA RESOURCES INTO STORAGE
+# LOAD FRENCH GOUV DATA RESOURCES INTO STORAGE / FORMATS
 class FrenchGouvLoader:
     """A class to load French Gouv data resources into various formats and storage systems."""
 
@@ -926,7 +926,7 @@ class FrenchGouvLoader:
 
 
 # START TO WRANGLE / ANALYSE
-# LOAD ONS NOMIS DATA RESOURCES INTO STORAGE
+# LOAD ONS NOMIS DATA RESOURCES INTO STORAGE / FORMATS
 # TODO: Add support for other formats
 class ONSNomisLoader:
     """A class to load ONS Nomis data resources into various formats and storage systems."""
@@ -1058,3 +1058,313 @@ class ONSNomisLoader:
             mode=mode,
             file_format=format_type,
         )
+
+
+# START TO WRANGLE / ANALYSE
+# LOAD DATAPRESS DATA RESOURCES INTO STORAGE / FORMATS
+class DataPressLoader:
+    """A class to load DataPress resources into various formats and storage systems."""
+
+    SUPPORTED_FORMATS = {
+        "spreadsheet": ["spreadsheet"],
+        "csv": ["csv"],
+        "parquet": ["parquet"],
+        "geopackage": ["gpkg", "geopackage"],
+    }
+
+    STORAGE_TYPES = {"s3": S3Uploader, "local": LocalUploader}
+
+    def __init__(self) -> None:
+        self._validate_dependencies()
+        self.df_loader = DataFrameLoader()
+
+    def _validate_dependencies(self):
+        """Validate that all required dependencies are available."""
+        required_modules = {
+            "pandas": pd,
+            "polars": pl,
+            "duckdb": duckdb,
+            "boto3": boto3,
+            "pyarrow": pa,
+        }
+        missing = [name for name, module in required_modules.items() if module is None]
+        if missing:
+            raise ImportError(f"Missing required dependencies: {', '.join(missing)}")
+
+    def _extract_resource_data(
+        self, resource_data: Optional[List[List[str]]], format_type: str
+    ) -> str:
+        """Validate resource data and extract download URL."""
+        if not resource_data:
+            raise OpenDataSoftExplorerError("No resource data provided")
+
+        # Get all supported formats
+        all_formats = [
+            fmt for formats in self.SUPPORTED_FORMATS.values() for fmt in formats
+        ]
+
+        # If the provided format_type is a category, get its format
+        valid_formats = (
+            self.SUPPORTED_FORMATS.get(format_type, [])
+            if format_type in self.SUPPORTED_FORMATS
+            else [format_type]
+        )
+
+        # Validate format type
+        if format_type not in self.SUPPORTED_FORMATS and format_type not in all_formats:
+            raise OpenDataSoftExplorerError(
+                f"Unsupported format: {format_type}. "
+                f"Supported formats: csv, parquet, xls, xlsx, geopackage"
+            )
+
+        # Find matching resource - assuming each inner list has [format, url] structure
+        url = next(
+            (
+                resource[1]  # The URL is at index 1
+                for resource in resource_data
+                if resource[0].lower() in valid_formats  # The format is at index 0
+            ),
+            None,
+        )
+
+        # If format provided does not have a url provide the formats that do
+        if not url:
+            available_formats = [resource[0] for resource in resource_data]
+            raise OpenDataSoftExplorerError(
+                f"No resource found with format: {format_type}. "
+                f"Available formats: {', '.join(available_formats)}"
+            )
+
+        return url
+
+    def _fetch_data(self, url: str, api_key: Optional[str] = None) -> BytesIO:
+        """Fetch data from URL and return as BytesIO object."""
+        try:
+            if api_key:
+                url = f"{url}?apikey={api_key}"
+
+            response = requests.get(url)
+            response.raise_for_status()
+            return BytesIO(response.content)
+        except requests.RequestException as e:
+            raise OpenDataSoftExplorerError(f"Failed to download resource: {str(e)}", e)
+
+    def _verify_data(
+        self, df: Union[pd.DataFrame, pl.DataFrame], api_key: Optional[str]
+    ) -> None:
+        """Verify that the DataFrame is not empty when no API key is provided."""
+        is_empty = df.empty if isinstance(df, pd.DataFrame) else df.height == 0
+        if is_empty and not api_key:
+            raise OpenDataSoftExplorerError(
+                "Received empty DataFrame. This likely means an API key is required. "
+                "Please provide an API key and try again."
+            )
+
+    @ResourceValidators.validate_datapress_resource
+    def get_sheet_names(
+        self,
+        resource_data: Optional[List[List[str]]],
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+    ) -> list[str]:
+        """
+        Get all sheet names from an Excel file.
+
+        Args:
+            resource_data: List of resources or single resource
+
+        Returns:
+            List of sheet names
+        """
+        url = self._extract_resource_data(resource_data, format_type)
+        binary_data = self._fetch_data(url)
+        return self.df_loader.get_sheet_names(binary_data)
+
+    @ResourceValidators.validate_datapress_resource
+    def polars_data_loader(
+        self,
+        resource_data: Optional[List[List[str]]],
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
+    ) -> pl.DataFrame:
+        """Load data from a resource URL into a Polars DataFrame."""
+        url = self._extract_resource_data(resource_data, format_type)
+        binary_data = self._fetch_data(url, api_key)
+        df = self.df_loader.create_dataframe(
+            binary_data, format_type, "polars", sheet_name, skip_rows
+        )
+        self._verify_data(df, api_key)
+        return df
+
+    @ResourceValidators.validate_datapress_resource
+    def pandas_data_loader(
+        self,
+        resource_data: Optional[List[List[str]]],
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        sheet_name: Optional[str] = None,
+        skip_rows: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """Load data from a resource URL into a Pandas DataFrame."""
+        url = self._extract_resource_data(resource_data, format_type)
+        binary_data = self._fetch_data(url, api_key)
+        df = self.df_loader.create_dataframe(
+            binary_data, format_type, "pandas", sheet_name, skip_rows
+        )
+        self._verify_data(df, api_key)
+        return df
+
+    @ResourceValidators.validate_datapress_resource
+    def upload_data(
+        self,
+        resource_data: Optional[List[List[str]]],
+        bucket_name: str,
+        custom_name: str,
+        format_type: str,
+        mode: Literal["raw", "parquet"],
+        storage_type: Literal["s3"] = "s3",
+        api_key: Optional[str] = None,
+    ) -> str:
+        """Upload data using specified uploader"""
+        if not all(
+            isinstance(x, str) and x.strip() for x in [bucket_name, custom_name]
+        ):
+            raise ValueError("Bucket name and custom name must be non-empty strings")
+
+        UploaderClass = self.STORAGE_TYPES[storage_type]
+        uploader = UploaderClass()
+
+        # Extract the URL using the existing method
+        url = self._extract_resource_data(resource_data, format_type)
+
+        # Fetch the data with optional API key
+        binary_data = self._fetch_data(url, api_key)
+
+        # Generate a unique key and upload
+        key = f"{custom_name}-{uuid.uuid4()}"
+        return uploader.upload(
+            data=binary_data,
+            bucket=bucket_name,
+            key=key,
+            mode=mode,
+            file_format=format_type,
+        )
+
+    @ResourceValidators.validate_datapress_resource
+    def duckdb_data_loader(
+        self,
+        resource_data: Optional[List[List[str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+        _skip_validation: bool = False,
+    ) -> bool:
+        """
+        Load data from a resource URL directly into DuckDB.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+            _skip_validation: Optional boolean to skip validation logic
+
+        Returns:
+            True if data was loaded successfully
+        """
+        # Initialise DuckDB loader
+        self.duckdb_loader = DuckDBLoader()
+
+        # Extract URL and load data (same for both code paths)
+        url = self._extract_resource_data(resource_data, format_type)
+
+        return self.duckdb_loader.load_remote_data(
+            url=url,
+            table_name=table_name,
+            file_format=format_type,
+            api_key=api_key,
+            options=options,
+        )
+
+    def execute_query(self, query: str) -> Any:
+        """
+        Execute a SQL query against the DuckDB instance.
+
+        Args:
+            query: SQL query to execute
+
+        Returns:
+            DuckDB result object
+        """
+        return self.duckdb_loader.execute_query(query)
+
+    @ResourceValidators.validate_datapress_resource
+    def query_to_pandas(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PandasDataFrame:
+        """
+        Load data into DuckDB and return query results as pandas DataFrame.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            pandas DataFrame with query results
+        """
+        self.duckdb_data_loader(
+            resource_data=resource_data,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+            _skip_validation=True,
+        )
+        return self.duckdb_loader.to_pandas(query)
+
+    @ResourceValidators.validate_datapress_resource
+    def query_to_polars(
+        self,
+        resource_data: Optional[List[Dict[str, str]]],
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PolarsDataFrame:
+        """
+        Load data into DuckDB and return query results as polars DataFrame.
+
+        Args:
+            resource_data: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            polars DataFrame with query results
+        """
+        self.duckdb_data_loader(
+            resource_data=resource_data,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+            _skip_validation=True,
+        )
+        return self.duckdb_loader.to_polars(query)

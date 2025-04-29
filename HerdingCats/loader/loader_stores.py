@@ -259,6 +259,48 @@ class ResourceValidators:
 
         return wrapper
 
+    @staticmethod
+    def validate_datapress_resource(func: Callable[..., T]) -> Callable[..., T]:
+        """
+        Decorator to validate DataPress resource data.
+        Input format:
+        - List of lists where each inner list contains [format, url]
+        Output format:
+        - Same as input (passes through)
+        """
+
+        @wraps(func)
+        def wrapper(self, resource_data, *args, **kwargs):
+            # Check if *skip*validation is True
+            if kwargs.get("_skip_validation", False):
+                # Skip validation and just call the function
+                return func(self, resource_data, *args, **kwargs)
+
+            # Regular validation logic
+            if not isinstance(resource_data, list):
+                logger.error("Resource data must be a list")
+                raise ValueError("Resource data must be a list of format-URL pairs")
+
+            # Check if all items in resource_data are valid format
+            all_valid = all(
+                isinstance(item, list)
+                and len(item) == 2
+                and isinstance(item[0], str)
+                and isinstance(item[1], str)
+                for item in resource_data
+            )
+
+            if not all_valid:
+                logger.error(
+                    "Each item in resource data must be a list with two string elements [format, url]"
+                )
+                raise ValueError("Invalid resource data format for DataPress")
+
+            logger.info("Resource data validated")
+            return func(self, resource_data, *args, **kwargs)
+
+        return wrapper
+
 
 class StorageTrait(Protocol):
     """Protocol defining the interface for remote storage uploaders."""

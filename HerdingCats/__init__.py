@@ -33,6 +33,7 @@ from .loader.loader import (
     OpenDataSoftLoader,
     FrenchGouvLoader,
     ONSNomisLoader,
+    DataPressLoader,
 )
 
 # Configuration components
@@ -61,11 +62,13 @@ __all__ = [
     "OpenDataSoftCatExplorer",
     "FrenchGouvCatExplorer",
     "ONSNomisCatExplorer",
+    "DataPressCatExplorer",
     # Resource Loaders
     "CkanLoader",
     "OpenDataSoftLoader",
     "FrenchGouvLoader",
     "ONSNomisLoader",
+    "DataPressLoader",
     # Configuration
     "CkanDataCatalogues",
     "DataPressCatalogues",
