@@ -842,7 +842,6 @@ class CkanCatExplorer:
                 logger.warning(
                     f"Resource '{resource_name}' found in package, but no URL available"
                 )
-                return ["NONE"]
         return results
 
     # ----------------------------

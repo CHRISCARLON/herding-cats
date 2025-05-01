@@ -8,4 +8,3 @@ class LLMCatalogueSummary(Protocol):
     def summarise_catalogue(self, catalogue_data) -> dict:
         """Implement the logic to summarise the catalogue data."""
         ...
-

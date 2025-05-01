@@ -52,7 +52,7 @@ class CkanPackageSummary(adal.DataClass):
 class CkanCatalogueSummariser(LLMCatalogueSummary):
     """Implementation of the LLMCatalogueSummary protocol for CKAN package information."""
 
-    def __init__(self, temperature = 0.2):
+    def __init__(self, temperature=0.2):
         """
         Initialize the CKAN catalogue summarizer with AdalFlow components.
         Uses GPT-4o-mini as specified.
@@ -76,7 +76,9 @@ Focus on providing information that would help a data analyst or data scientist 
 
         # Create a parser for structured output
         self.parser = adal.DataClassParser(
-            data_class=CkanPackageSummary, return_data_class=True, format_type="json"  # type: ignore
+            data_class=CkanPackageSummary, # type: ignore
+            return_data_class=True,
+            format_type="json",
         )
 
         # Define the template with output format
@@ -106,7 +108,7 @@ Focus on providing information that would help a data analyst or data scientist 
             model_client=OpenAIClient(),
             model_kwargs={
                 "model": "gpt-4o-mini",
-                "temperature": temperature, #type: ignore
+                "temperature": temperature,  # type: ignore
             },
             template=self.template,
             prompt_kwargs={
