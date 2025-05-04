@@ -28,7 +28,7 @@ from .explorer.explore import (
 )
 
 # LLM components
-from .llm_summary.llm_summary import CkanCatalogueSummariser
+from .llm_summary.llm_summary import CatalogueSummariser
 
 # Resource loader components
 from .loader.loader import (
@@ -67,7 +67,7 @@ __all__ = [
     "ONSNomisCatExplorer",
     "DataPressCatExplorer",
     # LLM
-    "CkanCatalogueSummariser",
+    "CatalogueSummariser",
     # Resource Loaders
     "CkanLoader",
     "OpenDataSoftLoader",

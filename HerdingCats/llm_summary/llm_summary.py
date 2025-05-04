@@ -1,24 +1,22 @@
-from dataclasses import dataclass, field
 import json
-
-# Import adalflow components
+import os
 import adalflow as adal
+from dataclasses import dataclass, field
 from adalflow.core import Generator
 from adalflow.components.model_client.openai_client import OpenAIClient
 from adalflow.optim.parameter import Parameter, ParameterType
-from HerdingCats.llm_summary.llm_config import LLMCatalogueSummary
-
+from .llm_config import LLMCatalogueSummary
 
 @dataclass
-class CkanPackageSummary(adal.DataClass):
-    """Data class for structured CKAN package summary output."""
+class DataSummary(adal.DataClass):
+    """Data class for structured dataset summary output."""
 
     title: str = field(
         default="", metadata={"desc": "The title or name of the dataset/package"}
     )
     description: str = field(
         default="",
-        metadata={"desc": "A concise description of the dataset (100-200 words)"},
+        metadata={"desc": "A concise description of the dataset in 100 words"},
     )
     key_resources: list[dict] = field(
         default_factory=list,
@@ -27,48 +25,40 @@ class CkanPackageSummary(adal.DataClass):
     metadata_summary: dict = field(
         default_factory=dict,
         metadata={
-            "desc": "Summary of important metadata like update frequency, license, etc."
+            "desc": "Summary of important metadata like when dataset was created, update frequency, license, etc."
         },
-    )
-    data_highlights: list[str] = field(
-        default_factory=list,
-        metadata={"desc": "List of key highlights or insights about the data"},
-    )
-    potential_uses: list[str] = field(
-        default_factory=list,
-        metadata={"desc": "List of potential use cases for this dataset"},
     )
 
     __output_fields__ = [
         "title",
         "description",
         "key_resources",
-        "metadata_summary",
-        "data_highlights",
-        "potential_uses",
+        "metadata_summary"
     ]
 
 
-class CkanCatalogueSummariser(LLMCatalogueSummary):
-    """Implementation of the LLMCatalogueSummary protocol for CKAN package information."""
+class CatalogueSummariser(LLMCatalogueSummary):
+    """Implementation of the LLMCatalogueSummary protocol for dataset information."""
 
     def __init__(self, temperature=0.2):
         """
-        Initialize the CKAN catalogue summarizer with AdalFlow components.
-        Uses GPT-4o-mini as specified.
+        Initialise the catalogue summariser with AdalFlow components.
+
+        Currently uses GPT-4o-mini.
 
         Args:
             temperature: The temperature parameter for generation
         """
-        # Define the system prompt as a parameter
+        # Define the main system prompt as a parameter
         self.system_prompt = Parameter(
-            data="""You are a data catalogue specialist who helps users understand and extract value from open data packages in CKAN catalogues.
-Your task is to analyze and summarize dataset metadata in a clear, structured format that highlights the most important aspects of the dataset.
-Focus on providing information that would help a data analyst or data scientist quickly understand:
-1. What the dataset contains
-2. The key available resources and their formats
-3. Important metadata like update frequency and license
-4. Potential uses for the dataset""",
+            data="""
+            You are a data catalogue specialist who helps users understand and extract value from open data sources.
+            Your task is to analyse and summarise dataset metadata in a clear, structured format that highlights the most important aspects of the dataset.
+            Focus on providing information that would help a data analyst or data scientist quickly understand:
+            1. What the dataset contains
+            2. The key available resources and their formats
+            3. Important metadata like when it was created,update frequency, and license
+            """,
             role_desc="To provide task instructions to the language model",
             requires_opt=False,
             param_type=ParameterType.PROMPT,
@@ -76,7 +66,7 @@ Focus on providing information that would help a data analyst or data scientist 
 
         # Create a parser for structured output
         self.parser = adal.DataClassParser(
-            data_class=CkanPackageSummary, # type: ignore
+            data_class=DataSummary, # type: ignore
             return_data_class=True,
             format_type="json",
         )
@@ -89,7 +79,7 @@ Focus on providing information that would help a data analyst or data scientist 
             </OUTPUT_FORMAT>
             <END_OF_SYSTEM_PROMPT>
             <START_OF_USER>
-            Please analyze and summarize the following CKAN dataset information:
+            Please analyse and summarise the following dataset information:
 
             DATASET METADATA:
             {{package_json}}
@@ -120,14 +110,18 @@ Focus on providing information that would help a data analyst or data scientist 
 
     def summarise_catalogue(self, catalogue_data) -> dict:
         """
-        Summarise the provided CKAN package information.
+        Summarise the provided data source information.
 
         Args:
-            catalogue_data: A dictionary or list of dictionaries containing the package information
+            catalogue_data: A dictionary or list of dictionaries containing the data source information
 
         Returns:
             A dictionary containing the structured summary
         """
+
+        if os.getenv("OPENAI_API_KEY") is None:
+            raise ValueError("OPENAI_API_KEY environment variable not set")
+
         # Convert to JSON for the prompt
         package_json = json.dumps(catalogue_data, indent=2)
 
@@ -141,8 +135,8 @@ Focus on providing information that would help a data analyst or data scientist 
 
         # Get the structured output and ensure proper typing
         summary = response.data
-        if not isinstance(summary, CkanPackageSummary):
-            raise TypeError(f"Expected CkanPackageSummary, got {type(summary)}")
+        if not isinstance(summary, DataSummary):
+            raise TypeError(f"Expected PackageSummary, got {type(summary)}")
 
         # Return as a dictionary
         return {
@@ -150,6 +144,4 @@ Focus on providing information that would help a data analyst or data scientist 
             "description": summary.description,
             "key_resources": summary.key_resources,
             "metadata_summary": summary.metadata_summary,
-            "data_highlights": summary.data_highlights,
-            "potential_uses": summary.potential_uses,
         }

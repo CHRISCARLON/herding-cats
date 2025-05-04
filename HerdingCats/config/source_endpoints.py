@@ -54,7 +54,7 @@ class ONSNomisApiPaths:
     SHOW_DATASET_INFO = BASE_PATH.format("dataset/{}/def.sdmx.json")
     SHOW_DATASET_OVERVIEW = BASE_PATH.format("dataset/{}.overview.json")
     GENERATE_LATEST_DATASET_DOWNLOAD_URL = BASE_PATH.format(
-        "dataset/{}.data.xlsx?date=latest{}"
+        "dataset/{}.data.csv?date=latest{}"
     )
     SHOW_CODELIST_DETAILS = BASE_PATH.format("codelist/{}.def.sdmx.json")
     # Add in codelists

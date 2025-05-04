@@ -2178,8 +2178,8 @@ class ONSNomisCatExplorer:
         Args:
             dataset_id (str): The ID of the dataset to download
             geography_codes (List[int], optional): List of geography codes to filter the data
-            geography_template (ONSNomisGeographyTemplates, optional): Geography template to filter the data
-                                                                      (only used if geography_codes is None)
+            geography_template (ONSNomisGeographyTemplates, optional): 
+            Geography template to filter the data (only used if geography_codes is None)
 
         Returns:
             str: The complete download URL

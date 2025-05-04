@@ -1,14 +1,14 @@
 # Notes for thinking through problems
 
-## Breadcrumbs for next time
+## Notes for implementing shared loaders behaviours
 
 <img width="995" alt="Screenshot 2025-03-06 at 16 38 25" src="https://github.com/user-attachments/assets/5a25b2a8-2177-49a9-a581-0103f5d3f82b"/>
 
-## Notes for implementing shared loaders behaviours
-
 The data loaders all accept different data structures based on the corresponding explorer type.
 
-This might need to change in the future?
+The explorer passes over a data structures to the loader to parse and handle.
+
+This might need to change in the future? Should there just be one data structure that is passed over??
 
 ## CKAN Data
 

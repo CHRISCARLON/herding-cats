@@ -77,8 +77,8 @@ class CkanLoader:
         api_key: Optional[str] = None,
     ) -> pl.DataFrame:
         """
-        This function is designed to work with CKAN datasets that use the "datastore"
-        extension to store their data. It allows you to query the data using SQL syntax
+        Work with CKAN datasets that use the "datastore" extension to store their data.
+        It allows you to query the data using SQL syntax
         and return the results as a Polars DataFrame.
 
         Args:
@@ -931,10 +931,6 @@ class FrenchGouvLoader:
 class ONSNomisLoader:
     """A class to load ONS Nomis data resources into various formats and storage systems."""
 
-    SUPPORTED_FORMATS = {
-        "xlsx": ["xlsx"],
-    }
-
     STORAGE_TYPES = {"s3": S3Uploader, "local": LocalUploader}
 
     def __init__(self) -> None:
@@ -965,61 +961,126 @@ class ONSNomisLoader:
             raise
 
     @ResourceValidators.validate_ons_nomis_resource
-    def get_sheet_names(self, url: str) -> list[str]:
-        """Get all sheet names from an Excel file.
-
-        Args:
-            url: URL to the Excel file
-
-        Returns:
-            List of sheet names
-        """
-        binary_data = self._fetch_data(url)
-        return self.df_loader.get_sheet_names(binary_data)
-
-    @ResourceValidators.validate_ons_nomis_resource
-    def polars_data_loader(
+    def duckdb_data_loader(
         self,
-        url: str,
-        sheet_name: Optional[str] = None,
-        skip_rows: Optional[int] = None,
-    ) -> pl.DataFrame:
-        """Load data from a resource URL into a Polars DataFrame.
+        resource_data: str,
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+        _skip_validation: bool = False,
+    ) -> bool:
+        """
+        Load data from a resource URL directly into DuckDB.
 
         Args:
-            url: URL to the Excel file
-            sheet_name: Name of the sheet to load
-            skip_rows: Number of rows to skip at the beginning of the sheet
+            url: Resource data from Nomis catalogue
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+            _skip_validation: Optional boolean to skip validation logic
 
         Returns:
-            Polars DataFrame with the loaded data
+            True if data was loaded successfully
         """
-        binary_data = self._fetch_data(url)
-        return self.df_loader.create_dataframe(
-            binary_data, "xlsx", "polars", sheet_name=sheet_name, skip_rows=skip_rows
+        # Initialise DuckDB loader
+        self.duckdb_loader = DuckDBLoader()
+
+        url = resource_data
+
+        return self.duckdb_loader.load_remote_data(
+            url=url,
+            table_name=table_name,
+            file_format=format_type,
+            api_key=api_key,
+            options=options,
         )
 
-    @ResourceValidators.validate_ons_nomis_resource
-    def pandas_data_loader(
-        self,
-        url: str,
-        sheet_name: Optional[str] = None,
-        skip_rows: Optional[int] = None,
-    ) -> pd.DataFrame:
-        """Load data from a resource URL into a Pandas DataFrame.
+    def execute_query(self, query: str) -> Any:
+        """
+        Execute a SQL query against the DuckDB instance.
 
         Args:
-            url: URL to the Excel file
-            sheet_name: Name of the sheet to load
-            skip_rows: Number of rows to skip at the beginning of the sheet
+            query: SQL query to execute
 
         Returns:
-            Pandas DataFrame with the loaded data
+            DuckDB result object
         """
-        binary_data = self._fetch_data(url)
-        return self.df_loader.create_dataframe(
-            binary_data, "xlsx", "pandas", sheet_name=sheet_name, skip_rows=skip_rows
+        return self.duckdb_loader.execute_query(query)
+
+    @ResourceValidators.validate_ons_nomis_resource
+    def query_to_pandas(
+        self,
+        resource_data: str,
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PandasDataFrame:
+        """
+        Load data into DuckDB and return query results as pandas DataFrame.
+
+        Args:
+            url: Resource data from Nomis catalogue
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            pandas DataFrame with query results
+        """
+
+        url = resource_data
+        self.duckdb_data_loader(
+            resource_data=url,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+            _skip_validation=True,
         )
+        return self.duckdb_loader.to_pandas(query)
+
+    @ResourceValidators.validate_ons_nomis_resource
+    def query_to_polars(
+        self,
+        resource_data: str,
+        table_name: str,
+        format_type: Literal["csv", "parquet", "spreadsheet", "xls", "xlsx"],
+        query: str,
+        api_key: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> PolarsDataFrame:
+        """
+        Load data into DuckDB and return query results as polars DataFrame.
+
+        Args:
+            url: Resource data from OpenDataSoft catalog
+            table_name: Name of table to create in DuckDB
+            format_type: Format of the data
+            query: SQL query to execute after loading data
+            api_key: Optional API key for the data source
+            options: Optional loading parameters
+
+        Returns:
+            polars DataFrame with query results
+        """
+
+        url = resource_data
+        
+        self.duckdb_data_loader(
+            resource_data=url,
+            table_name=table_name,
+            format_type=format_type,
+            api_key=api_key,
+            options=options,
+            _skip_validation=True,
+        )
+        return self.duckdb_loader.to_polars(query)
 
     @ResourceValidators.validate_ons_nomis_resource
     def upload_data(
@@ -1047,7 +1108,7 @@ class ONSNomisLoader:
         binary_data = self._fetch_data(url)
 
         # For ONS Nomis, we know it's always XLSX format
-        format_type = "xlsx"
+        format_type = "csv"
 
         # Generate a unique key and upload
         key = f"{custom_name}-{uuid.uuid4()}"

@@ -251,6 +251,12 @@ class ResourceValidators:
 
         @wraps(func)
         def wrapper(self, resource_data: str, *args, **kwargs):
+
+            # Check if *skip*validation is True
+            if kwargs.get("_skip_validation", False):
+                # Skip validation and just call the function
+                return func(self, resource_data, *args, **kwargs)
+            
             if not resource_data or not isinstance(resource_data, str):
                 logger.error("Resource data must be a string")
                 raise ValueError("Resource data must be a string")
