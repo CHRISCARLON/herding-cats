@@ -4,13 +4,14 @@ from enum import Enum
 class CkanDataCatalogues(Enum):
     LONDON_DATA_STORE = "https://data.london.gov.uk"
     UK_GOV = "https://data.gov.uk"
-    SUBAK = "https://data.subak.org"
+    # Need to look into why Subak is currently not working
+    # SUBAK = "https://data.subak.org"
     HUMANITARIAN_DATA_STORE = "https://data.humdata.org"
     OPEN_AFRICA = "https://open.africa"
     NATIONAL_GRID_DNO = "https://connecteddata.nationalgrid.co.uk"
     SSEN_DNO = "https://ckan-prod.sse.datopian.com"
     NHSBSA_OPEN_DATA = "https://opendata.nhsbsa.net"
-    OPEN_NET_ZERO = ""
+    OPEN_NET_ZERO = "https://ckanpreprod.opennetzero.org"
     # Add more catalogues as needed...
 
 
