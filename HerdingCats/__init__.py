@@ -30,8 +30,6 @@ from .explorer.explore import (
 # LLM components
 from .llm.llm_summary import CatalogueSummariser
 
-from .llm.llm_agent import CkanDatasetFinder
-
 # Resource loader components
 from .loader.loader import (
     CkanLoader,
@@ -70,7 +68,6 @@ __all__ = [
     "DataPressCatExplorer",
     # LLM
     "CatalogueSummariser",
-    "CkanDatasetFinder",
     # Resource Loaders
     "CkanLoader",
     "OpenDataSoftLoader",
