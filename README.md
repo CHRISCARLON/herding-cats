@@ -4,8 +4,8 @@
 
 [Documentation](https://herdingcats.dev)📚
 
-> [!NOTE]  
-> Version 0.1.2 PyPi is now available .
+> [!NOTE]
+> Version 0.1.3 PyPi is now available .
 >
 > HerdingCATs is currently under active development.
 >
