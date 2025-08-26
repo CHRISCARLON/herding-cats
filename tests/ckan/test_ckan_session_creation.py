@@ -9,9 +9,9 @@ def test_cat_session_creation():
     """
     try:
         session = CatSession(CkanDataCatalogues.UK_GOV)
-        assert isinstance(
-            session, CatSession
-        ), "CkanCatSession object should be created"
+        assert isinstance(session, CatSession), (
+            "CkanCatSession object should be created"
+        )
 
     except Exception as e:
         pytest.fail(f"Failed to create CkanCatSession: {str(e)}")

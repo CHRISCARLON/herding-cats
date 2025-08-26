@@ -552,17 +552,28 @@ class CkanCatExplorer:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
-            data_prep = data["result"]
 
-            # Check for both 'result' and 'results' keys
-            if "result" in data_prep:
-                result_data = data_prep["result"]
-            elif "results" in data_prep:
-                result_data = data_prep["results"]
+            # CKAN package_search returns: {"success": true, "result": {"count": X, "results": [...packages...]}}
+            # Standard CKAN API uses "results" (plural) for the package list
+            if "result" in data:
+                if isinstance(data["result"], dict):
+                    if "results" in data["result"]:
+                        result_data = data["result"]["results"]
+                    elif "result" in data["result"]:
+                        result_data = data["result"]["result"]
+                    else:
+                        logger.warning(
+                            f"Neither 'results' nor 'result' key found. Available keys: {list(data['result'].keys())}"
+                        )
+                        return []
+                elif isinstance(data["result"], list):
+                    result_data = data["result"]
+                else:
+                    logger.warning(f"Unexpected result type: {type(data['result'])}")
+                    return []
             else:
-                raise KeyError(
-                    "Neither 'result' nor 'results' key found in the API response"
-                )
+                logger.warning("No 'result' key found in API response")
+                return []
 
             logger.success(f"Showing results for query: {search_query}")
 
@@ -647,22 +658,35 @@ class CkanCatExplorer:
             params["rows"] = num_rows
 
         url = f"{base_url}?{urlencode(params)}" if params else base_url
+        logger.info(f"Making API request to: {url}")
 
         try:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
-            data_prep = data["result"]
 
-            # Check for both 'result' and 'results' keys as sometimes the key is 'results' and sometimes it's 'result'
-            if "result" in data_prep:
-                result_data = data_prep["result"]
-            elif "results" in data_prep:
-                result_data = data_prep["results"]
+            # CKAN package_search returns: {"success": true, "result": {"count": X, "results": [...packages...]}}
+            # Standard CKAN API uses "results" (plural) for the package list
+            if "result" in data:
+                if isinstance(data["result"], dict):
+                    if "results" in data["result"]:
+                        result_data = data["result"]["results"]
+                    elif "result" in data["result"]:
+                        result_data = data["result"]["result"]
+                    else:
+                        logger.warning(
+                            f"Neither 'results' nor 'result' key found. Available keys: {list(data['result'].keys())}"
+                        )
+                        return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
+
+                elif isinstance(data["result"], list):
+                    result_data = data["result"]
+                else:
+                    logger.warning(f"Unexpected result type: {type(data['result'])}")
+                    return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
             else:
-                raise KeyError(
-                    "Neither 'result' nor 'results' key found in the API response"
-                )
+                logger.warning("No 'result' key found in API response")
+                return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
 
             logger.success(f"Showing results for query: {search_query}")
 
@@ -768,17 +792,29 @@ class CkanCatExplorer:
             response = self.cat_session.session.get(url)
             response.raise_for_status()
             data = response.json()
-            data_prep = data["result"]
 
-            # Check for both 'result' and 'results' keys as sometimes the key is 'results' and sometimes it's 'result'
-            if "result" in data_prep:
-                result_data = data_prep["result"]
-            elif "results" in data_prep:
-                result_data = data_prep["results"]
+            # CKAN package_search returns: {"success": true, "result": {"count": X, "results": [...packages...]}}
+            # Standard CKAN API uses "results" (plural) for the package list
+            if "result" in data:
+                if isinstance(data["result"], dict):
+                    if "results" in data["result"]:
+                        result_data = data["result"]["results"]
+                    elif "result" in data["result"]:
+                        result_data = data["result"]["result"]
+                    else:
+                        logger.warning(
+                            f"Neither 'results' nor 'result' key found. Available keys: {list(data['result'].keys())}"
+                        )
+                        return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
+
+                elif isinstance(data["result"], list):
+                    result_data = data["result"]
+                else:
+                    logger.warning(f"Unexpected result type: {type(data['result'])}")
+                    return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
             else:
-                raise KeyError(
-                    "Neither 'result' nor 'results' key found in the API response"
-                )
+                logger.warning("No 'result' key found in API response")
+                return pd.DataFrame() if df_type == "pandas" else pl.DataFrame()
 
             logger.success(f"Showing results for query: {search_query}")
 
@@ -2224,26 +2260,17 @@ def list_all_catalogues():
     )
 
     catalogues = {
-        "CKAN": [
-            {"name": cat.name, "url": cat.value}
-            for cat in CkanDataCatalogues
-        ],
+        "CKAN": [{"name": cat.name, "url": cat.value} for cat in CkanDataCatalogues],
         "DataPress": [
-            {"name": cat.name, "url": cat.value}
-            for cat in DataPressCatalogues
+            {"name": cat.name, "url": cat.value} for cat in DataPressCatalogues
         ],
         "OpenDataSoft": [
-            {"name": cat.name, "url": cat.value}
-            for cat in OpenDataSoftDataCatalogues
+            {"name": cat.name, "url": cat.value} for cat in OpenDataSoftDataCatalogues
         ],
         "FrenchGov": [
-            {"name": cat.name, "url": cat.value}
-            for cat in FrenchGouvCatalogue
+            {"name": cat.name, "url": cat.value} for cat in FrenchGouvCatalogue
         ],
-        "ONSNomis": [
-            {"name": cat.name, "url": cat.value}
-            for cat in ONSNomisAPI
-        ]
+        "ONSNomis": [{"name": cat.name, "url": cat.value} for cat in ONSNomisAPI],
     }
 
     return catalogues

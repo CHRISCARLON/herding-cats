@@ -14,15 +14,15 @@ def test_cat_session_creation(domain):
     """
     try:
         session = CatSession(OpenDataSoftDataCatalogues.UK_POWER_NETWORKS_DNO)
-        assert isinstance(
-            session, CatSession
-        ), "OpenDataSoftCatSession object should be created"
-        assert (
-            session.domain == domain
-        ), "OpenDataSoftCatSession should have the correct domain"
-        assert (
-            session.base_url == f"https://{domain}"
-        ), "OpenDataSoftCatSession should have the correct base URL"
+        assert isinstance(session, CatSession), (
+            "OpenDataSoftCatSession object should be created"
+        )
+        assert session.domain == domain, (
+            "OpenDataSoftCatSession should have the correct domain"
+        )
+        assert session.base_url == f"https://{domain}", (
+            "OpenDataSoftCatSession should have the correct base URL"
+        )
     except Exception as e:
         pytest.fail(f"Failed to create OpenDataSoftCatSession!: {str(e)}")
 

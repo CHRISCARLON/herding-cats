@@ -1071,7 +1071,7 @@ class ONSNomisLoader:
         """
 
         url = resource_data
-        
+
         self.duckdb_data_loader(
             resource_data=url,
             table_name=table_name,

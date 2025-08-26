@@ -7,6 +7,7 @@ from adalflow.components.model_client.openai_client import OpenAIClient
 from adalflow.optim.parameter import Parameter, ParameterType
 from .llm_config import LLMCatalogueSummary
 
+
 @dataclass
 class DataSummary(adal.DataClass):
     """Data class for structured dataset summary output."""
@@ -29,12 +30,7 @@ class DataSummary(adal.DataClass):
         },
     )
 
-    __output_fields__ = [
-        "title",
-        "description",
-        "key_resources",
-        "metadata_summary"
-    ]
+    __output_fields__ = ["title", "description", "key_resources", "metadata_summary"]
 
 
 class CatalogueSummariser(LLMCatalogueSummary):
@@ -49,7 +45,6 @@ class CatalogueSummariser(LLMCatalogueSummary):
         Args:
             temperature: The temperature parameter for generation
         """
-        # Define the main system prompt as a parameter
         self.system_prompt = Parameter(
             data="""
             You are a data catalogue specialist who helps users understand and extract value from open data sources.
@@ -64,14 +59,12 @@ class CatalogueSummariser(LLMCatalogueSummary):
             param_type=ParameterType.PROMPT,
         )
 
-        # Create a parser for structured output
         self.parser = adal.DataClassParser(
-            data_class=DataSummary, # type: ignore
+            data_class=DataSummary,  # type: ignore
             return_data_class=True,
             format_type="json",
         )
 
-        # Define the template with output format
         self.template = r"""<START_OF_SYSTEM_PROMPT>
             {{system_prompt}}
             <OUTPUT_FORMAT>
@@ -93,7 +86,6 @@ class CatalogueSummariser(LLMCatalogueSummary):
             <END_OF_USER>
         """
 
-        # Initialise the Generator with GPT-4o-mini
         self.generator = Generator(
             model_client=OpenAIClient(),
             model_kwargs={
@@ -122,23 +114,18 @@ class CatalogueSummariser(LLMCatalogueSummary):
         if os.getenv("OPENAI_API_KEY") is None:
             raise ValueError("OPENAI_API_KEY environment variable not set")
 
-        # Convert to JSON for the prompt
         package_json = json.dumps(catalogue_data, indent=2)
 
-        # Generate the summary using AdalFlow
         response = self.generator(
             prompt_kwargs={"package_json": package_json, "context": None}
         )
 
         if response.error:
             raise Exception(f"Error generating summary: {response.error}")
-
-        # Get the structured output and ensure proper typing
         summary = response.data
         if not isinstance(summary, DataSummary):
             raise TypeError(f"Expected PackageSummary, got {type(summary)}")
 
-        # Return as a dictionary
         return {
             "title": summary.title,
             "description": summary.description,
