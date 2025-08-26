@@ -2178,7 +2178,7 @@ class ONSNomisCatExplorer:
         Args:
             dataset_id (str): The ID of the dataset to download
             geography_codes (List[int], optional): List of geography codes to filter the data
-            geography_template (ONSNomisGeographyTemplates, optional): 
+            geography_template (ONSNomisGeographyTemplates, optional):
             Geography template to filter the data (only used if geography_codes is None)
 
         Returns:
@@ -2203,3 +2203,72 @@ class ONSNomisCatExplorer:
             geo_codes_str = ",".join(map(str, geography_codes))
             base_url += ONSNomisQueryParams.GEOGRAPHY + geo_codes_str
         return base_url
+
+
+# ----------------------------
+# Catalogue info
+# ----------------------------
+def list_all_catalogues():
+    """
+    Simple function to list all available catalogues organized by type.
+
+    Returns:
+        dict: Dictionary containing all catalogues organized by type
+    """
+    from ..config.sources import (
+        CkanDataCatalogues,
+        DataPressCatalogues,
+        OpenDataSoftDataCatalogues,
+        FrenchGouvCatalogue,
+        ONSNomisAPI,
+    )
+
+    catalogues = {
+        "CKAN": [
+            {"name": cat.name, "url": cat.value}
+            for cat in CkanDataCatalogues
+        ],
+        "DataPress": [
+            {"name": cat.name, "url": cat.value}
+            for cat in DataPressCatalogues
+        ],
+        "OpenDataSoft": [
+            {"name": cat.name, "url": cat.value}
+            for cat in OpenDataSoftDataCatalogues
+        ],
+        "FrenchGov": [
+            {"name": cat.name, "url": cat.value}
+            for cat in FrenchGouvCatalogue
+        ],
+        "ONSNomis": [
+            {"name": cat.name, "url": cat.value}
+            for cat in ONSNomisAPI
+        ]
+    }
+
+    return catalogues
+
+
+def print_catalogues():
+    """Print all available catalogues in a formatted way."""
+    catalogues = list_all_catalogues()
+
+    print("=" * 80)
+    print("AVAILABLE DATA CATALOGUES")
+    print("=" * 80)
+
+    for cat_type, cat_list in catalogues.items():
+        print(f"\n{cat_type} Catalogues:")
+        print("-" * 40)
+        for catalog in cat_list:
+            print(f"  • {catalog['name']:30} → {catalog['url']}")
+
+    print("\n" + "=" * 80)
+    print("SUMMARY")
+    print("-" * 40)
+    total = sum(len(cat_list) for cat_list in catalogues.values())
+    for cat_type, cat_list in catalogues.items():
+        print(f"  {cat_type:15}: {len(cat_list):3}")
+    print(f"  {'─' * 23}")
+    print(f"  Total:          {total:3}")
+    print("=" * 80)

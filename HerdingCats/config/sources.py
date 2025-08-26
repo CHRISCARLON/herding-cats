@@ -11,7 +11,7 @@ class CkanDataCatalogues(Enum):
     NATIONAL_GRID_DNO = "https://connecteddata.nationalgrid.co.uk"
     SSEN_DNO = "https://ckan-prod.sse.datopian.com"
     NHSBSA_OPEN_DATA = "https://opendata.nhsbsa.net"
-    OPEN_NET_ZERO = ""
+    # OPEN_NET_ZERO = ""
     # Add more catalogues as needed...
 
 
