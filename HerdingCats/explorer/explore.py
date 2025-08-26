@@ -15,6 +15,7 @@ from ..config.source_endpoints import (
     FrenchGouvApiPaths,
     ONSNomisApiPaths,
     ONSNomisQueryParams,
+    DCATApiPaths,
 )
 from ..errors.errors import CatExplorerError, WrongCatalogueError
 from ..session.session import CatSession, CatalogueType
@@ -2241,8 +2242,331 @@ class ONSNomisCatExplorer:
         return base_url
 
 
+# FIND THE DATA YOU WANT / NEED / ISOLATE PACKAGES AND RESOURCES
+# For ONS Geo Catalogue Only
+class ONSGeoExplorer:
+    def __init__(self, cat_session: CatSession):
+        """
+        Takes in a CatSession.
+
+        Allows user to start exploring data catalogue programatically.
+
+        Make sure you pass a valid ONSGeoSession in - it will check if the catalogue type is right.
+
+        Args:
+            ONSGeoSession
+
+        Returns:
+            ONSGeoExplorer
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.ONSGeoPortal.ONS_GEO) as session:
+                print("connected")
+        if __name__ == "__main__":
+            main()
+        """
+
+        if not hasattr(cat_session, "catalogue_type"):
+            raise WrongCatalogueError(
+                "CatSession missing catalogue_type attribute",
+                expected_catalogue=str(CatalogueType.ONS_GEO_PORTAL),
+                received_catalogue="Unknown",
+            )
+
+        if cat_session.catalogue_type != CatalogueType.ONS_GEO_PORTAL:
+            raise WrongCatalogueError(
+                "Invalid catalogue type. CkanCatExplorer requires a Ckan catalogue session.",
+                expected_catalogue=str(CatalogueType.ONS_GEO_PORTAL),
+                received_catalogue=str(cat_session.catalogue_type),
+            )
+
+        self.cat_session = cat_session
+
+    # ----------------------------
+    # Check CKAN site health
+    # ----------------------------
+    def check_site_health(self) -> bool:
+        """
+        Make sure the ONS Geo Portal endpoints are healthy and reachable.
+
+        This calls the DCAT API endpoint to check if the site is still reachable.
+
+        Returns:
+            True if the site is healthy, False otherwise
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.ONSGeoPortal.ONS_GEO) as session:
+                explore = hc.ONSGeoExplorer(session)
+                health_check = explore.check_site_health()
+
+        if __name__ == "__main__":
+            main()
+        """
+
+        url: str = self.cat_session.base_url + DCATApiPaths.BASE_PATH + "?q=ONSUD"
+
+        try:
+            response = self.cat_session.session.get(url)
+
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    logger.success(
+                        "Health Check Passed: ONS Geo Portal is running and available"
+                    )
+                    return True
+                else:
+                    logger.warning(
+                        "Health Check Warning: ONS Geo Portal responded with an empty dataset"
+                    )
+                    return False
+            else:
+                logger.error(
+                    f"Health Check Failed: ONS Geo Portal responded with status code {response.status_code}"
+                )
+                return False
+
+        except requests.RequestException as e:
+            logger.error(
+                f"Health Check Failed: Unable to connect to ONS Geo Portal - {str(e)}"
+            )
+            return False
+
+    # ----------------------------
+    # Search datasets with query parameters
+    # ----------------------------
+    def _search_datasets(
+        self, q: str, sort: Optional[str] = None, id: Optional[str] = None
+    ) -> dict:
+        """
+        Search datasets in the ONS Geo Portal DCAT API.
+
+        Args:
+            q (str): Free text search query (required)
+            sort (str, optional): Sort string in format like "Date Created|created|desc"
+            id (str, optional): To include only a specific item id
+
+        Returns:
+            dict: JSON response from the API
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.ONSGeoPortal.ONS_GEO) as session:
+                explore = hc.ONSGeoExplorer(session)
+                results = explore.search_datasets("ONSUD", sort="Date Created|created|desc")
+                print(results)
+
+        if __name__ == "__main__":
+            main()
+        """
+        base_url = self.cat_session.base_url + DCATApiPaths.BASE_PATH
+
+        params = {"q": q}
+
+        if sort is not None:
+            params["sort"] = sort
+
+        if id is not None:
+            params["id"] = id
+
+        try:
+            if sort is not None:
+                if "sort" in params:
+                    del params["sort"]
+                query_string = urlencode(params)
+                full_url = f"{base_url}?{query_string}&sort={sort}"
+                response = self.cat_session.session.get(full_url)
+            else:
+                response = self.cat_session.session.get(base_url, params=params)
+
+            response.raise_for_status()
+            data = response.json()
+
+            logger.success(f"Search completed for query: '{q}'. Found results.")
+            return data
+
+        except requests.RequestException as e:
+            logger.error(f"Failed to search datasets: {str(e)}")
+            raise CatExplorerError(f"Failed to search datasets: {str(e)}")
+
+    def get_datasets_summary(
+        self,
+        q: str,
+        sort: Optional[str] = None,
+        id: Optional[str] = None,
+        description: bool = False,
+    ) -> List[Dict[str, str]]:
+        """
+        Search datasets and return only ID, title, and description for each dataset.
+
+        Args:
+            q (str): Free text search query (required)
+            sort (str, optional): Sort string in format like "Date Created|created|desc"
+            id (str, optional): To include only a specific item id
+            description (bool, optional): Include description field in results (default True)
+
+        Returns:
+            List[Dict[str, str]]: List of dictionaries with 'id', 'title', and 'description' keys
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.ONSGeoPortal.ONS_GEO) as session:
+                explore = hc.ONSGeoExplorer(session)
+                summary = explore.get_datasets_summary("ONSUD")
+                for dataset in summary:
+                    print(f"ID: {dataset['id']}")
+                    print(f"Title: {dataset['title']}")
+                    print(f"Description: {dataset['description'][:100]}...")
+                    print("-" * 50)
+
+        if __name__ == "__main__":
+            main()
+        """
+        try:
+            data = self._search_datasets(q, sort, id)
+            datasets = data.get("dcat:dataset", [])
+
+            summary = []
+
+            match description:
+                case True:
+                    for dataset in datasets:
+                        dataset_info = {
+                            "id": dataset.get("@id", ""),
+                            "title": dataset.get("dct:title", ""),
+                            "description": dataset.get("dct:description", ""),
+                        }
+                        summary.append(dataset_info)
+
+                    logger.success(f"Extracted summary for {len(summary)} datasets")
+                    return summary
+                case False:
+                    for dataset in datasets:
+                        dataset_info = {
+                            "id": dataset.get("@id", ""),
+                            "title": dataset.get("dct:title", ""),
+                        }
+                        summary.append(dataset_info)
+
+                    logger.success(f"Extracted summary for {len(summary)} datasets")
+                    return summary
+
+        except Exception as e:
+            logger.error(f"Failed to get datasets summary: {str(e)}")
+            raise CatExplorerError(f"Failed to get datasets summary: {str(e)}")
+
+    def _get_resource_metadata(self, dataset_id: str) -> dict:
+        """
+        Fetch detailed resource metadata including download links from ArcGIS REST API.
+
+        Args:
+            dataset_id (str): The dataset ID to fetch resource metadata for
+
+        Returns:
+            dict: Detailed resource metadata with download links
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.ONSGeoPortal.ONS_GEO) as session:
+                explore = hc.ONSGeoExplorer(session)
+                # First get the dataset ID from search results
+                summary = explore.get_datasets_summary("ONSUD")
+                dataset_id = summary[0]['id']
+
+                # Then get the detailed resource metadata
+                resource_meta = explore.get_resource_metadata(dataset_id)
+                print(resource_meta)
+
+        if __name__ == "__main__":
+            main()
+        """
+        base_url = "https://www.arcgis.com/sharing/rest/content/items"
+        url = f"{base_url}/{dataset_id}"
+
+        params = {"f": "json"}
+
+        try:
+            response = self.cat_session.session.get(url, params=params)
+            logger.info(f"Request URL: {response.url}")
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get("error"):
+                logger.error(f"ArcGIS API Error: {data['error']}")
+                raise CatExplorerError(f"ArcGIS API Error: {data['error']}")
+
+            logger.success(f"Retrieved resource metadata for dataset: {dataset_id}")
+            return data
+
+        except requests.RequestException as e:
+            logger.error(f"Failed to get resource metadata: {str(e)}")
+            raise CatExplorerError(f"Failed to get resource metadata: {str(e)}")
+
+    def get_download_info(self, dataset_id: str) -> Dict[str, Any]:
+        """
+        Get download information including direct download URLs for a dataset.
+
+        Args:
+            dataset_id (str): The dataset ID to get download info for
+
+        Returns:
+            Dict[str, Any]: Dictionary containing download URLs and file information
+
+        # Example usage...
+        import HerdingCats as hc
+
+        def main():
+            with hc.CatSession(hc.ONSGeoPortal.ONS_GEO) as session:
+                explore = hc.ONSGeoExplorer(session)
+                download_info = explore.get_download_info("b28cd21f0f274c77a2d556f0ee9ba594")
+                print(f"Title: {download_info['title']}")
+                print(f"Size: {download_info['size']} bytes")
+                print(f"Download URL: {download_info['download_url']}")
+
+        if __name__ == "__main__":
+            main()
+        """
+        try:
+            metadata = self._get_resource_metadata(dataset_id)
+            download_info = {
+                "id": metadata.get("id", ""),
+                "title": metadata.get("title", ""),
+                "description": metadata.get("description", ""),
+                "size": metadata.get("size", 0),
+                "type": metadata.get("type", ""),
+                "owner": metadata.get("owner", ""),
+                "created": metadata.get("created", ""),
+                "modified": metadata.get("modified", ""),
+                "access": metadata.get("access", ""),
+                "tags": metadata.get("tags", []),
+                "download_url": f"https://www.arcgis.com/sharing/rest/content/items/{dataset_id}/data",
+            }
+
+            if metadata.get("url"):
+                download_info["item_url"] = metadata["url"]
+
+            logger.success(f"Extracted download info for: {download_info['title']}")
+            return download_info
+
+        except Exception as e:
+            logger.error(f"Failed to get download info: {str(e)}")
+            raise CatExplorerError(f"Failed to get download info: {str(e)}")
+
+
 # ----------------------------
-# Catalogue info
+# General catalogue info
 # ----------------------------
 def list_all_catalogues():
     """

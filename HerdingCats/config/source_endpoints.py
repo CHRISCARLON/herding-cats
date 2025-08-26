@@ -62,3 +62,8 @@ class ONSNomisApiPaths:
 
 class ONSNomisQueryParams:
     GEOGRAPHY = "&geography="
+
+
+# DCAT
+class DCATApiPaths:
+    BASE_PATH = "/api/feed/dcat-ap/3.0.0.json"

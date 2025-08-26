@@ -9,6 +9,7 @@ from ..config.sources import (
     OpenDataSoftDataCatalogues,
     FrenchGouvCatalogue,
     ONSNomisAPI,
+    ONSGeoPortal,
 )
 from ..errors.errors import CatSessionError
 
@@ -22,6 +23,7 @@ class CatalogueType(Enum):
     OPENDATA_SOFT = "opendatasoft"
     GOUV_FR = "french_gov"
     ONS_NOMIS = "ons_nomis"
+    ONS_GEO_PORTAL = "ons_geo_portal"
 
 
 # START A SESSION WITH A DATA CATALOGUE
@@ -34,6 +36,7 @@ class CatSession:
             OpenDataSoftDataCatalogues,
             FrenchGouvCatalogue,
             ONSNomisAPI,
+            ONSGeoPortal,
         ],
     ) -> None:
         """
@@ -41,7 +44,7 @@ class CatSession:
 
         Args:
             catalogue: A predefined catalogue from one of the supported enum types
-            (CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, DataPressCatalogues, or ONSNomisAPI)
+            (CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, DataPressCatalogues, ONSNomisAPI, or ONSGeoPortal)
 
         Returns:
             A CatSession Object
@@ -63,6 +66,7 @@ class CatSession:
             OpenDataSoftDataCatalogues,
             FrenchGouvCatalogue,
             ONSNomisAPI,
+            ONSGeoPortal,
         ],
     ) -> tuple[str, CatalogueType]:
         """
@@ -83,11 +87,13 @@ class CatSession:
                 catalog_type = CatalogueType.OPENDATA_SOFT
             case ONSNomisAPI():
                 catalog_type = CatalogueType.ONS_NOMIS
+            case ONSGeoPortal():
+                catalog_type = CatalogueType.ONS_GEO_PORTAL
             case DataPressCatalogues():
                 catalog_type = CatalogueType.DATA_PRESS
             case _:
                 raise ValueError(
-                    "Catalogue must be one of: CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, DataPressCatalogues, or ONSNomisAPI"
+                    "Catalogue must be one of: CkanDataCatalogues, OpenDataSoftDataCatalogues, FrenchGouvCatalogue, DataPressCatalogues, ONSNomisAPI, or ONSGeoPortal"
                 )
 
         parsed_url = urlparse(catalogue.value)

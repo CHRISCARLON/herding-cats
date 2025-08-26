@@ -45,3 +45,8 @@ class FrenchGouvCatalogue(Enum):
 # ONS NOMI
 class ONSNomisAPI(Enum):
     ONS_NOMI = "https://www.nomisweb.co.uk/"
+
+
+# ONS Geo Portal
+class ONSGeoPortal(Enum):
+    ONS_GEO = "https://geoportal.statistics.gov.uk"

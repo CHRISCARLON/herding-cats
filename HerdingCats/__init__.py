@@ -25,6 +25,7 @@ from .explorer.explore import (
     OpenDataSoftCatExplorer,
     FrenchGouvCatExplorer,
     ONSNomisCatExplorer,
+    ONSGeoExplorer,
 )
 
 # LLM components
@@ -46,6 +47,7 @@ from .config.sources import (
     OpenDataSoftDataCatalogues,
     FrenchGouvCatalogue,
     ONSNomisAPI,
+    ONSGeoPortal,
 )
 
 # Error handling components
@@ -66,6 +68,7 @@ __all__ = [
     "FrenchGouvCatExplorer",
     "ONSNomisCatExplorer",
     "DataPressCatExplorer",
+    "ONSGeoExplorer",
     # LLM
     "CatalogueSummariser",
     # Resource Loaders
@@ -80,6 +83,7 @@ __all__ = [
     "OpenDataSoftDataCatalogues",
     "FrenchGouvCatalogue",
     "ONSNomisAPI",
+    "ONSGeoPortal",
     # Errors
     "CatSessionError",
     "CatExplorerError",
