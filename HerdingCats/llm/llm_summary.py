@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import adalflow as adal
 from dataclasses import dataclass, field
 from adalflow.core import Generator
@@ -100,6 +101,29 @@ class CatalogueSummariser(LLMCatalogueSummary):
             output_processors=self.parser,
         )
 
+    def _sanitize_error_message(self, error_message: str) -> str:
+        """
+        Sanitize error messages to prevent API key or other sensitive data leakage.
+
+        Args:
+            error_message: The original error message
+
+        Returns:
+            Sanitized error message with sensitive data redacted
+        """
+        sanitized = str(error_message)
+
+        sanitized = re.sub(r'sk-[a-zA-Z0-9]{20,}', '[API_KEY_REDACTED]', sanitized)
+
+        sanitized = re.sub(r'Bearer\s+[a-zA-Z0-9\-_\.]+', 'Bearer [TOKEN_REDACTED]', sanitized)
+
+        sanitized = re.sub(r'Authorization:\s*[^\s,]+', 'Authorization: [REDACTED]', sanitized)
+
+        sanitized = re.sub(r'api[_-]?key["\']?\s*[:=]\s*["\']?[a-zA-Z0-9\-_]{20,}["\']?',
+                          'api_key: [REDACTED]', sanitized, flags=re.IGNORECASE)
+
+        return sanitized
+
     def summarise_catalogue(self, catalogue_data) -> dict:
         """
         Summarise the provided data source information.
@@ -121,10 +145,11 @@ class CatalogueSummariser(LLMCatalogueSummary):
         )
 
         if response.error:
-            raise Exception(f"Error generating summary: {response.error}")
+            sanitized_error = self._sanitize_error_message(response.error)
+            raise Exception(f"Error generating summary: {sanitized_error}")
         summary = response.data
         if not isinstance(summary, DataSummary):
-            raise TypeError(f"Expected PackageSummary, got {type(summary)}")
+            raise TypeError(f"Expected DataSummary, got {type(summary)}")
 
         return {
             "title": summary.title,
