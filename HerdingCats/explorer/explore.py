@@ -2341,7 +2341,7 @@ class ONSGeoExplorer:
     # ----------------------------
     # Search datasets with query parameters
     # ----------------------------
-    def _search_datasets(
+    def search_datasets(
         self, q: str, sort: Optional[str] = None, id: Optional[str] = None
     ) -> dict:
         """
@@ -2433,7 +2433,7 @@ class ONSGeoExplorer:
             main()
         """
         try:
-            data = self._search_datasets(q, sort, id)
+            data = self.search_datasets(q, sort, id)
             datasets = data.get("dcat:dataset", [])
 
             summary = []

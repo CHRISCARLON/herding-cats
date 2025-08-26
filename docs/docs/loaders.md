@@ -16,7 +16,7 @@ The loaders follow a consistent pattern:
 2. **Data Structure Extraction**: Explorers provide structured data references to loaders
 3. **Data Loading**: Loaders fetch the actual data from source URLs
 4. **Data Transformation**: Loaders convert data into desired formats (DataFrame, Parquet, etc.)
-5. **Data Storage/Usage**: Data is used for analysis or stored in a persistent location
+5. **Data Storage/Usage**: Data is used in a DataFrame for analysis or stored in a persistent location - e.g. AWS S3.
 
 ## From Explorer to Loader
 
@@ -391,10 +391,10 @@ CKAN supports a "datastore" extension that allows you to run SQL queries directl
 - `filters`: (Optional) A dictionary of column-value pairs to filter the results (translated to a SQL WHERE clause).
 - `api_key`: (Optional) If the dataset is private, provide your CKAN API key.
 
-**Returns:**  
+**Returns:**
 A Polars DataFrame containing the query results.
 
-**When to use:**  
+**When to use:**
 Use this method when you want to filter or query large CKAN tabular datasets server-side before loading them into memory, leveraging the power of SQL and the efficiency of Polars.
 
 > **Note:** This method is only available for CKAN loaders and only works with CKAN catalogues that support the "datastore" extension.

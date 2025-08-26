@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "HerdCats"
-version = "0.1.3"
+version = "0.1.4"
 description = "A tool for exploring open data sources."
 authors = ["christophercarlon <chris@enmeshed.dev>"]
 readme = "README.md"

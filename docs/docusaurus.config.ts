@@ -8,7 +8,6 @@ const config: Config = {
   title: "HerdingCATs",
   tagline:
     "A project to speed up how data analysts explore and interact with open data sources.",
-  favicon: "img/cat-silhouette.png",
 
   // Set the production url of your site here
   url: "https://herdingcats.dev",
@@ -58,12 +57,6 @@ const config: Config = {
     },
     navbar: {
       title: "HerdingCATs",
-      logo: {
-        alt: "Cat Silhouette",
-        src: "img/cat-silhouette.png",
-        width: 32,
-        height: 32,
-      },
       items: [
         {
           type: "docSidebar",

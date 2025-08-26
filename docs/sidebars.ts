@@ -16,8 +16,8 @@ const sidebars: SidebarsConfig = {
   // By default, Docusaurus generates a sidebar from the docs folder structure
   tutorialSidebar: [
     "intro",
-    "quick-start",
     "catalogues",
+    "quick-start",
     {
       type: "category",
       label: "Explorer Classes",
@@ -26,9 +26,11 @@ const sidebars: SidebarsConfig = {
         "explorers/opendatasoft",
         "explorers/frenchgouv",
         "explorers/nomis",
+        "explorers/ons-geo-portal",
       ],
     },
     "loaders",
+    "llm-summary",
   ],
 
   // But you can create a sidebar manually
