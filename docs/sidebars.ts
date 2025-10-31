@@ -30,7 +30,6 @@ const sidebars: SidebarsConfig = {
       ],
     },
     "loaders",
-    "llm-summary",
   ],
 
   // But you can create a sidebar manually
